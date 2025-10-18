@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "iterate",
+  "description": "Monitors README.md files for changes and suggests documentation improvements",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/README.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "If current task is finished make sure all tests are passed and no warnings then continue with the next task. prod-xnaut-core we are rewriting this so it is full compatible and it must be idiot junior proof"
+  }
+}

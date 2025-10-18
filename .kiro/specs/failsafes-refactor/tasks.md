@@ -1,0 +1,439 @@
+# Implementation Plan - Failsafes System Refactor
+
+⚠️ **SAFETY-CRITICAL SYSTEM** ⚠️
+
+This is a safety-critical system. Any bug could result in drone crashes. Follow these rules:
+- Test extensively at each step
+- Never skip validation tests
+- Document all assumptions
+- When in doubt, fail safe (block output)
+- Get code review before merging
+
+## Task List
+
+- [ ] 1. Set up project structure for all failsafe components
+  - Create `prod-xnaut-core-rewrite/rust/odometry_failsafe` crate
+  - Create `prod-xnaut-core-rewrite/rust/navsatfix_failsafe` crate
+  - Create `prod-xnaut-core-rewrite/rust/hz_monitor` crate
+  - Create `prod-xnaut-core-rewrite/rust/error_node` crate
+  - Add dependencies: nalgebra, geographiclib-rs, rclrs, serde, thiserror, tracing
+  - Set up module structures for each crate
+  - Configure clippy and rustfmt to match existing standards
+  - _Requirements: 14.1, 14.3_
+
+- [ ] 2. Implement Odometry Failsafe - Core Types and Configuration
+  - [ ] 2.1 Define types and error enums in types.rs
+    - Create FailsafeStatus enum with all states (Ok, Unhealthy, Quality, Twist, Delay, Disabled, GroundTruthBad)
+    - Create OdometrySource enum (Input, GroundTruth)
+    - Define error types: QualityCheckError, TwistLimitError, DelayError
+    - Implement Display and Error traits
+    - Add severity() and source() methods to FailsafeStatus
+    - _Requirements: 1.1, 4.1, 11.3, 13.1_
+  - [ ] 2.2 Implement configuration in config.rs
+    - Create OdometryFailsafeConfig struct with all parameters
+    - Add serde Deserialize for YAML loading
+    - Implement validation logic (positive values, reasonable ranges)
+    - Add default values matching Python implementation
+    - Create config loading function with error handling
+    - _Requirements: 14.1, 14.4, 14.5, 11.4_
+  - [ ]* 2.3 Write unit tests for configuration
+    - Test YAML deserialization
+    - Test validation with invalid parameters
+    - Test default values
+    - _Requirements: 15.1_
+
+- [ ] 3. Implement Odometry Failsafe - Quality Checker
+  - [ ] 3.1 Implement QualityChecker in checks.rs
+    - Create QualityChecker struct with VecDeque buffer
+    - Implement compute_quality() matching Python logic
+    - Implement add_measurement() with buffer management
+    - Implement is_quality_acceptable() with statistical analysis
+    - Add comprehensive logging for quality metrics
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+  - [ ] 3.2 Write comprehensive unit tests for quality checker
+    - Test buffer management (add, overflow, size limits)
+    - Test quality computation with known inputs
+    - Test statistical analysis (mean calculation)
+    - Test threshold checking (pass/fail scenarios)
+    - Test edge cases (empty buffer, single value, all same values)
+    - _Requirements: 15.1, 15.2_
+
+- [ ] 4. Implement Odometry Failsafe - Twist Limit Checker
+  - [ ] 4.1 Implement TwistLimits in checks.rs
+    - Create TwistLimits struct with max_x, max_y, max_z
+    - Implement check() method for each axis
+    - Return detailed error with exceeded value and limit
+    - Add logging for limit violations
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+  - [ ] 4.2 Write unit tests for twist limits
+    - Test each axis independently
+    - Test boundary conditions (exactly at limit)
+    - Test combined violations
+    - Test negative values
+    - Test error message formatting
+    - _Requirements: 15.1, 15.2_
+
+- [ ] 5. Implement Odometry Failsafe - Delay Checker
+  - [ ] 5.1 Implement DelayChecker in checks.rs
+    - Create DelayChecker struct with max_delay Duration
+    - Implement check() method comparing timestamps
+    - Handle future timestamps (error condition)
+    - Return detailed error with age and threshold
+    - Add logging for delay violations
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ] 5.2 Write unit tests for delay checker
+    - Test within threshold
+    - Test exceeded threshold
+    - Test boundary condition (exactly at threshold)
+    - Test future timestamps
+    - Test zero delay
+    - _Requirements: 15.1, 15.2_
+
+- [ ] 6. Implement Odometry Failsafe - State Machine
+  - [ ] 6.1 Implement state machine logic in state_machine.rs
+    - Create determine_status() function with all state transition logic
+    - Implement source selection based on status
+    - Add state transition logging
+    - Ensure deterministic behavior (no race conditions)
+    - Match Python state machine exactly
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
+  - [ ] 6.2 Write comprehensive state machine tests
+    - Test all state transitions
+    - Test source selection for each state
+    - Test priority of checks (ground truth > delay > quality > twist)
+    - Test disabled mode (passthrough)
+    - Verify matches Python behavior exactly
+    - _Requirements: 15.1, 15.3, 15.5_
+
+- [ ] 7. Implement Odometry Failsafe - ROS2 Node
+  - [ ] 7.1 Create OdometryFailsafeNode in node.rs
+    - Define node struct with all components
+    - Implement new() constructor with initialization
+    - Create subscribers for input and ground truth
+    - Create publishers for output and status
+    - Initialize all checkers and state
+    - Integrate with error manager and performance monitor
+    - _Requirements: 1.1, 4.1, 13.1, 13.3, 17.1_
+  - [ ] 7.2 Implement callback functions
+    - Write ground_truth_callback() to store latest message
+    - Write input_callback() to process and check input
+    - Write monitor_callback() for periodic health checks
+    - Implement update_checks() to run all checkers
+    - Implement publish_status() with header matching
+    - Add comprehensive error handling and logging
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 13.2_
+  - [ ] 7.3 Implement diagnostics and monitoring
+    - Add diagnostic status publishing
+    - Track metrics (error count, switch count, quality stats)
+    - Implement report_diagnostics() with detailed information
+    - Add performance monitoring integration
+    - Log all source switches with reason
+    - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 17.2, 17.3, 17.4_
+  - [ ]* 7.4 Write integration tests for odometry failsafe
+    - Test node initialization
+    - Test all callback scenarios
+    - Test source switching behavior
+    - Test diagnostic publishing
+    - _Requirements: 15.3_
+
+- [ ] 8. Implement NavSatFix Failsafe - Core Types and Configuration
+  - [ ] 8.1 Define types in types.rs
+    - Create NavSatFixFailsafeStatus enum
+    - Create GroundTruthUnhealthyBehavior enum (Block, Xnaut)
+    - Create XnautUnhealthyBehavior enum (Passthrough, Block, Xnaut)
+    - Define error types: DistanceError, DelayError
+    - Implement from_str() for behavior enums
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+  - [ ] 8.2 Implement configuration in config.rs
+    - Create NavSatFixFailsafeConfig struct
+    - Add all parameters matching Python
+    - Implement validation logic
+    - Parse behavior enum strings
+    - Add default values
+    - _Requirements: 14.1, 14.4, 14.5, 11.4_
+  - [ ]* 8.3 Write unit tests for configuration
+    - Test YAML deserialization
+    - Test behavior enum parsing
+    - Test validation
+    - _Requirements: 15.1_
+
+- [ ] 9. Implement NavSatFix Failsafe - Distance Checker
+  - [ ] 9.1 Implement DistanceChecker in checks.rs
+    - Create DistanceChecker struct with max_distance
+    - Implement is_valid_fix() for coordinate validation
+    - Implement geodesic_distance() using geographiclib or Haversine
+    - Implement compute_distance() with error handling
+    - Implement check() with threshold comparison
+    - Add logging for distance violations
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  - [ ] 9.2 Write comprehensive tests for distance checker
+    - Test geodesic distance calculation with known coordinates
+    - Test invalid coordinates (NaN, out of range)
+    - Test boundary conditions
+    - Test threshold checking
+    - Verify matches Python geopy.distance.geodesic
+    - _Requirements: 15.1, 15.2, 15.3, 15.5_
+
+- [ ] 10. Implement NavSatFix Failsafe - Delay and Odometry Integration
+  - [ ] 10.1 Implement delay checking in checks.rs
+    - Reuse DelayChecker from odometry failsafe
+    - Add separate checks for input and ground truth
+    - Handle different timeout values
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [ ] 10.2 Implement OdometryIntegration in checks.rs
+    - Create OdometryIntegration struct
+    - Implement update_status() to store latest odometry status
+    - Implement is_healthy() with timeout checking
+    - Parse status text ("ok", "disabled")
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+  - [ ]* 10.3 Write unit tests
+    - Test delay checking
+    - Test odometry integration
+    - Test timeout handling
+    - _Requirements: 15.1, 15.2_
+
+- [ ] 11. Implement NavSatFix Failsafe - State Machine and Node
+  - [ ] 11.1 Implement state machine in state_machine.rs
+    - Create determine_status() with all checks
+    - Implement configurable behavior logic
+    - Handle ground truth unhealthy scenarios
+    - Handle input unhealthy scenarios
+    - Ensure deterministic behavior
+    - Match Python logic exactly
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+  - [ ] 11.2 Create NavSatFixFailsafeNode in node.rs
+    - Define node struct with all components
+    - Implement new() constructor
+    - Create subscribers (fix, ground truth, odom status)
+    - Create publishers (output fix, status)
+    - Initialize all checkers
+    - _Requirements: 5.1, 6.1, 7.1, 13.1, 17.1_
+  - [ ] 11.3 Implement callbacks and monitoring
+    - Write fix_callback()
+    - Write ground_truth_callback()
+    - Write odom_status_callback()
+    - Write monitor_callback() with all checks
+    - Implement update_status() and diagnostics
+    - _Requirements: 5.1, 6.1, 7.1, 13.1, 13.2, 17.2_
+  - [ ]* 11.4 Write integration tests
+    - Test all callback scenarios
+    - Test configurable behavior modes
+    - Test odometry integration
+    - _Requirements: 15.3_
+
+- [ ] 12. Implement Hz Monitor
+  - [ ] 12.1 Implement RateTracker in rate_tracker.rs
+    - Create RateTracker struct with VecDeque of timestamps
+    - Implement add_message() with window management
+    - Implement compute_rate() over time window
+    - Implement is_rate_acceptable() with threshold check
+    - _Requirements: 9.1, 9.2, 9.3, 9.4_
+  - [ ] 12.2 Create HzMonitorNode in node.rs
+    - Define node struct
+    - Implement new() with configuration
+    - Create generic subscriber for any message type
+    - Create status publisher
+    - Implement callback to track rate
+    - Implement monitor timer to check rate
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+  - [ ]* 12.3 Write tests for Hz monitor
+    - Test rate calculation
+    - Test window management
+    - Test threshold checking
+    - Test with various message rates
+    - _Requirements: 15.1_
+
+- [ ] 13. Implement Error Node
+  - [ ] 13.1 Implement ErrorAggregator in aggregator.rs
+    - Create ErrorAggregator struct with HashMap of sources
+    - Create ErrorSource struct with status tracking
+    - Implement add_source() to register error sources
+    - Implement update_status() to track latest status
+    - Implement get_overall_status() to aggregate errors
+    - _Requirements: 10.1, 10.2, 10.3, 10.4_
+  - [ ] 13.2 Create ErrorNode in node.rs
+    - Define node struct with aggregator
+    - Implement new() with configuration
+    - Create subscribers for all error sources
+    - Create publisher for aggregated status
+    - Implement callbacks to update aggregator
+    - Implement monitor timer to publish overall status
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+  - [ ]* 13.3 Write tests for error node
+    - Test error aggregation
+    - Test timeout handling
+    - Test severity escalation
+    - _Requirements: 15.1_
+
+- [ ] 14. Implement backward compatibility validation
+  - [ ] 14.1 Create Python test vector generation
+    - Create script to run Python implementation with test inputs
+    - Generate comprehensive test cases (all scenarios)
+    - Save test vectors to JSON (inputs + expected outputs)
+    - Include edge cases and failure scenarios
+    - _Requirements: 11.5, 15.3, 15.5_
+  - [ ] 14.2 Implement compatibility tests in Rust
+    - Load Python test vectors from JSON
+    - Process through Rust implementation
+    - Compare outputs (must match exactly)
+    - Test all failsafe states and transitions
+    - Verify 100% compatibility
+    - _Requirements: 11.5, 15.3, 15.5_
+
+- [ ] 15. Create configuration and launch files
+  - [ ] 15.1 Create YAML configuration files
+    - Create `config/odometry_failsafe.yaml` matching Python
+    - Create `config/navsatfix_failsafe.yaml` matching Python
+    - Create `config/hz_monitor.yaml` matching Python
+    - Create `config/error_node.yaml` matching Python
+    - Add comments explaining all parameters
+    - _Requirements: 14.1, 11.1, 11.2, 11.3, 11.4_
+  - [ ] 15.2 Create launch files
+    - Create `launch/odometry_failsafe.launch.py`
+    - Create `launch/navsatfix_failsafe.launch.py`
+    - Create `launch/hz_monitor.launch.py`
+    - Create `launch/error_node.launch.py`
+    - Create `launch/failsafes_system.launch.py` (all components)
+    - Match Python launch file structure
+    - _Requirements: 14.3, 11.1, 11.2, 11.3_
+  - [ ] 15.3 Create hybrid side-by-side launch files
+    - Create launch files to run Python and Rust in parallel
+    - Use unique node names
+    - Publish to different topics for comparison
+    - Add validation nodes to compare outputs
+    - _Requirements: 11.5, 15.3, 16.1_
+
+- [ ] 16. Implement fault injection tests
+  - [ ] 16.1 Create sensor loss tests
+    - Test odometry sensor loss and recovery
+    - Test GPS sensor loss and recovery
+    - Test ground truth loss scenarios
+    - Verify correct failsafe activation and deactivation
+    - _Requirements: 15.4, 16.2_
+  - [ ] 16.2 Create stale data tests
+    - Test increasing message delays
+    - Test timeout scenarios
+    - Verify failsafe activates at correct threshold
+    - Test recovery when data becomes fresh again
+    - _Requirements: 15.4, 16.2_
+  - [ ] 16.3 Create invalid data tests
+    - Inject NaN values
+    - Inject inf values
+    - Inject out-of-range values
+    - Verify safe handling without panics
+    - Test all edge cases from requirements
+    - _Requirements: 15.2, 15.4, 16.2_
+  - [ ] 16.4 Create rapid state transition tests
+    - Rapidly switch between healthy and unhealthy
+    - Test race conditions
+    - Verify consistent state
+    - Test all state transition paths
+    - _Requirements: 15.4, 16.3_
+
+- [ ] 17. Implement performance benchmarks
+  - [ ] 17.1 Create latency benchmarks
+    - Benchmark odometry failsafe processing time
+    - Benchmark navsatfix failsafe processing time
+    - Benchmark each checker independently
+    - Target: < 500μs total latency
+    - Measure variance (target: < 50μs)
+    - _Requirements: 12.1, 12.2_
+  - [ ] 17.2 Create comparison benchmarks
+    - Benchmark Python implementations
+    - Run same test cases through both
+    - Compare latency (target: 3x improvement)
+    - Compare CPU usage
+    - Generate comparison report
+    - _Requirements: 12.5_
+  - [ ]* 17.3 Create memory profiling
+    - Verify zero runtime allocations
+    - Measure total memory usage
+    - Compare with Python
+    - _Requirements: 12.3, 12.4_
+
+- [ ] 18. Create comprehensive documentation
+  - [ ] 18.1 Create README for each component
+    - Document odometry failsafe logic and usage
+    - Document navsatfix failsafe logic and usage
+    - Document hz monitor usage
+    - Document error node usage
+    - Include configuration examples
+    - Add troubleshooting sections
+    - _Requirements: 18.1, 18.2, 18.3_
+  - [ ] 18.2 Create safety validation documentation
+    - Document validation methodology
+    - Document test results
+    - Document side-by-side validation results
+    - Include performance comparison
+    - Document known limitations
+    - _Requirements: 18.5_
+  - [ ] 18.3 Create migration guide
+    - Document migration procedure
+    - Document validation checklist
+    - Document rollback procedure
+    - Include monitoring recommendations
+    - Add deployment best practices
+    - _Requirements: 18.4_
+  - [ ] 18.4 Add inline documentation
+    - Document all public functions with rustdoc
+    - Add examples in documentation
+    - Document state machines with diagrams
+    - Document error conditions
+    - _Requirements: 18.1, 18.3_
+
+- [ ] 19. Side-by-side validation (CRITICAL - DO NOT SKIP)
+  - [ ] 19.1 Set up side-by-side environment
+    - Deploy hybrid launch configuration
+    - Set up data collection
+    - Set up monitoring dashboards
+    - Configure alerting for discrepancies
+    - _Requirements: 16.1, 17.1, 17.3_
+  - [ ] 19.2 Run extended validation
+    - Run for minimum 100 hours
+    - Collect all outputs from both implementations
+    - Monitor for any discrepancies
+    - Test all failure scenarios
+    - Document any issues found
+    - _Requirements: 16.1, 16.2, 16.3_
+  - [ ] 19.3 Analyze validation results
+    - Compare outputs statistically
+    - Verify zero false negatives
+    - Measure false positive rate
+    - Verify all state transitions match
+    - Generate validation report
+    - _Requirements: 16.4, 16.5_
+  - [ ] 19.4 Fix any discrepancies
+    - Investigate root cause of any differences
+    - Fix Rust implementation to match Python
+    - Re-run validation
+    - Document fixes
+    - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
+
+- [ ] 20. Integration with existing system
+  - [ ] 20.1 Update build system
+    - Add all failsafe crates to workspace Cargo.toml
+    - Update CMakeLists.txt
+    - Add to CI/CD pipeline
+    - _Requirements: 14.3_
+  - [ ] 20.2 Update system launch files
+    - Add failsafe nodes to main system launch
+    - Add feature flags for Python/Rust switching
+    - Update documentation
+    - _Requirements: 14.3_
+  - [ ] 20.3 Create deployment documentation
+    - Document deployment procedure
+    - Document validation checklist
+    - Document monitoring setup
+    - Document rollback procedure
+    - Include emergency procedures
+    - _Requirements: 18.4_
+
+## Notes
+
+- Tasks marked with `*` are optional testing tasks that can be skipped for faster MVP
+- **Task 19 (Side-by-side validation) is MANDATORY and cannot be skipped**
+- Each task references specific requirements from requirements.md
+- This is a safety-critical system - extensive testing is required
+- Get code review for all safety-critical components
+- Document all assumptions and design decisions
+- When in doubt, fail safe (block output rather than pass bad data)
