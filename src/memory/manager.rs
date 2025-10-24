@@ -1,123 +1,127 @@
-//! Main memory manager coordinating pools and regions
+//! MMAP memory manager for consciousness system
+//!
+//! Coordinates pool allocation, region management, and context loading
+//! for zero-copy access to dimensional layers.
 
-use crate::{Result, ConsciousnessError, LayerId, DimensionId, Frequency};
-use crate::memory::{
-    MmapOffset, PoolAllocator, MmapRegion, LayerMetadata, 
-    ContentLocation, ContextCollection, LoadedContext
+use crate::{Result, ConsciousnessError, LayerId, DimensionId};
+use super::{
+    pool::{PoolAllocator, PoolStats},
+    region::{MmapRegion, ContentLocation, LoadedContext, ContextCollection},
+    MmapOffset, MmapHandle,
 };
-use crate::navigation::NavigationPath;
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
-/// Main memory manager for consciousness system
+/// Main memory manager for the consciousness system
 #[derive(Debug)]
 pub struct MmapManager {
-    /// Pool allocator for memory blocks
     pool_allocator: PoolAllocator,
-    
-    /// Regions organized by dimension
-    regions: HashMap<DimensionId, MmapRegion>,
-    
-    /// Layer index for fast lookup
-    layer_index: HashMap<LayerId, DimensionId>,
-    
-    /// Total memory budget in MB
-    total_memory_mb: usize,
-    
-    /// Reserve pool for emergent dimensions
-    reserve_pool_size: usize,
+    regions: HashMap<u32, MmapRegion>,
+    layer_index: HashMap<LayerId, LayerLocation>,
+    next_region_id: u32,
+    base_path: PathBuf,
+    total_allocated_mb: usize,
+}
+
+/// Location information for a layer
+#[derive(Debug, Clone)]
+struct LayerLocation {
+    region_id: u32,
+    content_location: ContentLocation,
 }
 
 impl MmapManager {
-    /// Create new memory manager with specified memory budget
+    /// Create new MMAP manager with specified total memory allocation
     pub fn new(total_memory_mb: usize) -> Result<Self> {
-        let pool_allocator = PoolAllocator::new()?;
-        let regions = HashMap::new();
-        let layer_index = HashMap::new();
+        let mut pool_allocator = PoolAllocator::new();
         
-        // Reserve 30% of memory for emergent dimensions
-        let reserve_pool_size = (total_memory_mb * 30) / 100;
+        // Initialize standard pools with different block sizes
+        // 4KB blocks for small layers (metadata, simple content)
+        pool_allocator.add_pool(32, 4096)?; // 32MB of 4KB blocks
+        
+        // 16KB blocks for medium layers (typical layer content)
+        pool_allocator.add_pool(128, 16384)?; // 128MB of 16KB blocks
+        
+        // 64KB blocks for large layers (complex hierarchies)
+        pool_allocator.add_pool(80, 65536)?; // 80MB of 64KB blocks
+        
+        // 256KB blocks for very large dimensions
+        pool_allocator.add_pool(40, 262144)?; // 40MB of 256KB blocks
+        
+        let base_path = std::env::current_dir()
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to get current directory: {}", e)
+            ))?
+            .join("data")
+            .join("consciousness");
+        
+        // Ensure base directory exists
+        std::fs::create_dir_all(&base_path)
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to create base directory: {}", e)
+            ))?;
         
         Ok(Self {
             pool_allocator,
-            regions,
-            layer_index,
-            total_memory_mb,
-            reserve_pool_size,
+            regions: HashMap::new(),
+            layer_index: HashMap::new(),
+            next_region_id: 0,
+            base_path,
+            total_allocated_mb: total_memory_mb,
         })
     }
     
-    /// Initialize dimension regions with predefined layout
-    pub fn initialize_dimensions(&mut self) -> Result<()> {
-        let dimension_configs = vec![
-            (DimensionId(1), 16),  // D01-Emotion: 16MB
-            (DimensionId(2), 16),  // D02-Cognition: 16MB
-            (DimensionId(3), 16),  // D03-Intention: 16MB
-            (DimensionId(4), 8),   // D04-Social: 8MB
-            (DimensionId(5), 8),   // D05-Temporal: 8MB
-            (DimensionId(6), 16),  // D06-Philosophical: 16MB
-            (DimensionId(7), 12),  // D07-Technical: 12MB
-            (DimensionId(8), 8),   // D08-Creative: 8MB
-            (DimensionId(9), 12),  // D09-Ethical: 12MB
-            (DimensionId(10), 8),  // D10-Meta: 8MB
-            (DimensionId(11), 8),  // D11-Ecological: 8MB
-            (DimensionId(12), 8),  // D12-Positivity: 8MB
-            (DimensionId(13), 8),  // D13-Balance: 8MB
-            (DimensionId(14), 4),  // D14-Security: 4MB
-        ];
+    /// Load a dimension from file system
+    pub fn load_dimension(&mut self, dimension_id: DimensionId) -> Result<u32> {
+        let dimension_path = self.base_path
+            .join(format!("D{:02}", dimension_id.0));
         
-        for (dimension_id, size_mb) in dimension_configs {
-            let size_bytes = size_mb * 1024 * 1024;
-            let base_offset = self.pool_allocator.allocate(size_bytes)?;
-            
-            let region = MmapRegion::new(
-                dimension_id.0,
-                base_offset,
-                size_bytes,
-            );
-            
-            self.regions.insert(dimension_id, region);
+        if !dimension_path.exists() {
+            return Err(ConsciousnessError::MemoryError(
+                format!("Dimension directory not found: {:?}", dimension_path)
+            ));
         }
         
-        Ok(())
+        // Find the main region file for this dimension
+        let region_file = dimension_path.join("region.mmap");
+        if !region_file.exists() {
+            return Err(ConsciousnessError::MemoryError(
+                format!("Region file not found: {:?}", region_file)
+            ));
+        }
+        
+        let region_id = self.next_region_id;
+        self.next_region_id += 1;
+        
+        // Load the MMAP region
+        let region = MmapRegion::from_file(region_id, dimension_id, &region_file)?;
+        
+        // Index all layers in this region
+        for layer_id in region.list_layers() {
+            let layer_info = region.get_layer_info(layer_id)
+                .ok_or_else(|| ConsciousnessError::MemoryError(
+                    format!("Layer info not found for {:?}", layer_id)
+                ))?;
+            
+            let location = LayerLocation {
+                region_id,
+                content_location: ContentLocation::Mmap {
+                    offset: layer_info.offset,
+                    size: layer_info.size,
+                    region_id,
+                },
+            };
+            
+            self.layer_index.insert(layer_id, location);
+        }
+        
+        self.regions.insert(region_id, region);
+        
+        Ok(region_id)
     }
     
-    /// Store layer content in appropriate region
-    pub fn store_layer(
-        &mut self,
-        layer_id: LayerId,
-        name: String,
-        frequency: Frequency,
-        keywords: Vec<String>,
-        content: &[u8],
-    ) -> Result<()> {
-        // Allocate memory for content
-        let content_offset = self.pool_allocator.allocate(content.len())?;
-        
-        // Write content to allocated memory
-        let memory_slice = self.pool_allocator.get_bytes_mut(content_offset)?;
-        memory_slice[..content.len()].copy_from_slice(content);
-        
-        // Create layer metadata
-        let mut metadata = LayerMetadata::new(layer_id, name, frequency, keywords);
-        metadata.content_location = crate::memory::region::ContentLocationMeta::Mmap {
-            offset_bytes: content_offset.offset,
-            size: content.len(),
-        };
-        
-        // Add to appropriate region
-        let region = self.regions.get_mut(&layer_id.dimension)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Dimension region not found".to_string()))?;
-        
-        region.add_layer(metadata)?;
-        
-        // Update layer index
-        self.layer_index.insert(layer_id, layer_id.dimension);
-        
-        Ok(())
-    }
-    
-    /// Load contexts for navigation paths
-    pub fn load_contexts(&mut self, paths: &[NavigationPath]) -> Result<ContextCollection> {
+    /// Load contexts for specified navigation paths
+    pub fn load_contexts(&self, paths: &[NavigationPath]) -> Result<ContextCollection> {
         let mut collection = ContextCollection::new();
         
         for path in paths {
@@ -130,163 +134,262 @@ impl MmapManager {
         Ok(collection)
     }
     
-    /// Load single layer context
-    pub fn load_layer_context(&mut self, layer_id: LayerId) -> Result<LoadedContext> {
-        // Find region containing this layer
-        let dimension_id = self.layer_index.get(&layer_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Layer not found in index".to_string()))?;
+    /// Load context for a specific layer
+    pub fn load_layer_context(&self, layer_id: LayerId) -> Result<LoadedContext> {
+        let location = self.layer_index.get(&layer_id)
+            .ok_or_else(|| ConsciousnessError::MemoryError(
+                format!("Layer not found in index: {:?}", layer_id)
+            ))?;
         
-        let region = self.regions.get_mut(dimension_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Region not found".to_string()))?;
-        
-        let metadata = region.get_layer(layer_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Layer not found in region".to_string()))?;
-        
-        // Load content based on location
-        let content = match &metadata.content_location {
-            crate::memory::region::ContentLocationMeta::Mmap { offset_bytes, size } => {
-                let offset = MmapOffset {
-                    pool_id: 0, // TODO: proper pool ID mapping
-                    offset: *offset_bytes,
-                };
-                let bytes = self.pool_allocator.get_bytes(offset)?;
-                String::from_utf8_lossy(&bytes[..*size]).to_string()
-            },
-            crate::memory::region::ContentLocationMeta::Heap { .. } => {
-                // TODO: implement heap content loading
-                "Heap content not yet implemented".to_string()
-            },
-            crate::memory::region::ContentLocationMeta::Hybrid { .. } => {
-                // TODO: implement hybrid content loading
-                "Hybrid content not yet implemented".to_string()
-            },
-        };
-        
-        Ok(LoadedContext {
-            layer_id,
-            content,
-            frequency: metadata.frequency(),
-            keywords: metadata.keywords.clone(),
-        })
-    }
-    
-    /// Add synesthetic association to layer
-    pub fn add_synesthetic_association(
-        &mut self,
-        layer_id: LayerId,
-        keyword: String,
-        associations: Vec<String>,
-    ) -> Result<()> {
-        let dimension_id = self.layer_index.get(&layer_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Layer not found".to_string()))?;
-        
-        let region = self.regions.get_mut(dimension_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Region not found".to_string()))?;
-        
-        let metadata = region.get_layer(layer_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Layer not found".to_string()))?;
-        
-        metadata.add_synesthetic_association(keyword, associations);
-        
-        Ok(())
-    }
-    
-    /// Find layers matching keywords across all dimensions
-    pub fn find_matching_layers(&mut self, keywords: &[String]) -> Vec<(LayerId, f32)> {
-        let mut all_matches = Vec::new();
-        
-        for region in self.regions.values_mut() {
-            let matches = region.find_matching_layers(keywords);
-            all_matches.extend(matches);
-        }
-        
-        // Sort by score (highest first)
-        all_matches.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        
-        all_matches
-    }
-    
-    /// Crystallize proto-dimension from heap to mmap
-    pub fn crystallize_proto_dimension(
-        &mut self,
-        dimension_id: DimensionId,
-        layers: Vec<(LayerId, String, Frequency, Vec<String>, Vec<u8>)>,
-    ) -> Result<()> {
-        // Calculate total size needed
-        let total_size: usize = layers.iter().map(|(_, _, _, _, content)| content.len()).sum();
-        
-        // Allocate from reserve pool
-        if total_size > self.reserve_pool_size {
-            return Err(ConsciousnessError::MemoryError(
-                "Proto-dimension too large for reserve pool".to_string()
-            ));
-        }
-        
-        // Create new region for this dimension
-        let base_offset = self.pool_allocator.allocate(total_size)?;
-        let mut region = MmapRegion::new(dimension_id.0, base_offset, total_size);
-        
-        // Store all layers in the new region
-        for (layer_id, name, frequency, keywords, content) in layers {
-            let content_offset = self.pool_allocator.allocate(content.len())?;
-            let memory_slice = self.pool_allocator.get_bytes_mut(content_offset)?;
-            memory_slice[..content.len()].copy_from_slice(&content);
+        match &location.content_location {
+            ContentLocation::Mmap { offset, size, region_id } => {
+                let region = self.regions.get(region_id)
+                    .ok_or_else(|| ConsciousnessError::MemoryError(
+                        format!("Region not found: {}", region_id)
+                    ))?;
+                
+                let content = region.read_string(*offset, *size)?;
+                let layer_info = region.get_layer_info(layer_id).unwrap();
+                
+                Ok(LoadedContext {
+                    layer_id,
+                    content,
+                    frequency: layer_info.frequency(),
+                    keywords: layer_info.keywords.clone(),
+                })
+            }
             
-            let mut metadata = LayerMetadata::new(layer_id, name, frequency, keywords);
-            metadata.content_location = crate::memory::region::ContentLocationMeta::Mmap {
-                offset_bytes: content_offset.offset,
-                size: content.len(),
-            };
+            ContentLocation::Heap { data, .. } => {
+                let content = String::from_utf8(data.clone())
+                    .map_err(|e| ConsciousnessError::MemoryError(
+                        format!("Invalid UTF-8 in heap content: {}", e)
+                    ))?;
+                
+                // For heap content, we need to get frequency and keywords from somewhere
+                // This would typically be stored alongside the heap data
+                Ok(LoadedContext {
+                    layer_id,
+                    content,
+                    frequency: crate::Frequency::new(1.0), // Default frequency
+                    keywords: Vec::new(), // Would need to be stored with heap data
+                })
+            }
             
-            region.add_layer(metadata)?;
-            self.layer_index.insert(layer_id, dimension_id);
+            ContentLocation::Hybrid { mmap_base, mmap_size, heap_overlay, region_id } => {
+                let region = self.regions.get(region_id)
+                    .ok_or_else(|| ConsciousnessError::MemoryError(
+                        format!("Region not found: {}", region_id)
+                    ))?;
+                
+                let mmap_content = region.read_string(*mmap_base, *mmap_size)?;
+                let heap_content = String::from_utf8(heap_overlay.clone())
+                    .map_err(|e| ConsciousnessError::MemoryError(
+                        format!("Invalid UTF-8 in heap overlay: {}", e)
+                    ))?;
+                
+                let combined_content = format!("{}\n\n{}", mmap_content, heap_content);
+                let layer_info = region.get_layer_info(layer_id).unwrap();
+                
+                Ok(LoadedContext {
+                    layer_id,
+                    content: combined_content,
+                    frequency: layer_info.frequency(),
+                    keywords: layer_info.keywords.clone(),
+                })
+            }
         }
-        
-        self.regions.insert(dimension_id, region);
-        self.reserve_pool_size -= total_size;
-        
-        Ok(())
+    }
+    
+    /// Allocate space for new content (for learning system)
+    pub fn allocate(&mut self, size: usize) -> Result<MmapOffset> {
+        self.pool_allocator.allocate(size)
+    }
+    
+    /// Deallocate previously allocated space
+    pub fn deallocate(&mut self, offset: MmapOffset) -> Result<()> {
+        self.pool_allocator.deallocate(offset)
     }
     
     /// Get memory usage statistics
-    pub fn get_memory_stats(&self) -> MemoryStats {
+    pub fn get_stats(&self) -> MemoryStats {
         let pool_stats = self.pool_allocator.get_stats();
-        let total_pool_memory = self.pool_allocator.total_memory_usage();
-        
-        let region_stats: Vec<_> = self.regions.values()
-            .map(|region| region.stats())
-            .collect();
-        
-        let total_layers: usize = region_stats.iter()
-            .map(|stats| stats.layer_count)
-            .sum();
-        
-        let total_accesses: u64 = region_stats.iter()
-            .map(|stats| stats.total_accesses)
-            .sum();
         
         MemoryStats {
-            total_memory_mb: self.total_memory_mb,
-            pool_memory_bytes: total_pool_memory,
-            reserve_pool_size: self.reserve_pool_size,
-            total_dimensions: self.regions.len(),
-            total_layers,
-            total_accesses,
+            total_allocated_mb: self.total_allocated_mb,
             pool_stats,
-            region_stats,
+            regions_loaded: self.regions.len(),
+            layers_indexed: self.layer_index.len(),
+            utilization_percent: pool_stats.utilization(),
         }
+    }
+    
+    /// Initialize all core dimensions
+    pub async fn initialize_core_dimensions(&mut self) -> Result<()> {
+        // Load all 14 core dimensions
+        let core_dimensions = [
+            DimensionId(1),  // D01-Emotion
+            DimensionId(2),  // D02-Cognition
+            DimensionId(3),  // D03-Intention
+            DimensionId(4),  // D04-Social
+            DimensionId(5),  // D05-Temporal
+            DimensionId(6),  // D06-Philosophical
+            DimensionId(7),  // D07-Technical
+            DimensionId(8),  // D08-Creative
+            DimensionId(9),  // D09-Ethical
+            DimensionId(10), // D10-Meta
+            DimensionId(11), // D11-Ecological
+            DimensionId(12), // D12-Positivity
+            DimensionId(13), // D13-Balance
+            DimensionId(14), // D14-Security
+        ];
+        
+        for dimension_id in &core_dimensions {
+            match self.load_dimension(*dimension_id) {
+                Ok(region_id) => {
+                    tracing::info!("Loaded dimension {:?} as region {}", dimension_id, region_id);
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to load dimension {:?}: {}", dimension_id, e);
+                    // Continue loading other dimensions even if one fails
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Create a new proto-dimension in heap memory (for learning)
+    pub fn create_proto_dimension(
+        &mut self,
+        dimension_id: DimensionId,
+        content: Vec<u8>,
+    ) -> Result<LayerId> {
+        let layer_id = LayerId {
+            dimension: dimension_id,
+            layer: 0, // Proto-dimensions start at layer 0
+        };
+        
+        let location = LayerLocation {
+            region_id: u32::MAX, // Special marker for heap-only content
+            content_location: ContentLocation::Heap {
+                data: content,
+                created_at: std::time::SystemTime::now(),
+            },
+        };
+        
+        self.layer_index.insert(layer_id, location);
+        
+        Ok(layer_id)
+    }
+    
+    /// Crystallize a proto-dimension from heap to MMAP
+    pub fn crystallize_proto_dimension(
+        &mut self,
+        layer_id: LayerId,
+    ) -> Result<()> {
+        let location = self.layer_index.get(&layer_id)
+            .ok_or_else(|| ConsciousnessError::MemoryError(
+                format!("Proto-dimension not found: {:?}", layer_id)
+            ))?;
+        
+        if let ContentLocation::Heap { data, .. } = &location.content_location {
+            // Allocate space in reserve pool
+            let mmap_offset = self.allocate(data.len())?;
+            
+            // Copy data to MMAP region
+            let ptr = self.pool_allocator.get_ptr(mmap_offset)?;
+            unsafe {
+                std::ptr::copy_nonoverlapping(
+                    data.as_ptr(),
+                    ptr,
+                    data.len()
+                );
+            }
+            
+            // Update location to MMAP
+            let new_location = LayerLocation {
+                region_id: mmap_offset.pool_id as u32,
+                content_location: ContentLocation::Mmap {
+                    offset: mmap_offset.offset,
+                    size: data.len(),
+                    region_id: mmap_offset.pool_id as u32,
+                },
+            };
+            
+            self.layer_index.insert(layer_id, new_location);
+            
+            tracing::info!("Crystallized proto-dimension {:?} to MMAP", layer_id);
+        }
+        
+        Ok(())
     }
 }
 
-/// Overall memory usage statistics
+/// Navigation path from multiverse navigator
 #[derive(Debug, Clone)]
+pub struct NavigationPath {
+    pub dimension_id: DimensionId,
+    pub layer_sequence: Vec<LayerId>,
+    pub confidence: f32,
+    pub frequency: crate::Frequency,
+}
+
+/// Memory usage statistics
+#[derive(Debug)]
 pub struct MemoryStats {
-    pub total_memory_mb: usize,
-    pub pool_memory_bytes: usize,
-    pub reserve_pool_size: usize,
-    pub total_dimensions: usize,
-    pub total_layers: usize,
-    pub total_accesses: u64,
-    pub pool_stats: Vec<crate::memory::pool::PoolStats>,
-    pub region_stats: Vec<crate::memory::region::RegionStats>,
+    pub total_allocated_mb: usize,
+    pub pool_stats: PoolStats,
+    pub regions_loaded: usize,
+    pub layers_indexed: usize,
+    pub utilization_percent: f32,
+}
+
+impl MemoryStats {
+    /// Check if memory usage is approaching limits
+    pub fn is_near_capacity(&self) -> bool {
+        self.utilization_percent > 85.0
+    }
+    
+    /// Get available memory in MB
+    pub fn available_mb(&self) -> usize {
+        let used_mb = (self.pool_stats.allocated_size as f32 / (1024.0 * 1024.0)) as usize;
+        self.total_allocated_mb.saturating_sub(used_mb)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+    
+    #[tokio::test]
+    async fn test_memory_manager_creation() {
+        let manager = MmapManager::new(280).unwrap();
+        let stats = manager.get_stats();
+        
+        assert_eq!(stats.total_allocated_mb, 280);
+        assert_eq!(stats.regions_loaded, 0);
+        assert_eq!(stats.layers_indexed, 0);
+    }
+    
+    #[tokio::test]
+    async fn test_proto_dimension_lifecycle() {
+        let mut manager = MmapManager::new(280).unwrap();
+        let dimension_id = DimensionId(99); // Test dimension
+        
+        // Create proto-dimension
+        let content = b"test proto content".to_vec();
+        let layer_id = manager.create_proto_dimension(dimension_id, content).unwrap();
+        
+        // Load context from heap
+        let context = manager.load_layer_context(layer_id).unwrap();
+        assert_eq!(context.content, "test proto content");
+        
+        // Crystallize to MMAP
+        manager.crystallize_proto_dimension(layer_id).unwrap();
+        
+        // Load context from MMAP
+        let context = manager.load_layer_context(layer_id).unwrap();
+        assert_eq!(context.content, "test proto content");
+    }
 }
