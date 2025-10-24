@@ -28,8 +28,10 @@ FROM golang:1.23-alpine as development
 
 WORKDIR /app
 
-# Install wget for health checks
-RUN apk add --no-cache wget git
+# Install wget for health checks and air for hot reload
+# Using v1.61.1 which is compatible with Go 1.23
+RUN apk add --no-cache wget git && \
+    go install github.com/air-verse/air@v1.61.1
 
 # Copy go mod file first for caching
 COPY api/go.mod ./
@@ -38,14 +40,17 @@ COPY api/go.mod ./
 # This will create go.sum if it doesn't exist
 RUN go mod download
 
+# Copy air configuration
+COPY api/.air.toml ./.air.toml
+
 # Copy source
 COPY api/ .
 
 # Ensure go.mod and go.sum are in sync
 RUN go mod tidy
 
-# Run the server directly (hot reload can be added later with air)
-CMD ["go", "run", "."]
+# Use air for hot reload in development
+CMD ["air", "-c", ".air.toml"]
 
 # ============================================
 # Stage 3: Production

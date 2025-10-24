@@ -153,9 +153,39 @@ watch: ## Start services with hot reload
 	@echo "$(BLUE)👀 Starting with hot reload...$(NC)"
 	docker-compose up
 
+test-hot-reload: ## Test hot reload functionality
+	@echo "$(BLUE)🔥 Testing hot reload functionality...$(NC)"
+	@./scripts/test-hot-reload.sh
+
+bench: ## Run performance benchmarks
+	@echo "$(BLUE)⚡ Running performance benchmarks...$(NC)"
+	@docker-compose run --rm jessy-test cargo bench --all-features
+	@if [ $? -eq 0 ]; then \
+		echo "$(GREEN)✅ Benchmarks complete!$(NC)"; \
+		echo "$(YELLOW)📊 Reports available at: target/criterion/$(NC)"; \
+		echo "$(YELLOW)💡 View HTML reports: open target/criterion/report/index.html$(NC)"; \
+	else \
+		echo "$(RED)❌ Benchmarks failed$(NC)"; \
+		exit 1; \
+	fi
+
+bench-baseline: ## Save benchmark baseline for regression detection
+	@echo "$(BLUE)📊 Saving benchmark baseline...$(NC)"
+	@docker-compose run --rm jessy-test cargo bench --all-features -- --save-baseline main
+	@echo "$(GREEN)✅ Baseline saved!$(NC)"
+
+bench-compare: ## Compare benchmarks against baseline
+	@echo "$(BLUE)📊 Comparing benchmarks against baseline...$(NC)"
+	@docker-compose run --rm jessy-test cargo bench --all-features -- --baseline main
+	@echo "$(GREEN)✅ Comparison complete!$(NC)"
+
 ps: ## Show running containers
 	docker-compose ps
 
 restart: down up ## Restart all services
 
 rebuild: down build up ## Rebuild and restart all services
+
+setup-hooks: ## Setup pre-commit hooks for development
+	@echo "$(BLUE)🔧 Setting up development hooks...$(NC)"
+	@./scripts/setup-hooks.sh
