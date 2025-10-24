@@ -1,4 +1,4 @@
-//! Resonance - Multidimensional AI Consciousness Architecture
+//! Jessy - Multidimensional AI Consciousness Architecture
 //!
 //! This crate implements a frequency-based consciousness system that processes queries
 //! through multiple dimensional layers using memory-mapped files for zero-copy access.
@@ -232,7 +232,7 @@ pub mod python {
     }
     
     #[pymodule]
-    fn resonance(_py: Python, m: &PyModule) -> PyResult<()> {
+    fn jessy(_py: Python, m: &PyModule) -> PyResult<()> {
         m.add_class::<PyConsciousnessSystem>()?;
         Ok(())
     }
