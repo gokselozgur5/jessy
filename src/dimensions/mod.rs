@@ -8,8 +8,8 @@ pub mod layer;
 pub mod registry;
 
 pub use dimension::{Dimension, DimensionInfo};
-pub use layer::{Layer, LayerInfo, LayerHierarchy};
-pub use registry::{DimensionRegistry, DimensionActivation};
+pub use layer::{LayerInfo, LayerHierarchy};
+pub use registry::DimensionRegistry;
 
 use crate::{DimensionId, LayerId, Frequency, Result};
 use std::collections::HashMap;
