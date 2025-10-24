@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Check Compilation",
+  "description": "Verifies code compiles after creating new Rust files",
+  "version": "1",
+  "when": {
+    "type": "fileCreated",
+    "patterns": ["src/**/*.rs"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "New Rust file(s) created. Run `cargo check` to verify compilation. If errors:\n\n1. Read error messages carefully\n2. Fix issues immediately\n3. Re-run check\n\nReport: ✅ if compiles, ❌ with fixes if errors found. Be concise."
+  }
+}
