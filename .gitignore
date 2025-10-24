@@ -51,6 +51,8 @@ wheels/
 *.log
 
 # Kiro IDE configuration (private)
-.kiro/
+.kiro/*
 # But allow spec files to be committed
 !.kiro/specs/
+# Ignore any files with kiro in the name
+*kiro*.*
