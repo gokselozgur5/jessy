@@ -7,9 +7,9 @@ pub mod navigator;
 pub mod synesthetic;
 pub mod path_selector;
 
-pub use navigator::{MultiverseNavigator, NavigationResult};
+pub use navigator::MultiverseNavigator;
 pub use synesthetic::{SynestheticEngine, SynestheticAssociation};
-pub use path_selector::{PathSelector, NavigationPath};
+pub use path_selector::PathSelector;
 
 use crate::{Result, DimensionId, LayerId, Frequency};
 use std::collections::HashMap;
