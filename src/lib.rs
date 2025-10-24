@@ -44,7 +44,7 @@ pub type Result<T> = std::result::Result<T, ConsciousnessError>;
 pub struct DimensionId(pub u8);
 
 /// Unique identifier for layers within dimensions
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct LayerId {
     pub dimension: DimensionId,
     pub layer: u16,
@@ -135,7 +135,7 @@ impl ConsciousnessSystem {
             config.complexity_threshold,
         );
         let learning_system = learning::LearningSystem::new();
-        let security_layer = security::SecurityLayer::new(config.security_timeout_ms);
+        let security_layer = security::SecurityLayer::new();
         
         Ok(Self {
             config,
