@@ -72,13 +72,13 @@ This implementation plan transforms the Jessy consciousness system into a fully 
   - Verify no data loss during shutdown
   - _Requirements: 5.3_
 
-- [x] 2.4 Configure restart policies
+- [-] 2.4 Configure restart policies
   - Set restart: unless-stopped for core services
   - Configure exponential backoff for failures
   - Test automatic restart on crash
   - _Requirements: 5.3_
 
-- [ ] 3. Create automated testing infrastructure
+- [-] 3. Create automated testing infrastructure
   - Set up test execution in containers
   - Configure coverage reporting
   - Implement BDD test runner

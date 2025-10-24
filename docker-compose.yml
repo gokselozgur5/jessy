@@ -16,15 +16,28 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - RUST_LOG=debug
+      - RUST_LOG=jessy=debug,actix_web=info
       - RUST_BACKTRACE=1
+      - RUST_ENV=development
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 10s
+    # Restart policy: unless-stopped ensures service restarts on failure
+    # Docker automatically implements exponential backoff (10s, 20s, 40s, etc.)
+    # Maximum backoff is 1 minute between restart attempts
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service,environment"
+    labels:
+      service: "jessy-core"
+      environment: "development"
     networks:
       - jessy-network
 
@@ -43,7 +56,9 @@ services:
       - "3000:3000"
     environment:
       - GO_ENV=development
+      - PORT=3000
       - RUST_SERVICE_URL=http://jessy-core:8080
+      - LOG_LEVEL=debug
     depends_on:
       jessy-core:
         condition: service_healthy
@@ -53,7 +68,19 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    # Restart policy: unless-stopped ensures service restarts on failure
+    # Docker automatically implements exponential backoff (10s, 20s, 40s, etc.)
+    # Maximum backoff is 1 minute between restart attempts
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service,environment"
+    labels:
+      service: "jessy-api"
+      environment: "development"
     networks:
       - jessy-network
 

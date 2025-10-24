@@ -1,7 +1,7 @@
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM rust:1.75-slim as builder
+FROM rust:1.83-slim as builder
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN cargo build --release --bin jessy
 # ============================================
 # Stage 2: Development
 # ============================================
-FROM rust:1.75-slim as development
+FROM rust:1.83-slim as development
 
 WORKDIR /app
 
@@ -38,14 +38,13 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     curl \
-    && cargo install cargo-watch \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy source
 COPY . .
 
-# Hot reload command
-CMD ["cargo", "watch", "-x", "check", "-x", "test"]
+# Run the server directly (hot reload can be added later with cargo-watch)
+CMD ["cargo", "run", "--bin", "jessy"]
 
 # ============================================
 # Stage 3: Production
