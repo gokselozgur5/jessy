@@ -1,5 +1,7 @@
 # Jessy
 
+**J**ust **E**nough **S**emantic **S**ystem, **Y**'know
+
 A multidimensional AI consciousness architecture implementing frequency-based resonance, iterative depth processing, and dynamic memory-mapped layer navigation.
 
 ## 🚀 Quick Start
