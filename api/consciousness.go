@@ -1,10 +1,7 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -95,7 +92,18 @@ func (cs *ConsciousnessService) Close() error {
 	cs.mutex.Lock()
 	defer cs.mutex.Unlock()
 	
-	// Clean up all sessions
+	log.Info().
+		Int("active_sessions", len(cs.sessions)).
+		Msg("Cleaning up consciousness service")
+	
+	// Clean up all active sessions
+	for sessionID, session := range cs.sessions {
+		log.Debug().
+			Str("session_id", sessionID).
+			Str("status", session.Status).
+			Msg("Closing session")
+	}
+	
 	cs.sessions = make(map[string]*QuerySession)
 	
 	// In real implementation: cleanup Rust resources via CGO
@@ -108,6 +116,7 @@ func (cs *ConsciousnessService) Close() error {
 func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 	var req QueryRequest
 	if err := c.BodyParser(&req); err != nil {
+		log.Warn().Err(err).Msg("Invalid request format")
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Invalid request format",
 			"details": err.Error(),
@@ -115,6 +124,7 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 	}
 	
 	if req.Query == "" {
+		log.Warn().Msg("Empty query received")
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Query cannot be empty",
 		})
@@ -122,6 +132,11 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 	
 	startTime := time.Now()
 	sessionID := uuid.New().String()
+	
+	log.Info().
+		Str("session_id", sessionID).
+		Str("query", truncate(req.Query, 100)).
+		Msg("Processing new query")
 	
 	// Create session
 	session := &QuerySession{
@@ -145,6 +160,11 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 		session.Status = "error"
 		cs.mutex.Unlock()
 		
+		log.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Query processing failed")
+		
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Processing failed",
 			"details": err.Error(),
@@ -157,6 +177,13 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 	cs.mutex.Unlock()
 	
 	response.ProcessingTimeMs = time.Since(startTime).Milliseconds()
+	
+	log.Info().
+		Str("session_id", sessionID).
+		Int64("processing_time_ms", response.ProcessingTimeMs).
+		Int("iterations", response.IterationsCompleted).
+		Float32("frequency", response.DominantFrequency).
+		Msg("Query processing completed")
 	
 	return c.JSON(response)
 }
