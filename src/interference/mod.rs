@@ -7,9 +7,8 @@ pub mod engine;
 pub mod patterns;
 pub mod harmonics;
 
-pub use engine::{InterferenceEngine, InterferenceResult};
-pub use patterns::{InterferencePattern, FrequencyState};
-pub use harmonics::{HarmonicAnalyzer, HarmonicRelationship};
+pub use engine::InterferenceEngine;
+pub use harmonics::HarmonicAnalyzer;
 
 use crate::{Frequency, Result};
 use std::collections::HashMap;
