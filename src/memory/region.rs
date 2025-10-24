@@ -1,24 +1,34 @@
 //! Memory region management for consciousness layers
+//!
+//! Handles individual MMAP regions with content location tracking
+//! and hybrid storage for static + dynamic content.
 
 use crate::{Result, ConsciousnessError, LayerId, Frequency};
-use crate::memory::MmapOffset;
+use memmap2::{Mmap, MmapOptions};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::Path;
 
 /// Location of layer content in memory
 #[derive(Debug, Clone)]
 pub enum ContentLocation {
-    /// Content stored in memory-mapped region
-    Mmap { offset: MmapOffset, size: usize },
-    
-    /// Content stored in heap (temporary, learning)
-    Heap { data: Vec<u8> },
-    
-    /// Hybrid: base content in mmap + overlay in heap
+    /// Content stored in memory-mapped file
+    Mmap { 
+        offset: usize, 
+        size: usize,
+        region_id: u32,
+    },
+    /// Content stored in heap memory (temporary)
+    Heap { 
+        data: Vec<u8>,
+        created_at: std::time::SystemTime,
+    },
+    /// Hybrid: base content in MMAP + overlay in heap
     Hybrid { 
-        mmap_base: MmapOffset, 
+        mmap_base: usize, 
         mmap_size: usize,
-        heap_overlay: Vec<u8> 
+        heap_overlay: Vec<u8>,
+        region_id: u32,
     },
 }
 
@@ -27,100 +37,192 @@ impl ContentLocation {
     pub fn size(&self) -> usize {
         match self {
             ContentLocation::Mmap { size, .. } => *size,
-            ContentLocation::Heap { data } => data.len(),
+            ContentLocation::Heap { data, .. } => data.len(),
             ContentLocation::Hybrid { mmap_size, heap_overlay, .. } => {
                 mmap_size + heap_overlay.len()
             }
         }
     }
     
-    /// Check if content is stored in mmap (fast access)
-    pub fn is_mmap(&self) -> bool {
+    /// Check if content is in permanent storage (MMAP)
+    pub fn is_permanent(&self) -> bool {
         matches!(self, ContentLocation::Mmap { .. } | ContentLocation::Hybrid { .. })
     }
     
-    /// Check if content has heap overlay (learning data)
-    pub fn has_heap_overlay(&self) -> bool {
-        matches!(self, ContentLocation::Heap { .. } | ContentLocation::Hybrid { .. })
+    /// Check if content is temporary (heap only)
+    pub fn is_temporary(&self) -> bool {
+        matches!(self, ContentLocation::Heap { .. })
     }
 }
 
 /// Memory-mapped region for consciousness layers
 #[derive(Debug)]
 pub struct MmapRegion {
-    /// Region identifier
-    pub region_id: u8,
-    
-    /// Base memory offset
-    pub base_offset: MmapOffset,
-    
-    /// Total size of region
-    pub total_size: usize,
-    
-    /// Layers stored in this region
-    pub layers: HashMap<LayerId, LayerMetadata>,
-    
-    /// Free space tracking
-    pub free_space: usize,
+    pub region_id: u32,
+    pub dimension_id: crate::DimensionId,
+    pub file_path: std::path::PathBuf,
+    pub mmap: Mmap,
+    pub metadata: RegionMetadata,
 }
 
-/// Metadata for a layer stored in memory
+impl MmapRegion {
+    /// Create new MMAP region from file
+    pub fn from_file<P: AsRef<Path>>(
+        region_id: u32,
+        dimension_id: crate::DimensionId,
+        file_path: P,
+    ) -> Result<Self> {
+        let file_path = file_path.as_ref().to_path_buf();
+        
+        let file = std::fs::File::open(&file_path)
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to open file {:?}: {}", file_path, e)
+            ))?;
+        
+        let mmap = unsafe {
+            MmapOptions::new()
+                .map(&file)
+                .map_err(|e| ConsciousnessError::MemoryError(
+                    format!("Failed to mmap file {:?}: {}", file_path, e)
+                ))?
+        };
+        
+        // Parse metadata from file header or separate metadata file
+        let metadata = Self::parse_metadata(&mmap)?;
+        
+        Ok(Self {
+            region_id,
+            dimension_id,
+            file_path,
+            mmap,
+            metadata,
+        })
+    }
+    
+    /// Read content at specific offset and size
+    pub fn read_content(&self, offset: usize, size: usize) -> Result<&[u8]> {
+        if offset + size > self.mmap.len() {
+            return Err(ConsciousnessError::MemoryError(
+                format!("Read beyond region bounds: {}+{} > {}", 
+                    offset, size, self.mmap.len())
+            ));
+        }
+        
+        Ok(&self.mmap[offset..offset + size])
+    }
+    
+    /// Read content as UTF-8 string
+    pub fn read_string(&self, offset: usize, size: usize) -> Result<String> {
+        let bytes = self.read_content(offset, size)?;
+        String::from_utf8(bytes.to_vec())
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Invalid UTF-8 content: {}", e)
+            ))
+    }
+    
+    /// Get layer information by layer ID
+    pub fn get_layer_info(&self, layer_id: LayerId) -> Option<&LayerInfo> {
+        self.metadata.layers.get(&layer_id)
+    }
+    
+    /// List all layers in this region
+    pub fn list_layers(&self) -> Vec<LayerId> {
+        self.metadata.layers.keys().copied().collect()
+    }
+    
+    /// Parse metadata from MMAP content
+    fn parse_metadata(mmap: &Mmap) -> Result<RegionMetadata> {
+        // Look for metadata header (first 1KB)
+        if mmap.len() < 1024 {
+            return Err(ConsciousnessError::MemoryError(
+                "Region too small for metadata".to_string()
+            ));
+        }
+        
+        let header_bytes = &mmap[0..1024];
+        
+        // Try to find JSON metadata marker
+        if let Some(json_start) = header_bytes.windows(4).position(|w| w == b"JSON") {
+            let json_bytes = &header_bytes[json_start + 4..];
+            if let Some(json_end) = json_bytes.iter().position(|&b| b == 0) {
+                let json_str = std::str::from_utf8(&json_bytes[..json_end])
+                    .map_err(|e| ConsciousnessError::MemoryError(
+                        format!("Invalid metadata UTF-8: {}", e)
+                    ))?;
+                
+                return serde_json::from_str(json_str)
+                    .map_err(|e| ConsciousnessError::MemoryError(
+                        format!("Invalid metadata JSON: {}", e)
+                    ));
+            }
+        }
+        
+        // Fallback: create default metadata
+        Ok(RegionMetadata::default())
+    }
+}
+
+/// Metadata for an MMAP region
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LayerMetadata {
-    /// Layer identifier
+pub struct RegionMetadata {
+    pub version: u32,
+    pub created_at: u64, // Unix timestamp
+    pub dimension_name: String,
+    pub total_size: usize,
+    pub content_offset: usize, // Where actual content starts (after metadata)
+    pub layers: HashMap<LayerId, LayerInfo>,
+}
+
+impl Default for RegionMetadata {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            created_at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+            dimension_name: "unknown".to_string(),
+            total_size: 0,
+            content_offset: 1024, // Skip first 1KB for metadata
+            layers: HashMap::new(),
+        }
+    }
+}
+
+/// Information about a layer within a region
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LayerInfo {
     pub layer_id: LayerId,
-    
-    /// Layer name
     pub name: String,
-    
-    /// Operating frequency
     pub frequency: f32,
-    
-    /// Content location
-    pub content_location: ContentLocationMeta,
-    
-    /// Keywords for matching
+    pub depth: u8,
+    pub offset: usize,
+    pub size: usize,
     pub keywords: Vec<String>,
-    
-    /// Synesthetic associations
-    pub synesthetic_map: HashMap<String, Vec<String>>,
-    
-    /// Parent layer (if any)
     pub parent: Option<LayerId>,
-    
-    /// Child layers
     pub children: Vec<LayerId>,
-    
-    /// Last access timestamp
     pub last_accessed: u64,
-    
-    /// Access count for usage statistics
     pub access_count: u64,
 }
 
-/// Serializable version of ContentLocation
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ContentLocationMeta {
-    Mmap { offset_bytes: usize, size: usize },
-    Heap { size: usize },
-    Hybrid { mmap_offset_bytes: usize, mmap_size: usize, heap_size: usize },
-}
-
-impl LayerMetadata {
-    /// Create new layer metadata
+impl LayerInfo {
+    /// Create new layer info
     pub fn new(
         layer_id: LayerId,
         name: String,
         frequency: Frequency,
-        keywords: Vec<String>,
+        depth: u8,
+        offset: usize,
+        size: usize,
     ) -> Self {
         Self {
             layer_id,
             name,
             frequency: frequency.hz(),
-            content_location: ContentLocationMeta::Heap { size: 0 },
-            keywords,
-            synesthetic_map: HashMap::new(),
+            depth,
+            offset,
+            size,
+            keywords: Vec::new(),
             parent: None,
             children: Vec::new(),
             last_accessed: 0,
@@ -137,157 +239,145 @@ impl LayerMetadata {
             .as_secs();
     }
     
-    /// Add synesthetic association
-    pub fn add_synesthetic_association(&mut self, keyword: String, associations: Vec<String>) {
-        self.synesthetic_map.insert(keyword, associations);
-    }
-    
     /// Get frequency as Frequency type
     pub fn frequency(&self) -> Frequency {
         Frequency::new(self.frequency)
     }
-    
-    /// Check if layer matches keyword (literal or synesthetic)
-    pub fn matches_keyword(&self, query_keyword: &str) -> f32 {
-        let query_lower = query_keyword.to_lowercase();
-        
-        // Direct keyword match
-        for keyword in &self.keywords {
-            if keyword.to_lowercase().contains(&query_lower) {
-                return 1.0; // Perfect match
-            }
-        }
-        
-        // Synesthetic association match
-        let mut best_score = 0.0;
-        for (keyword, associations) in &self.synesthetic_map {
-            if keyword.to_lowercase().contains(&query_lower) {
-                best_score = best_score.max(0.8); // Strong synesthetic match
-            }
-            
-            for association in associations {
-                if association.to_lowercase().contains(&query_lower) {
-                    best_score = best_score.max(0.6); // Moderate synesthetic match
-                }
-            }
-        }
-        
-        best_score
-    }
 }
 
-impl MmapRegion {
-    /// Create new memory region
-    pub fn new(region_id: u8, base_offset: MmapOffset, total_size: usize) -> Self {
+/// Builder for creating MMAP regions
+pub struct RegionBuilder {
+    dimension_id: crate::DimensionId,
+    dimension_name: String,
+    layers: Vec<(LayerInfo, Vec<u8>)>,
+    total_size: usize,
+}
+
+impl RegionBuilder {
+    /// Create new region builder
+    pub fn new(dimension_id: crate::DimensionId, dimension_name: String) -> Self {
         Self {
-            region_id,
-            base_offset,
-            total_size,
-            layers: HashMap::new(),
-            free_space: total_size,
+            dimension_id,
+            dimension_name,
+            layers: Vec::new(),
+            total_size: 1024, // Reserve space for metadata
         }
     }
     
-    /// Add layer to region
-    pub fn add_layer(&mut self, metadata: LayerMetadata) -> Result<()> {
-        let layer_size = match &metadata.content_location {
-            ContentLocationMeta::Mmap { size, .. } => *size,
-            ContentLocationMeta::Heap { size } => *size,
-            ContentLocationMeta::Hybrid { mmap_size, heap_size, .. } => mmap_size + heap_size,
-        };
+    /// Add a layer to the region
+    pub fn add_layer(
+        &mut self,
+        layer_id: LayerId,
+        name: String,
+        frequency: Frequency,
+        depth: u8,
+        content: Vec<u8>,
+        keywords: Vec<String>,
+    ) -> &mut Self {
+        let offset = self.total_size;
+        let size = content.len();
         
-        if layer_size > self.free_space {
-            return Err(ConsciousnessError::MemoryError(
-                "Insufficient space in region".to_string()
-            ));
-        }
+        let mut layer_info = LayerInfo::new(layer_id, name, frequency, depth, offset, size);
+        layer_info.keywords = keywords;
         
-        self.free_space -= layer_size;
-        self.layers.insert(metadata.layer_id, metadata);
+        self.layers.push((layer_info, content));
+        self.total_size += size;
         
-        Ok(())
+        self
     }
     
-    /// Remove layer from region
-    pub fn remove_layer(&mut self, layer_id: LayerId) -> Result<LayerMetadata> {
-        let metadata = self.layers.remove(&layer_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError("Layer not found".to_string()))?;
+    /// Build the region and write to file
+    pub fn build_to_file<P: AsRef<Path>>(
+        self,
+        file_path: P,
+        region_id: u32,
+    ) -> Result<MmapRegion> {
+        let file_path = file_path.as_ref();
         
-        let layer_size = match &metadata.content_location {
-            ContentLocationMeta::Mmap { size, .. } => *size,
-            ContentLocationMeta::Heap { size } => *size,
-            ContentLocationMeta::Hybrid { mmap_size, heap_size, .. } => mmap_size + heap_size,
-        };
-        
-        self.free_space += layer_size;
-        
-        Ok(metadata)
-    }
-    
-    /// Get layer metadata
-    pub fn get_layer(&mut self, layer_id: LayerId) -> Option<&mut LayerMetadata> {
-        if let Some(metadata) = self.layers.get_mut(&layer_id) {
-            metadata.record_access();
-            Some(metadata)
-        } else {
-            None
-        }
-    }
-    
-    /// Find layers matching keywords
-    pub fn find_matching_layers(&mut self, keywords: &[String]) -> Vec<(LayerId, f32)> {
-        let mut matches = Vec::new();
-        
-        for (layer_id, metadata) in &mut self.layers {
-            let mut total_score = 0.0;
-            
-            for keyword in keywords {
-                let score = metadata.matches_keyword(keyword);
-                total_score += score;
-            }
-            
-            if total_score > 0.0 {
-                metadata.record_access();
-                matches.push(*layer_id, total_score / keywords.len() as f32);
-            }
-        }
-        
-        // Sort by score (highest first)
-        matches.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        
-        matches
-    }
-    
-    /// Get region statistics
-    pub fn stats(&self) -> RegionStats {
-        let total_layers = self.layers.len();
-        let used_space = self.total_size - self.free_space;
-        let utilization = used_space as f32 / self.total_size as f32;
-        
-        let total_accesses: u64 = self.layers.values()
-            .map(|m| m.access_count)
-            .sum();
-        
-        RegionStats {
-            region_id: self.region_id,
+        // Create metadata
+        let mut metadata = RegionMetadata {
+            version: 1,
+            created_at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+            dimension_name: self.dimension_name.clone(),
             total_size: self.total_size,
-            used_space,
-            free_space: self.free_space,
-            utilization,
-            layer_count: total_layers,
-            total_accesses,
+            content_offset: 1024,
+            layers: HashMap::new(),
+        };
+        
+        // Add layer info to metadata
+        for (layer_info, _) in &self.layers {
+            metadata.layers.insert(layer_info.layer_id, layer_info.clone());
         }
+        
+        // Create file and write content
+        let mut file_content = Vec::with_capacity(self.total_size);
+        
+        // Write metadata header (1KB)
+        let metadata_json = serde_json::to_string(&metadata)
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to serialize metadata: {}", e)
+            ))?;
+        
+        file_content.extend_from_slice(b"JSON");
+        file_content.extend_from_slice(metadata_json.as_bytes());
+        
+        // Pad to 1KB
+        while file_content.len() < 1024 {
+            file_content.push(0);
+        }
+        
+        // Write layer content
+        for (_, content) in &self.layers {
+            file_content.extend_from_slice(content);
+        }
+        
+        // Write to file
+        std::fs::write(file_path, &file_content)
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to write region file: {}", e)
+            ))?;
+        
+        // Create MMAP region
+        MmapRegion::from_file(region_id, self.dimension_id, file_path)
     }
 }
 
-/// Region usage statistics
-#[derive(Debug, Clone)]
-pub struct RegionStats {
-    pub region_id: u8,
-    pub total_size: usize,
-    pub used_space: usize,
-    pub free_space: usize,
-    pub utilization: f32,
-    pub layer_count: usize,
-    pub total_accesses: u64,
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+    
+    #[test]
+    fn test_region_builder() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let dimension_id = crate::DimensionId(1);
+        let layer_id = LayerId { dimension: dimension_id, layer: 0 };
+        
+        let mut builder = RegionBuilder::new(dimension_id, "test_dimension".to_string());
+        builder.add_layer(
+            layer_id,
+            "test_layer".to_string(),
+            Frequency::new(1.0),
+            0,
+            b"test content".to_vec(),
+            vec!["test".to_string(), "layer".to_string()],
+        );
+        
+        let region = builder.build_to_file(temp_file.path(), 0).unwrap();
+        
+        assert_eq!(region.dimension_id, dimension_id);
+        assert_eq!(region.metadata.dimension_name, "test_dimension");
+        assert_eq!(region.metadata.layers.len(), 1);
+        
+        let layer_info = region.get_layer_info(layer_id).unwrap();
+        assert_eq!(layer_info.name, "test_layer");
+        assert_eq!(layer_info.frequency, 1.0);
+        assert_eq!(layer_info.keywords, vec!["test", "layer"]);
+        
+        let content = region.read_string(layer_info.offset, layer_info.size).unwrap();
+        assert_eq!(content, "test content");
+    }
 }
