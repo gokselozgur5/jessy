@@ -42,8 +42,10 @@ wheels/
 .installed.cfg
 *.egg
 
-# Kiro IDE files
-.kiro/
+# IDE files
+.vscode/
+.idea/
 
 # Temporary files
-sonnet4545.txt
+*.tmp
+*.log
