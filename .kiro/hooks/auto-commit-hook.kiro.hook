@@ -1,0 +1,28 @@
+# Auto-commit Hook for Resonance Development
+# Automatically commits changes every minute during active development
+
+name: "Auto-commit Development Progress"
+description: "Automatically commits changes with atomic commits during development sessions"
+trigger: "file_change"
+interval: 60 # seconds
+
+conditions:
+  - file_patterns: ["src/**/*.rs", "api/**/*.go", ".kiro/adrs/**/*.md", "tests/**/*"]
+  - exclude_patterns: ["target/**", "*.log", "*.tmp"]
+  - min_changes: 1
+
+actions:
+  - type: "git_add"
+    patterns: ["src/", "api/", ".kiro/adrs/", "tests/"]
+    
+  - type: "git_commit"
+    message_template: "feat: auto-commit development progress - {changed_files}"
+    atomic: true
+    
+  - type: "continue_development"
+    next_task: "auto"
+
+settings:
+  auto_push: false  # Manual push control
+  max_commits_per_hour: 60
+  pause_on_error: true
