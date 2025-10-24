@@ -40,7 +40,7 @@ pub enum ConsciousnessError {
 pub type Result<T> = std::result::Result<T, ConsciousnessError>;
 
 /// Unique identifier for dimensions
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct DimensionId(pub u8);
 
 /// Unique identifier for layers within dimensions
