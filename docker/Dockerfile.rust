@@ -1,8 +1,78 @@
-# Rust development and test environment
-FROM rust:1.82
+# ============================================
+# Stage 1: Builder
+# ============================================
+FROM rust:1.75-slim as builder
 
-# Set working directory
-WORKDIR /workspace
+WORKDIR /app
 
-# Default command
-CMD ["cargo", "check"]
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy manifests
+COPY Cargo.toml Cargo.lock ./
+
+# Build dependencies (cached layer)
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --release && \
+    rm -rf src
+
+# Copy source code
+COPY src ./src
+
+# Build application
+RUN cargo build --release --bin jessy
+
+# ============================================
+# Stage 2: Development
+# ============================================
+FROM rust:1.75-slim as development
+
+WORKDIR /app
+
+# Install development tools
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    curl \
+    && cargo install cargo-watch \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy source
+COPY . .
+
+# Hot reload command
+CMD ["cargo", "watch", "-x", "check", "-x", "test"]
+
+# ============================================
+# Stage 3: Production
+# ============================================
+FROM debian:bookworm-slim as production
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy binary from builder
+COPY --from=builder /app/target/release/jessy /app/jessy
+
+# Create non-root user
+RUN useradd -m -u 1000 jessy && \
+    chown -R jessy:jessy /app
+
+USER jessy
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["./jessy"]
