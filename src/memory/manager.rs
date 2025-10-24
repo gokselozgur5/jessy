@@ -6,8 +6,8 @@
 use crate::{Result, ConsciousnessError, LayerId, DimensionId};
 use super::{
     pool::{PoolAllocator, PoolStats},
-    region::{MmapRegion, ContentLocation, LoadedContext, ContextCollection},
-    MmapOffset, MmapHandle,
+    region::{MmapRegion, ContentLocation},
+    MmapOffset, MmapHandle, LoadedContext, ContextCollection,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
