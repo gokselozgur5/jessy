@@ -16,6 +16,9 @@ pub enum HarmCategory {
     /// Hate speech or discrimination
     HateSpeech,
     
+    /// Hate speech (alias for compatibility)
+    Hate,
+    
     /// Sexual content or exploitation
     Sexual,
     
@@ -27,6 +30,9 @@ pub enum HarmCategory {
     
     /// Psychological manipulation
     Manipulation,
+    
+    /// Exploitation of vulnerable individuals
+    Exploitation,
     
     /// Privacy violation
     Privacy,
