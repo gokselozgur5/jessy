@@ -59,16 +59,46 @@ logs: ## Show logs from all services
 	docker-compose logs -f
 
 logs-rust: ## Show logs from Rust service
-	docker-compose logs -f rust-dev
+	docker-compose logs -f jessy-core
 
 logs-go: ## Show logs from Go API
-	docker-compose logs -f go-api
+	docker-compose logs -f jessy-api
+
+logs-json: ## Show logs in JSON format (structured)
+	@echo "$(BLUE)📋 Showing structured logs...$(NC)"
+	docker-compose logs --no-color | grep -E '^\{.*\}$$' || docker-compose logs
+
+logs-filter: ## Filter logs by service label
+	@echo "$(BLUE)🔍 Filtering logs by service...$(NC)"
+	@echo "$(YELLOW)Jessy Core logs:$(NC)"
+	docker inspect --format='{{.Config.Labels.service}}' jessy-core 2>/dev/null || echo "Service not running"
+	@echo ""
+	@echo "$(YELLOW)Jessy API logs:$(NC)"
+	docker inspect --format='{{.Config.Labels.service}}' jessy-api 2>/dev/null || echo "Service not running"
+
+logs-test: ## Test log aggregation and structured logging
+	@echo "$(BLUE)🧪 Testing log aggregation...$(NC)"
+	@echo ""
+	@echo "$(YELLOW)1. Starting services...$(NC)"
+	@docker-compose up -d
+	@sleep 5
+	@echo ""
+	@echo "$(YELLOW)2. Generating test traffic...$(NC)"
+	@curl -s http://localhost:8080/health > /dev/null && echo "✓ Rust health check" || echo "✗ Rust health check failed"
+	@curl -s http://localhost:8080/status > /dev/null && echo "✓ Rust status check" || echo "✗ Rust status check failed"
+	@curl -s http://localhost:3000/api/health > /dev/null && echo "✓ Go health check" || echo "✗ Go health check failed"
+	@curl -s http://localhost:3000/api/v1/status > /dev/null && echo "✓ Go status check" || echo "✗ Go status check failed"
+	@echo ""
+	@echo "$(YELLOW)3. Aggregated logs from all services:$(NC)"
+	@docker-compose logs --tail=50
+	@echo ""
+	@echo "$(GREEN)✅ Log aggregation test complete$(NC)"
 
 shell-rust: ## Open shell in Rust container
-	docker-compose exec rust-dev /bin/bash
+	docker-compose exec jessy-core /bin/bash
 
 shell-go: ## Open shell in Go API container
-	docker-compose exec go-api /bin/sh
+	docker-compose exec jessy-api /bin/sh
 
 fmt: ## Format code
 	@echo "$(BLUE)🎨 Formatting code...$(NC)"

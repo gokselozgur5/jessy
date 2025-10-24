@@ -1,17 +1,18 @@
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM golang:1.21-alpine as builder
+FROM golang:1.23-alpine as builder
 
 WORKDIR /app
 
 # Install dependencies
 RUN apk add --no-cache git
 
-# Copy go mod files
-COPY api/go.mod api/go.sum ./
+# Copy go mod file
+COPY api/go.mod ./
 
 # Download dependencies (cached layer)
+# This will create go.sum if it doesn't exist
 RUN go mod download
 
 # Copy source
@@ -23,16 +24,28 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o jessy-api .
 # ============================================
 # Stage 2: Development
 # ============================================
-FROM golang:1.21-alpine as development
+FROM golang:1.23-alpine as development
 
 WORKDIR /app
 
-# Install air for hot reload
-RUN go install github.com/cosmtrek/air@latest
+# Install wget for health checks
+RUN apk add --no-cache wget git
 
+# Copy go mod file first for caching
+COPY api/go.mod ./
+
+# Download dependencies (cached layer)
+# This will create go.sum if it doesn't exist
+RUN go mod download
+
+# Copy source
 COPY api/ .
 
-CMD ["air", "-c", ".air.toml"]
+# Ensure go.mod and go.sum are in sync
+RUN go mod tidy
+
+# Run the server directly (hot reload can be added later with air)
+CMD ["go", "run", "."]
 
 # ============================================
 # Stage 3: Production
