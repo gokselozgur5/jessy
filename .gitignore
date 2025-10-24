@@ -52,3 +52,5 @@ wheels/
 
 # Kiro IDE configuration (private)
 .kiro/
+# But allow spec files to be committed
+!.kiro/specs/
