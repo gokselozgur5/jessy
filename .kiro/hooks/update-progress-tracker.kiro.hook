@@ -4,7 +4,10 @@
   "description": "Updates implementation-progress.md when modules are completed",
   "version": "1",
   "when": {
-    "type": "afterAgentResponse"
+    "type": "afterAgentResponse",
+    "patterns": [
+      "..*/*"
+    ]
   },
   "then": {
     "type": "askAgent",

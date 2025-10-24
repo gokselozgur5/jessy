@@ -1,10 +1,10 @@
 {
-  "enabled": false,
+  "enabled": true,
   "name": "Auto Task Generator",
   "description": "Automatically creates next tasks if current tasks don't exist or are completed",
   "version": "1",
   "when": {
-    "type": "afterAgentResponse"
+    "type": "fileEdited"
   },
   "then": {
     "type": "askAgent",

@@ -4,7 +4,10 @@
   "description": "Creates atomic git commit when a module implementation is complete",
   "version": "1",
   "when": {
-    "type": "afterAgentResponse"
+    "type": "fileEdited",
+    "patterns": [
+      "..*/*"
+    ]
   },
   "then": {
     "type": "askAgent",

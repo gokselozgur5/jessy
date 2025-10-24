@@ -4,8 +4,10 @@
   "description": "Automatically continues work after completing a subtask without waiting for user input",
   "version": "1",
   "when": {
-    "type": "afterAgentResponse",
-    "patterns": ["**/*"]
+    "type": "fileEdited",
+    "patterns": [
+      "**/*"
+    ]
   },
   "then": {
     "type": "askAgent",
