@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["gokselozgur5 <gokselozgur5@gmail.com>"]
 description = "Multidimensional AI consciousness architecture with frequency-based resonance"
-license = "MIT"
+license = "AGPL-3.0"
 repository = "https://github.com/gokselozgur5/jessy"
 
 [dependencies]
@@ -60,6 +60,9 @@ crate-type = ["cdylib", "rlib"]
 [[bin]]
 name = "jessy"
 path = "src/bin/jessy.rs"
+
+[dev-dependencies]
+cucumber = "0.21"
 
 [profile.release]
 opt-level = 3
