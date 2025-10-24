@@ -72,7 +72,7 @@ This implementation plan transforms the Jessy consciousness system into a fully 
   - Verify no data loss during shutdown
   - _Requirements: 5.3_
 
-- [-] 2.4 Configure restart policies
+- [x] 2.4 Configure restart policies
   - Set restart: unless-stopped for core services
   - Configure exponential backoff for failures
   - Test automatic restart on crash
@@ -91,14 +91,14 @@ This implementation plan transforms the Jessy consciousness system into a fully 
   - Test with existing unit tests
   - _Requirements: 2.1, 2.2_
 
-- [ ] 3.2 Implement integration test execution
+- [x] 3.2 Implement integration test execution
   - Create `make test-integration` command
   - Start services with docker-compose
   - Run integration tests against running services
   - Clean up after tests
   - _Requirements: 2.1, 2.2_
 
-- [ ] 3.3 Set up coverage reporting
+- [-] 3.3 Set up coverage reporting
   - Configure cargo-tarpaulin in test container
   - Generate HTML coverage reports
   - Mount test-results volume for report access
