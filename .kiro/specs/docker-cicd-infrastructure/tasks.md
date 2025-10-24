@@ -84,7 +84,7 @@ This implementation plan transforms the Jessy consciousness system into a fully 
   - Implement BDD test runner
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 3.1 Implement unit test execution
+- [-] 3.1 Implement unit test execution
   - Create `make test-unit` command
   - Configure cargo test in container
   - Add colored output for test results
