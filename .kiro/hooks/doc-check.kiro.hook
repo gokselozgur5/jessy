@@ -1,11 +1,13 @@
 {
-  "enabled": false,
+  "enabled": true,
   "name": "Documentation Check",
   "description": "Ensures public APIs are documented",
   "version": "1",
   "when": {
-    "type": "fileSaved",
-    "patterns": ["src/**/*.rs"]
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.rs"
+    ]
   },
   "then": {
     "type": "askAgent",

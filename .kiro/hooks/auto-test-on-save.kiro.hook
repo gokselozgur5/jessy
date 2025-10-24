@@ -4,8 +4,10 @@
   "description": "Automatically runs tests when Rust files are saved",
   "version": "1",
   "when": {
-    "type": "fileSaved",
-    "patterns": ["src/**/*.rs"]
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.rs"
+    ]
   },
   "then": {
     "type": "askAgent",

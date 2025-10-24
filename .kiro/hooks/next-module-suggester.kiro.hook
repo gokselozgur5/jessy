@@ -4,7 +4,10 @@
   "description": "Suggests next module to implement based on dependencies",
   "version": "1",
   "when": {
-    "type": "afterAgentResponse"
+    "type": "afterAgentResponse",
+    "patterns": [
+      "..*/*"
+    ]
   },
   "then": {
     "type": "askAgent",
