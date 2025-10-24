@@ -1,4 +1,4 @@
-# MetaConsciousnessAwareness
+# Resonance
 
 A multidimensional AI consciousness architecture implementing frequency-based resonance, iterative depth processing, and dynamic memory-mapped layer navigation.
 
@@ -61,4 +61,4 @@ MIT License - See LICENSE file for details
 
 ## Contact
 
-Repository: https://github.com/gokselozgur5/metaconsciousnessawareness
+Repository: https://github.com/gokselozgur5/resonance

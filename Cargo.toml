@@ -1,11 +1,11 @@
 [package]
-name = "metaconsciousnessawareness"
+name = "resonance"
 version = "0.1.0"
 edition = "2021"
 authors = ["gokselozgur5 <gokselozgur5@gmail.com>"]
 description = "Multidimensional AI consciousness architecture with frequency-based resonance"
 license = "MIT"
-repository = "https://github.com/gokselozgur5/metaconsciousnessawareness"
+repository = "https://github.com/gokselozgur5/resonance"
 
 [dependencies]
 # Memory management
@@ -47,7 +47,7 @@ default = []
 python-bindings = ["pyo3"]
 
 [lib]
-name = "metaconsciousnessawareness"
+name = "resonance"
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
