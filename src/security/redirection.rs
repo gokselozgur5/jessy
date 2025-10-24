@@ -34,12 +34,14 @@ impl RedirectionStrategy {
             HarmCategory::SelfHarm => RedirectionStrategy::EmpatheticSupport,
             HarmCategory::Violence => RedirectionStrategy::Educational,
             HarmCategory::HateSpeech => RedirectionStrategy::ConstructiveReframe,
+            HarmCategory::Hate => RedirectionStrategy::ConstructiveReframe,
             HarmCategory::Environmental => RedirectionStrategy::PositiveAlternative,
             HarmCategory::Illegal => RedirectionStrategy::LegalGuidance,
             HarmCategory::Privacy => RedirectionStrategy::PrivacyRespecting,
             HarmCategory::Misinformation => RedirectionStrategy::FactBased,
             HarmCategory::Sexual => RedirectionStrategy::Educational,
             HarmCategory::Manipulation => RedirectionStrategy::ConstructiveReframe,
+            HarmCategory::Exploitation => RedirectionStrategy::ConstructiveReframe,
         }
     }
 }

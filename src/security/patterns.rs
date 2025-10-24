@@ -63,10 +63,12 @@ impl HarmCategory {
             HarmCategory::Violence => 1.0,
             HarmCategory::SelfHarm => 1.0,
             HarmCategory::HateSpeech => 0.9,
+            HarmCategory::Hate => 0.9,
             HarmCategory::Sexual => 0.9,
             HarmCategory::Illegal => 0.8,
             HarmCategory::Environmental => 0.7,
             HarmCategory::Manipulation => 0.8,
+            HarmCategory::Exploitation => 0.8,
             HarmCategory::Privacy => 0.7,
             HarmCategory::Misinformation => 0.6,
         }
