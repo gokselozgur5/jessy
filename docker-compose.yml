@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # Rust development environment
+  rust-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.rust
+    platform: linux/arm64  # Apple Silicon (M2)
+    container_name: jessy-rust-dev
+    volumes:
+      - .:/workspace
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/workspace/target
+    working_dir: /workspace
+    command: cargo watch -x check -x test
+    environment:
+      - RUST_BACKTRACE=1
+      - RUST_LOG=debug
+    networks:
+      - jessy-network
+
+  # Go API development environment
+  go-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.go
+    platform: linux/arm64  # Apple Silicon (M2)
+    container_name: jessy-go-api
+    volumes:
+      - ./api:/app
+    working_dir: /app
+    ports:
+      - "8080:8080"
+      - "8081:8081"  # WebSocket
+    command: go run main.go consciousness.go
+    environment:
+      - GO_ENV=development
+      - PORT=8080
+    depends_on:
+      - rust-dev
+    networks:
+      - jessy-network
+
+  # Test runner
+  test-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.rust
+    platform: linux/arm64  # Apple Silicon (M2)
+    container_name: jessy-test-runner
+    volumes:
+      - .:/workspace
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/workspace/target
+    working_dir: /workspace
+    command: cargo test --all-features
+    environment:
+      - RUST_BACKTRACE=1
+      - RUST_TEST_THREADS=1
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
+  # BDD test runner
+  bdd-tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.rust
+    platform: linux/arm64  # Apple Silicon (M2)
+    container_name: jessy-bdd-tests
+    volumes:
+      - .:/workspace
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/workspace/target
+    working_dir: /workspace
+    command: cargo test --test integration_tests
+    environment:
+      - RUST_BACKTRACE=1
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
+  # Benchmark runner
+  benchmark:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.rust
+    platform: linux/arm64  # Apple Silicon (M2)
+    container_name: jessy-benchmark
+    volumes:
+      - .:/workspace
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/workspace/target
+    working_dir: /workspace
+    command: cargo bench
+    environment:
+      - RUST_BACKTRACE=1
+    networks:
+      - jessy-network
+    profiles:
+      - bench
+
+  # Documentation server
+  docs:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.rust
+    platform: linux/arm64  # Apple Silicon (M2)
+    container_name: jessy-docs
+    volumes:
+      - .:/workspace
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/workspace/target
+    working_dir: /workspace
+    ports:
+      - "8000:8000"
+    command: cargo doc --no-deps --open
+    networks:
+      - jessy-network
+    profiles:
+      - docs
+
+volumes:
+  cargo-cache:
+  target-cache:
+
+networks:
+  jessy-network:
+    driver: bridge
