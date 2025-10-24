@@ -49,3 +49,6 @@ wheels/
 # Temporary files
 *.tmp
 *.log
+
+# Kiro IDE configuration (private)
+.kiro/
