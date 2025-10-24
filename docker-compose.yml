@@ -1,133 +1,95 @@
-version: '3.8'
-
 services:
-  # Rust development environment
-  rust-dev:
+  # Rust Core Service
+  jessy-core:
     build:
       context: .
       dockerfile: docker/Dockerfile.rust
       target: development
-    platform: linux/arm64  # Apple Silicon (M2)
-    container_name: jessy-rust-dev
+    platform: linux/arm64
+    container_name: jessy-core
     volumes:
-      - .:/app
+      - ./src:/app/src
+      - ./Cargo.toml:/app/Cargo.toml
+      - ./Cargo.lock:/app/Cargo.lock
       - cargo-cache:/usr/local/cargo/registry
       - target-cache:/app/target
-    working_dir: /app
+    ports:
+      - "8080:8080"
     environment:
-      - RUST_BACKTRACE=1
       - RUST_LOG=debug
+      - RUST_BACKTRACE=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
     networks:
       - jessy-network
 
-  # Go API development environment
-  go-api:
+  # Go API Service
+  jessy-api:
     build:
       context: .
       dockerfile: docker/Dockerfile.go
       target: development
-    platform: linux/arm64  # Apple Silicon (M2)
-    container_name: jessy-go-api
+    platform: linux/arm64
+    container_name: jessy-api
     volumes:
-      - ./api:/app
+      - ./api:/app/api
       - go-cache:/go/pkg/mod
-    working_dir: /app
     ports:
       - "3000:3000"
     environment:
       - GO_ENV=development
-      - PORT=3000
-      - RUST_SERVICE_URL=http://rust-dev:8080
+      - RUST_SERVICE_URL=http://jessy-core:8080
     depends_on:
-      - rust-dev
+      jessy-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
     networks:
       - jessy-network
 
-  # Test runner
-  test-runner:
+  # Test Runner Service
+  jessy-test:
     build:
       context: .
-      dockerfile: docker/Dockerfile.rust
-    platform: linux/arm64  # Apple Silicon (M2)
-    container_name: jessy-test-runner
+      dockerfile: docker/Dockerfile.test
+    platform: linux/arm64
+    container_name: jessy-test
     volumes:
-      - .:/workspace
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./Cargo.toml:/app/Cargo.toml
+      - ./Cargo.lock:/app/Cargo.lock
+      - test-results:/app/test-results
       - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/workspace/target
-    working_dir: /workspace
-    command: cargo test --all-features
+      - target-cache:/app/target
     environment:
-      - RUST_BACKTRACE=1
       - RUST_TEST_THREADS=1
+      - RUST_BACKTRACE=1
+    command: ["cargo", "test", "--all-features"]
     networks:
       - jessy-network
     profiles:
       - test
-
-  # BDD test runner
-  bdd-tests:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.rust
-    platform: linux/arm64  # Apple Silicon (M2)
-    container_name: jessy-bdd-tests
-    volumes:
-      - .:/workspace
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/workspace/target
-    working_dir: /workspace
-    command: cargo test --test integration_tests
-    environment:
-      - RUST_BACKTRACE=1
-    networks:
-      - jessy-network
-    profiles:
-      - test
-
-  # Benchmark runner
-  benchmark:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.rust
-    platform: linux/arm64  # Apple Silicon (M2)
-    container_name: jessy-benchmark
-    volumes:
-      - .:/workspace
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/workspace/target
-    working_dir: /workspace
-    command: cargo bench
-    environment:
-      - RUST_BACKTRACE=1
-    networks:
-      - jessy-network
-    profiles:
-      - bench
-
-  # Documentation server
-  docs:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.rust
-    platform: linux/arm64  # Apple Silicon (M2)
-    container_name: jessy-docs
-    volumes:
-      - .:/workspace
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/workspace/target
-    working_dir: /workspace
-    ports:
-      - "8000:8000"
-    command: cargo doc --no-deps --open
-    networks:
-      - jessy-network
-    profiles:
-      - docs
 
 volumes:
   cargo-cache:
+    driver: local
   target-cache:
+    driver: local
   go-cache:
+    driver: local
+  test-results:
+    driver: local
 
 networks:
   jessy-network:
