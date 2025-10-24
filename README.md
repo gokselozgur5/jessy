@@ -162,18 +162,30 @@ platform: linux/arm64
 
 ## 📚 Documentation
 
-Comprehensive NASA-standard specifications available in [`docs/specifications/`](./docs/specifications/):
+### Technical Specifications
 
-- **[Memory Manager](./docs/specifications/memory-manager/)** - Zero-copy MMAP architecture
-- **[Navigation System](./docs/specifications/navigation-system/)** - Parallel dimension scanning
-- **[Learning System](./docs/specifications/learning-system/)** - Pattern detection & crystallization
-- **[Docker & CI/CD](./docs/specifications/docker-cicd/)** - Infrastructure & deployment
+Comprehensive NASA-standard specifications available in [`docs/specs/`](./docs/specs/):
+
+- **[Docker & CI/CD Infrastructure](./docs/specs/docker-cicd-infrastructure/)** - Containerization and deployment pipeline
+- **[Memory Manager](./docs/specs/memory-manager/)** - Zero-copy MMAP architecture
+- **[Learning System](./docs/specs/learning-system-spec.md)** - Pattern detection & crystallization
+- **[Navigation System](./docs/specs/navigation-system-spec.md)** - Parallel dimension scanning
 
 Each specification includes:
 - ✅ EARS-compliant requirements
 - ✅ Detailed architecture design
 - ✅ Implementation task breakdown
 - ✅ Traceability to requirements
+
+### Developer Guides
+
+Additional documentation in [`docs/`](./docs/):
+
+- **[Health Checks](./docs/HEALTH_CHECKS.md)** - Service health monitoring
+- **[Graceful Shutdown](./docs/GRACEFUL_SHUTDOWN.md)** - Clean service termination
+- **[Logging](./docs/LOGGING.md)** - Structured logging with JSON
+- **[Testing Infrastructure](./docs/TESTING_INFRASTRUCTURE.md)** - Unit, integration, and BDD tests
+- **[Service Orchestration](./docs/SERVICE_ORCHESTRATION.md)** - Docker Compose setup
 
 ## License
 
