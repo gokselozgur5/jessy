@@ -108,6 +108,119 @@ services:
     profiles:
       - test
 
+  # Unit Test Service
+  unit-tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test
+    platform: linux/arm64
+    container_name: jessy-unit-tests
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./Cargo.toml:/app/Cargo.toml
+      - ./Cargo.lock:/app/Cargo.lock
+      - test-results:/app/test-results
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      - RUST_TEST_THREADS=1
+      - RUST_BACKTRACE=1
+      - CARGO_TERM_COLOR=always
+    command: ["cargo", "test", "--lib", "--all-features", "--color=always", "--", "--nocapture"]
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
+  # Integration Test Service
+  integration-tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test
+    platform: linux/arm64
+    container_name: jessy-integration-tests
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./Cargo.toml:/app/Cargo.toml
+      - ./Cargo.lock:/app/Cargo.lock
+      - test-results:/app/test-results
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      - RUST_TEST_THREADS=1
+      - RUST_BACKTRACE=1
+      - CARGO_TERM_COLOR=always
+      - RUST_SERVICE_URL=http://jessy-core:8080
+      - API_SERVICE_URL=http://jessy-api:3000
+    command: ["cargo", "test", "--test", "*", "--all-features", "--color=always"]
+    depends_on:
+      jessy-core:
+        condition: service_healthy
+      jessy-api:
+        condition: service_healthy
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
+  # Coverage Service (uses nightly Rust for tarpaulin)
+  coverage:
+    image: xd009642/tarpaulin:latest
+    platform: linux/arm64
+    container_name: jessy-coverage
+    volumes:
+      - ./src:/volume/src
+      - ./tests:/volume/tests
+      - ./Cargo.toml:/volume/Cargo.toml
+      - ./Cargo.lock:/volume/Cargo.lock
+      - ./test-results:/volume/test-results
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/volume/target
+    working_dir: /volume
+    environment:
+      - RUST_TEST_THREADS=1
+      - RUST_BACKTRACE=1
+      - CARGO_TERM_COLOR=always
+    command: ["cargo", "tarpaulin", "--all-features", "--workspace", "--timeout", "300", "--out", "Html", "--output-dir", "test-results", "--color", "always"]
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
+  # BDD Test Service
+  bdd-tests:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.test
+    platform: linux/arm64
+    container_name: jessy-bdd-tests
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./Cargo.toml:/app/Cargo.toml
+      - ./Cargo.lock:/app/Cargo.lock
+      - test-results:/app/test-results
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      - RUST_TEST_THREADS=1
+      - RUST_BACKTRACE=1
+      - CARGO_TERM_COLOR=always
+      - RUST_SERVICE_URL=http://jessy-core:8080
+      - API_SERVICE_URL=http://jessy-api:3000
+    command: ["cargo", "test", "--test", "cucumber", "--all-features", "--color=always"]
+    depends_on:
+      jessy-core:
+        condition: service_healthy
+      jessy-api:
+        condition: service_healthy
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
 volumes:
   cargo-cache:
     driver: local

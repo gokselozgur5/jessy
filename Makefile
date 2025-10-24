@@ -31,23 +31,59 @@ build: ## Build all Docker images
 
 test: ## Run all tests in containers
 	@echo "$(BLUE)🧪 Running all tests...$(NC)"
-	docker-compose run --rm test-runner
-	@echo "$(GREEN)✅ Tests complete$(NC)"
+	@docker-compose run --rm jessy-test
+	@if [ $$? -eq 0 ]; then \
+		echo "$(GREEN)✅ Tests complete$(NC)"; \
+	else \
+		echo "$(RED)❌ Tests failed$(NC)"; \
+		exit 1; \
+	fi
 
 test-unit: ## Run unit tests only
 	@echo "$(BLUE)🧪 Running unit tests...$(NC)"
-	docker-compose run --rm test-runner cargo test --lib --all-features
-	@echo "$(GREEN)✅ Unit tests complete$(NC)"
+	@docker-compose run --rm unit-tests
+	@if [ $$? -eq 0 ]; then \
+		echo "$(GREEN)✅ Unit tests complete$(NC)"; \
+	else \
+		echo "$(RED)❌ Unit tests failed$(NC)"; \
+		exit 1; \
+	fi
 
 test-integration: ## Run integration tests
 	@echo "$(BLUE)🧪 Running integration tests...$(NC)"
-	docker-compose run --rm test-runner cargo test --test '*' --all-features
-	@echo "$(GREEN)✅ Integration tests complete$(NC)"
+	@echo "$(YELLOW)⚠️  Starting required services...$(NC)"
+	@docker-compose up -d jessy-core jessy-api
+	@echo "$(YELLOW)⏳ Waiting for services to be healthy...$(NC)"
+	@sleep 10
+	@docker-compose run --rm integration-tests
+	@if [ $$? -eq 0 ]; then \
+		echo "$(GREEN)✅ Integration tests complete$(NC)"; \
+		docker-compose down; \
+	else \
+		echo "$(RED)❌ Integration tests failed$(NC)"; \
+		docker-compose down; \
+		exit 1; \
+	fi
+
+test-integration-verbose: ## Run integration tests with enhanced health checking and logging
+	@./scripts/run-integration-tests.sh
 
 test-bdd: ## Run BDD tests
 	@echo "$(BLUE)🧪 Running BDD tests...$(NC)"
 	docker-compose run --rm bdd-tests
 	@echo "$(GREEN)✅ BDD tests complete$(NC)"
+
+coverage: ## Generate test coverage report
+	@echo "$(BLUE)📊 Generating coverage report...$(NC)"
+	@docker-compose run --rm coverage
+	@if [ $$? -eq 0 ]; then \
+		echo "$(GREEN)✅ Coverage report generated!$(NC)"; \
+		echo "$(YELLOW)📄 Report available at: test-results/index.html$(NC)"; \
+		echo "$(YELLOW)💡 Open with: open test-results/index.html$(NC)"; \
+	else \
+		echo "$(RED)❌ Coverage generation failed$(NC)"; \
+		exit 1; \
+	fi
 
 clean: ## Clean up containers, volumes, and build artifacts
 	@echo "$(BLUE)🧹 Cleaning up...$(NC)"

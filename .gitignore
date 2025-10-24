@@ -52,10 +52,3 @@ wheels/
 
 # Kiro IDE configuration (private)
 .kiro/
-# But include hooks, steering, specs, and ADRs (team shared)
-!.kiro/hooks/
-!.kiro/steering/
-!.kiro/specs/
-!.kiro/adrs/
-!.kiro/analysis/
-!.kiro/README.md
