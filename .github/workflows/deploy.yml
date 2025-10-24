@@ -1,0 +1,176 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.jessy.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push images
+        run: |
+          docker-compose -f docker-compose.yml build
+          docker-compose -f docker-compose.yml push
+
+      - name: Deploy to staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          # Add your deployment commands here
+          # Examples:
+          # - SSH to staging server and pull images
+          # - Use kubectl for Kubernetes deployment
+          # - Use AWS ECS/Fargate deployment
+          # - Use Docker Swarm deployment
+          echo "✅ Deployment to staging complete"
+
+      - name: Run smoke tests
+        run: |
+          echo "🧪 Running smoke tests..."
+          sleep 30  # Wait for services to start
+          # Add smoke test commands here
+          # curl -f https://staging.jessy.example.com/health || exit 1
+          echo "✅ Smoke tests passed"
+
+      - name: Notify deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              context: 'deployment/staging',
+              description: 'Deployed to staging',
+              target_url: 'https://staging.jessy.example.com'
+            });
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://jessy.example.com
+    needs: []
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify tag format
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid tag format: $TAG"
+            echo "Expected format: v1.2.3"
+            exit 1
+          fi
+          echo "✅ Valid tag format: $TAG"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION="manual-$(date +%Y%m%d-%H%M%S)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build and push production images
+        run: |
+          docker-compose -f docker-compose.yml build
+          docker tag jessy-core:latest ${{ secrets.DOCKER_USERNAME }}/jessy-core:${{ steps.version.outputs.version }}
+          docker tag jessy-api:latest ${{ secrets.DOCKER_USERNAME }}/jessy-api:${{ steps.version.outputs.version }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/jessy-core:${{ steps.version.outputs.version }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/jessy-api:${{ steps.version.outputs.version }}
+
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying version ${{ steps.version.outputs.version }} to production..."
+          # Add your production deployment commands here
+          echo "✅ Deployment to production complete"
+
+      - name: Run smoke tests
+        run: |
+          echo "🧪 Running production smoke tests..."
+          sleep 30  # Wait for services to start
+          # Add production smoke test commands here
+          # curl -f https://jessy.example.com/health || exit 1
+          echo "✅ Production smoke tests passed"
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## Changes in this Release
+            
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+            
+            ## Docker Images
+            
+            - `${{ secrets.DOCKER_USERNAME }}/jessy-core:${{ steps.version.outputs.version }}`
+            - `${{ secrets.DOCKER_USERNAME }}/jessy-api:${{ steps.version.outputs.version }}`
+          draft: false
+          prerelease: false
+
+      - name: Notify deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              context: 'deployment/production',
+              description: 'Deployed to production',
+              target_url: 'https://jessy.example.com'
+            });

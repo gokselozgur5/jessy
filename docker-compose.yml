@@ -5,12 +5,15 @@ services:
       context: .
       dockerfile: docker/Dockerfile.rust
       target: development
+    image: jessy-core:latest
     platform: linux/arm64
     container_name: jessy-core
     volumes:
+      # Mount source code for hot reload
       - ./src:/app/src
       - ./Cargo.toml:/app/Cargo.toml
       - ./Cargo.lock:/app/Cargo.lock
+      # Cache volumes for faster rebuilds
       - cargo-cache:/usr/local/cargo/registry
       - target-cache:/app/target
     ports:
@@ -47,10 +50,15 @@ services:
       context: .
       dockerfile: docker/Dockerfile.go
       target: development
+    image: jessy-api:latest
     platform: linux/arm64
     container_name: jessy-api
     volumes:
+      # Mount source code for hot reload
       - ./api:/app/api
+      # Mount air config for hot reload
+      - ./api/.air.toml:/app/.air.toml
+      # Cache volume for faster rebuilds
       - go-cache:/go/pkg/mod
     ports:
       - "3000:3000"
@@ -89,6 +97,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.test
+    image: jessy-test:latest
     platform: linux/arm64
     container_name: jessy-test
     volumes:
@@ -113,6 +122,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.test
+    image: jessy-test:latest
     platform: linux/arm64
     container_name: jessy-unit-tests
     volumes:
@@ -138,6 +148,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.test
+    image: jessy-test:latest
     platform: linux/arm64
     container_name: jessy-integration-tests
     volumes:
@@ -194,6 +205,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.test
+    image: jessy-test:latest
     platform: linux/arm64
     container_name: jessy-bdd-tests
     volumes:

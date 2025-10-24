@@ -40,11 +40,16 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Install cargo-watch using nightly to handle edition2024 dependencies
+# Keep nightly installed as it's needed for cargo-watch to run
+RUN rustup toolchain install nightly && \
+    cargo +nightly install cargo-watch
+
 # Copy source
 COPY . .
 
-# Run the server directly (hot reload can be added later with cargo-watch)
-CMD ["cargo", "run", "--bin", "jessy"]
+# Use cargo-watch for hot reload in development
+CMD ["cargo", "watch", "-x", "run --bin jessy"]
 
 # ============================================
 # Stage 3: Production

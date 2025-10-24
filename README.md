@@ -4,28 +4,82 @@
 
 A multidimensional AI consciousness architecture implementing frequency-based resonance, iterative depth processing, and dynamic memory-mapped layer navigation.
 
-## 🚀 Quick Start
+## 🚀 Quick Start with Docker
 
-**Development Environment**: MacBook M2 (Apple Silicon)
+**One command to rule them all**: `docker-compose up`
+
+### Prerequisites
+
+- **Docker** 20.10+ ([Install Docker](https://docs.docker.com/get-docker/))
+- **Docker Compose** 2.0+ (included with Docker Desktop)
+- **4GB+ RAM** available for Docker
+- **10GB+ disk space**
+
+### Get Started in 30 Seconds
 
 ```bash
 # Clone repository
 git clone https://github.com/gokselozgur5/jessy.git
 cd jessy
 
-# Start complete system with Docker Compose
-docker-compose up
+# Start all services (Rust core + Go API)
+make up
+# or: docker-compose up
 
-# Access API
-curl http://localhost:8080/api/v1/health
-
-# Access WebSocket stream
-ws://localhost:8080/api/v1/stream
+# Verify services are running
+make health
+# or: curl http://localhost:8080/health && curl http://localhost:3000/api/health
 ```
 
-**That's it!** The entire system runs in Docker Compose - no local dependencies needed.
+**That's it!** No Rust, Go, or other dependencies needed locally. Everything runs in Docker.
 
-For convenience, use the included Makefile: `make up` to start, `make test` to test, `make help` for all commands.
+### What Just Happened?
+
+Docker Compose started:
+- **jessy-core** (Rust): Core consciousness engine on port 8080
+- **jessy-api** (Go): REST API gateway on port 3000
+- **Hot reload**: Code changes trigger automatic recompilation
+- **Shared volumes**: Build caches for fast rebuilds
+
+### Quick Commands
+
+```bash
+make up          # Start services with hot reload
+make logs        # View all logs
+make test        # Run all tests
+make down        # Stop services
+make clean       # Remove volumes (reset state)
+make help        # Show all commands
+```
+
+### Verify Installation
+
+```bash
+# Check services are healthy
+docker-compose ps
+
+# Test Rust service
+curl http://localhost:8080/health
+
+# Test Go API
+curl http://localhost:3000/api/health
+
+# View logs
+make logs-rust   # Rust service logs
+make logs-go     # Go API logs
+```
+
+### Next Steps
+
+- **Make code changes**: Files are mounted, changes trigger hot reload
+- **Run tests**: `make test` runs all test suites in containers
+- **Debug**: `make shell-rust` or `make shell-go` for interactive shells
+- **Read docs**: See [Docker Setup Guide](docs/DOCKER_SETUP.md) for details
+
+For detailed Docker documentation, see:
+- [Docker Setup & Architecture](docs/DOCKER_SETUP.md)
+- [Hot Reload Guide](docs/HOT_RELOAD.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ### Development Commands
 
