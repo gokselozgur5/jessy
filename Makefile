@@ -1,89 +1,95 @@
-# Jessy Development Makefile
-# Optimized for MacBook M2 (Apple Silicon)
+.PHONY: help up down build test test-unit test-integration test-bdd clean logs shell
 
-.PHONY: help up down restart logs test bench docs clean build
+# Colors for output
+BLUE := \033[0;34m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
 
-# Default target
-.DEFAULT_GOAL := help
-
-## help: Show this help message
-help:
-	@echo "Jessy Development Commands (MacBook M2)"
+help: ## Show this help message
+	@echo "$(BLUE)🎪 Jessy Development Commands$(NC)"
 	@echo ""
-	@echo "Usage: make [target]"
-	@echo ""
-	@echo "Targets:"
-	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 
-## up: Start development environment
-up:
-	docker-compose up rust-dev go-api
+up: ## Start all services (docker-compose up)
+	@echo "$(BLUE)🎪 Starting the maestro orchestra...$(NC)"
+	docker-compose up -d
+	@echo "$(GREEN)✅ All services are up!$(NC)"
+	@echo "$(YELLOW)Rust Core: http://localhost:8080$(NC)"
+	@echo "$(YELLOW)Go API: http://localhost:3000$(NC)"
 
-## down: Stop all services
-down:
+down: ## Stop all services
+	@echo "$(BLUE)🛑 Stopping services...$(NC)"
 	docker-compose down
+	@echo "$(GREEN)✅ All services stopped$(NC)"
 
-## restart: Restart all services
-restart: down up
+build: ## Build all Docker images
+	@echo "$(BLUE)🔨 Building images...$(NC)"
+	docker-compose build
+	@echo "$(GREEN)✅ Build complete$(NC)"
 
-## logs: Show logs from all services
-logs:
-	docker-compose logs -f
+test: ## Run all tests in containers
+	@echo "$(BLUE)🧪 Running all tests...$(NC)"
+	docker-compose run --rm test-runner
+	@echo "$(GREEN)✅ Tests complete$(NC)"
 
-## test: Run all tests
-test:
-	docker-compose --profile test up test-runner
+test-unit: ## Run unit tests only
+	@echo "$(BLUE)🧪 Running unit tests...$(NC)"
+	docker-compose run --rm test-runner cargo test --lib --all-features
+	@echo "$(GREEN)✅ Unit tests complete$(NC)"
 
-## test-bdd: Run BDD integration tests
-test-bdd:
-	docker-compose --profile test up bdd-tests
+test-integration: ## Run integration tests
+	@echo "$(BLUE)🧪 Running integration tests...$(NC)"
+	docker-compose run --rm test-runner cargo test --test '*' --all-features
+	@echo "$(GREEN)✅ Integration tests complete$(NC)"
 
-## bench: Run performance benchmarks
-bench:
-	docker-compose --profile bench up benchmark
+test-bdd: ## Run BDD tests
+	@echo "$(BLUE)🧪 Running BDD tests...$(NC)"
+	docker-compose run --rm bdd-tests
+	@echo "$(GREEN)✅ BDD tests complete$(NC)"
 
-## docs: Generate and serve documentation
-docs:
-	docker-compose --profile docs up docs
-
-## clean: Remove all containers and volumes
-clean:
+clean: ## Clean up containers, volumes, and build artifacts
+	@echo "$(BLUE)🧹 Cleaning up...$(NC)"
 	docker-compose down -v
 	docker system prune -f
+	@echo "$(GREEN)✅ Cleanup complete$(NC)"
 
-## build: Rebuild all Docker images
-build:
-	docker-compose build --no-cache
+logs: ## Show logs from all services
+	docker-compose logs -f
 
-## shell-rust: Open shell in Rust container
-shell-rust:
-	docker-compose run --rm rust-dev /bin/bash
+logs-rust: ## Show logs from Rust service
+	docker-compose logs -f rust-dev
 
-## shell-go: Open shell in Go container
-shell-go:
-	docker-compose run --rm go-api /bin/sh
+logs-go: ## Show logs from Go API
+	docker-compose logs -f go-api
 
-## check: Run cargo check
-check:
-	docker-compose run --rm rust-dev cargo check
+shell-rust: ## Open shell in Rust container
+	docker-compose exec rust-dev /bin/bash
 
-## fmt: Format code
-fmt:
-	docker-compose run --rm rust-dev cargo fmt
+shell-go: ## Open shell in Go API container
+	docker-compose exec go-api /bin/sh
 
-## clippy: Run clippy linter
-clippy:
-	docker-compose run --rm rust-dev cargo clippy
+fmt: ## Format code
+	@echo "$(BLUE)🎨 Formatting code...$(NC)"
+	docker-compose run --rm rust-dev cargo fmt --all
+	@echo "$(GREEN)✅ Code formatted$(NC)"
 
-## health: Check API health
-health:
-	@curl -s http://localhost:8080/api/v1/health | jq .
+clippy: ## Run clippy linter
+	@echo "$(BLUE)📎 Running clippy...$(NC)"
+	docker-compose run --rm rust-dev cargo clippy --all-features -- -D warnings
+	@echo "$(GREEN)✅ Clippy checks passed$(NC)"
 
-## status: Show container status
-status:
+ci: fmt clippy test ## Run full CI pipeline locally
+	@echo "$(GREEN)✅ Full CI pipeline complete!$(NC)"
+
+watch: ## Start services with hot reload
+	@echo "$(BLUE)👀 Starting with hot reload...$(NC)"
+	docker-compose up
+
+ps: ## Show running containers
 	docker-compose ps
 
-## platform: Show Docker platform info
-platform:
-	@echo "Docker Platform: $$(docker version --format '{{.Server.Os}}/{{.Server.Arch}}')"
-	@echo "Expected: linux/arm64 (Apple Silicon)"
+restart: down up ## Restart all services
+
+rebuild: down build up ## Rebuild and restart all services
