@@ -35,9 +35,10 @@ MetaConsciousness processes queries through 14 dimensional layers, each operatin
 
 - **Core Engine**: Rust (performance, memory safety, MMAP operations)
 - **Memory Management**: Custom pool allocator with mremap growth
-- **API Layer**: Python bindings via PyO3
-- **Web Interface**: FastAPI/Flask with WebSocket streaming
+- **API Layer**: Go (high performance HTTP/gRPC, excellent concurrency)
+- **Web Interface**: Go Fiber/Gin with WebSocket streaming
 - **Storage**: Memory-mapped files with hybrid heap overlay for learning
+- **Bindings**: CGO interface between Go API and Rust core
 
 ## Performance Targets
 
