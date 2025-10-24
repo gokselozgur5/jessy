@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,7 +19,28 @@ import (
 func main() {
 	// Configure structured logging
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zlog.Logger = zlog.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	
+	// Use JSON logging in production, pretty console in development
+	if os.Getenv("GO_ENV") == "production" {
+		zlog.Logger = zerolog.New(os.Stdout).With().Timestamp().Caller().Logger()
+	} else {
+		zlog.Logger = zlog.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05"})
+	}
+	
+	// Set log level from environment
+	logLevel := os.Getenv("LOG_LEVEL")
+	switch logLevel {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
 
 	// Initialize Fiber app with optimized settings
 	app := fiber.New(fiber.Config{
@@ -46,14 +70,23 @@ func main() {
 	}
 	defer consciousness.Close()
 
+	// Health check (at root /api/health for docker healthcheck)
+	app.Get("/api/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "healthy",
+			"service": "jessy-api",
+			"version": "1.0.0",
+		})
+	})
+
 	// API Routes
 	api := app.Group("/api/v1")
 	
-	// Health check
+	// Health check (also available at v1)
 	api.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"status": "healthy",
-			"service": "resonance-api",
+			"status":  "healthy",
+			"service": "jessy-api",
 			"version": "1.0.0",
 		})
 	})
@@ -73,9 +106,41 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "3000"
 	}
 
-	zlog.Info().Str("port", port).Msg("Starting Resonance API server")
-	log.Fatal(app.Listen(":" + port))
+	// Start server in a goroutine
+	go func() {
+		zlog.Info().Str("port", port).Msg("Starting Jessy API server")
+		if err := app.Listen(":" + port); err != nil {
+			zlog.Fatal().Err(err).Msg("Server failed to start")
+		}
+	}()
+
+	// Wait for interrupt signal for graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	sig := <-quit
+
+	zlog.Info().
+		Str("signal", sig.String()).
+		Msg("Received shutdown signal, initiating graceful shutdown")
+
+	// Gracefully shutdown with timeout
+	zlog.Info().Msg("Shutting down HTTP server...")
+	if err := app.ShutdownWithTimeout(30 * time.Second); err != nil {
+		zlog.Error().Err(err).Msg("Server forced to shutdown")
+	} else {
+		zlog.Info().Msg("HTTP server stopped gracefully")
+	}
+
+	// Close consciousness service
+	zlog.Info().Msg("Closing consciousness service...")
+	if err := consciousness.Close(); err != nil {
+		zlog.Error().Err(err).Msg("Error closing consciousness service")
+	} else {
+		zlog.Info().Msg("Consciousness service closed successfully")
+	}
+
+	zlog.Info().Msg("Graceful shutdown complete")
 }
