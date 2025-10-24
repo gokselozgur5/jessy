@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Auto Commit on Module Complete",
+  "description": "Creates atomic git commit when a module implementation is complete",
+  "version": "1",
+  "when": {
+    "type": "afterAgentResponse"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check your last response. If you just completed implementing a full module or feature:\n\n1. Run `git status` to see changes\n2. Create an atomic commit with format: `feat(module): brief description`\n3. Include bullet points of what was implemented\n4. Reference any ADRs or specs\n\nOnly commit if:\n- Tests are passing\n- Module is complete (not partial)\n- No compilation errors\n\nDo NOT commit if work is incomplete or tests fail."
+  }
+}

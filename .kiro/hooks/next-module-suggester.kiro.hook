@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Next Module Suggester",
+  "description": "Suggests next module to implement based on dependencies",
+  "version": "1",
+  "when": {
+    "type": "afterAgentResponse"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "If you just completed a module:\n\n1. Check `.kiro/analysis/implementation-progress.md`\n2. Identify the next P0 module to implement\n3. Check if it has dependencies on other modules\n4. Suggest the optimal next module\n5. Start implementing it immediately\n\nPriority order: security → learning → navigation → interference → dimensions\n\nDo NOT wait for confirmation - start the next module."
+  }
+}

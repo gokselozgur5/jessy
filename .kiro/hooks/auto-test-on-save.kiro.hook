@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Auto Test on Rust Save",
+  "description": "Automatically runs tests when Rust files are saved",
+  "version": "1",
+  "when": {
+    "type": "fileSaved",
+    "patterns": ["src/**/*.rs"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A Rust file was just saved. Run `cargo test --lib` for the affected module only. Report results concisely: ✅ if all pass, ❌ with error details if any fail. Do not wait for confirmation."
+  }
+}
