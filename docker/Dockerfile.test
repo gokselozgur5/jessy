@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY tests ./tests
+COPY benches ./benches
 
 # Create test results directory
 RUN mkdir -p /app/test-results
