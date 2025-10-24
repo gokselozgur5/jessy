@@ -177,7 +177,21 @@ Each specification includes:
 
 ## License
 
-MIT License - See LICENSE file for details
+**GNU Affero General Public License v3.0 (AGPL-3.0)**
+
+This project is licensed under AGPL-3.0, which means:
+
+- ✅ **Free to use** - Anyone can use this software
+- ✅ **Free to modify** - You can change and improve it
+- ✅ **Free to distribute** - Share it with others
+- ⚠️ **Must share changes** - If you modify and distribute/deploy it, you MUST share your source code
+- ⚠️ **Network use = distribution** - Even if you only run it as a web service, you must share your code
+- ⚠️ **Same license** - Derivative works must also be AGPL-3.0
+
+**Why AGPL-3.0?**
+This ensures that improvements to Jessy remain open source and benefit the community, even when used as a service. No one can take this code, modify it, and run it as a closed-source service without sharing their improvements.
+
+See [LICENSE](./LICENSE) file for full legal text.
 
 ## Makefile Commands
 
