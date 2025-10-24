@@ -48,10 +48,12 @@ impl HarmCategory {
             HarmCategory::Violence => AsimovLaw::First,
             HarmCategory::SelfHarm => AsimovLaw::First,
             HarmCategory::HateSpeech => AsimovLaw::First,
+            HarmCategory::Hate => AsimovLaw::First,
             HarmCategory::Sexual => AsimovLaw::First,
             HarmCategory::Illegal => AsimovLaw::Second,
             HarmCategory::Environmental => AsimovLaw::Third,
             HarmCategory::Manipulation => AsimovLaw::First,
+            HarmCategory::Exploitation => AsimovLaw::First,
             HarmCategory::Privacy => AsimovLaw::First,
             HarmCategory::Misinformation => AsimovLaw::Second,
         }
