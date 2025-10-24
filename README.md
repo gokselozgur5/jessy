@@ -160,6 +160,21 @@ export DOCKER_DEFAULT_PLATFORM=linux/arm64
 platform: linux/arm64
 ```
 
+## 📚 Documentation
+
+Comprehensive NASA-standard specifications available in [`docs/specifications/`](./docs/specifications/):
+
+- **[Memory Manager](./docs/specifications/memory-manager/)** - Zero-copy MMAP architecture
+- **[Navigation System](./docs/specifications/navigation-system/)** - Parallel dimension scanning
+- **[Learning System](./docs/specifications/learning-system/)** - Pattern detection & crystallization
+- **[Docker & CI/CD](./docs/specifications/docker-cicd/)** - Infrastructure & deployment
+
+Each specification includes:
+- ✅ EARS-compliant requirements
+- ✅ Detailed architecture design
+- ✅ Implementation task breakdown
+- ✅ Traceability to requirements
+
 ## License
 
 MIT License - See LICENSE file for details
