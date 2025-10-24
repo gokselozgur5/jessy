@@ -1,0 +1,28 @@
+# ============================================
+# Test Runner Dockerfile
+# ============================================
+FROM rust:1.75-slim
+
+WORKDIR /app
+
+# Install test dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install test tools
+RUN cargo install cargo-tarpaulin && \
+    cargo install cargo-nextest
+
+# Copy project files
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+COPY tests ./tests
+
+# Create test results directory
+RUN mkdir -p /app/test-results
+
+# Default: Run all tests with coverage
+CMD ["cargo", "tarpaulin", "--all-features", "--workspace", "--timeout", "300", "--out", "Html", "--output-dir", "test-results"]
