@@ -148,7 +148,7 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-  # Job 3: Build and Push Docker Images
+  # Job 3: Build Docker Images (Push disabled)
   build:
     name: Build Docker Images
     runs-on: ubuntu-latest
@@ -161,29 +161,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      # Docker login temporarily disabled
+      # - name: Log in to Docker Hub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKER_USERNAME }}
+      #     password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Extract metadata for Rust image
         id: meta-rust
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/jessy-core
+          images: jessy-core  # Changed from ${{ secrets.DOCKER_USERNAME }}/jessy-core
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Rust image
+      - name: Build Rust image (no push)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/Dockerfile.rust
           target: production
-          push: true
+          push: false  # Changed from true
+          load: true
           tags: ${{ steps.meta-rust.outputs.tags }}
           labels: ${{ steps.meta-rust.outputs.labels }}
           cache-from: type=gha
@@ -193,19 +195,20 @@ jobs:
         id: meta-go
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/jessy-api
+          images: jessy-api  # Changed from ${{ secrets.DOCKER_USERNAME }}/jessy-api
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Go image
+      - name: Build Go image (no push)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/Dockerfile.go
           target: production
-          push: true
+          push: false  # Changed from true
+          load: true
           tags: ${{ steps.meta-go.outputs.tags }}
           labels: ${{ steps.meta-go.outputs.labels }}
           cache-from: type=gha
