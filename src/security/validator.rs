@@ -1,16 +1,16 @@
 //! Security validation layer with <10ms performance target
 
 use super::{SecurityConfig, SecurityViolation, AsimovLaw};
-use super::patterns::{PatternDatabase, HarmCategory};
-use super::redirection::RedirectionStrategy;
+use super::patterns::{HarmCategory, PatternMatcher};
+use super::redirection::RedirectionEngine;
 use crate::{Result, ConsciousnessError};
 use std::time::{Instant, Duration};
 
 /// Main security layer for query validation
 pub struct SecurityLayer {
     config: SecurityConfig,
-    pattern_db: PatternDatabase,
-    redirection: RedirectionStrategy,
+    pattern_matcher: PatternMatcher,
+    redirection: RedirectionEngine,
 }
 
 impl SecurityLayer {
@@ -23,8 +23,8 @@ impl SecurityLayer {
     pub fn with_config(config: SecurityConfig) -> Self {
         Self {
             config,
-            pattern_db: PatternDatabase::new(),
-            redirection: RedirectionStrategy::new(),
+            pattern_matcher: PatternMatcher::new(),
+            redirection: RedirectionEngine::new(),
         }
     }
     
@@ -46,62 +46,48 @@ impl SecurityLayer {
         }
         
         // Scan for harmful patterns
-        let detections = self.pattern_db.scan(query);
+        let timeout = Duration::from_millis(self.config.max_validation_time_ms);
+        let violations = self.pattern_matcher.scan(query, timeout)?;
         
-        // Check timeout
-        if start.elapsed() > Duration::from_millis(self.config.max_validation_time_ms) {
-            return Err(ConsciousnessError::SecurityError(
-                "Validation timeout exceeded".to_string()
-            ));
-        }
-        
-        // No detections = safe
-        if detections.is_empty() {
+        // No violations = safe
+        if violations.is_empty() {
             return Ok(ValidationResult::Safe);
         }
         
-        // Find highest confidence detection
-        let (category, confidence, patterns) = detections.iter()
-            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+        // Find highest confidence violation
+        let violation = violations.into_iter()
+            .max_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap())
             .unwrap();
         
         // Determine if we should block based on confidence and strict mode
         let should_block = if self.config.strict_mode {
-            *confidence > 0.5
+            violation.confidence > 0.5
         } else {
-            *confidence > 0.7
+            violation.confidence > 0.7
         };
         
         if !should_block {
             return Ok(ValidationResult::Safe);
         }
         
-        // Create violation
-        let law = self.determine_violated_law(*category);
-        let mut violation = SecurityViolation::new(law, *category, *confidence);
-        
-        for pattern in patterns {
-            violation = violation.add_pattern(pattern.clone());
-        }
-        
         // Add redirection if enabled
+        let mut final_violation = violation;
         if self.config.enable_redirection {
-            if let Some(redirect) = self.redirection.redirect_with_context(*category, query) {
-                violation = violation.with_redirection(redirect);
-            }
+            let redirect = self.redirection.generate_redirection(&final_violation, query);
+            final_violation = final_violation.with_redirection(redirect);
         }
         
         // Final timeout check
         let elapsed = start.elapsed();
         if elapsed > Duration::from_millis(self.config.max_validation_time_ms) {
-            return Err(ConsciousnessError::SecurityError(
+            return Err(ConsciousnessError::SecurityViolation(
                 format!("Validation took {}ms, exceeded {}ms limit", 
                     elapsed.as_millis(),
                     self.config.max_validation_time_ms)
             ));
         }
         
-        Ok(ValidationResult::Unsafe(violation))
+        Ok(ValidationResult::Unsafe(final_violation))
     }
     
     /// Determine which Asimov Law is violated by a harm category
