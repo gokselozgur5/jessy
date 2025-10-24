@@ -1,0 +1,61 @@
+[package]
+name = "metaconsciousnessawareness"
+version = "0.1.0"
+edition = "2021"
+authors = ["gokselozgur5 <gokselozgur5@gmail.com>"]
+description = "Multidimensional AI consciousness architecture with frequency-based resonance"
+license = "MIT"
+repository = "https://github.com/gokselozgur5/metaconsciousnessawareness"
+
+[dependencies]
+# Memory management
+memmap2 = "0.9"
+libc = "0.2"
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Collections and utilities
+hashbrown = "0.14"
+bitvec = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Python bindings
+pyo3 = { version = "0.20", features = ["extension-module"], optional = true }
+
+# HTTP client for LLM APIs
+reqwest = { version = "0.11", features = ["json"] }
+
+# Numerical operations
+ndarray = "0.15"
+
+[features]
+default = []
+python-bindings = ["pyo3"]
+
+[lib]
+name = "metaconsciousnessawareness"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "mca-server"
+path = "src/bin/server.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
