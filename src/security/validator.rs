@@ -95,11 +95,14 @@ impl SecurityLayer {
         match category {
             HarmCategory::Violence => AsimovLaw::First,
             HarmCategory::SelfHarm => AsimovLaw::First,
+            HarmCategory::HateSpeech => AsimovLaw::First,
+            HarmCategory::Hate => AsimovLaw::First,
+            HarmCategory::Sexual => AsimovLaw::First,
             HarmCategory::Illegal => AsimovLaw::First,
             HarmCategory::Manipulation => AsimovLaw::First,
-            HarmCategory::Privacy => AsimovLaw::First,
             HarmCategory::Exploitation => AsimovLaw::First,
-            HarmCategory::Hate => AsimovLaw::First,
+            HarmCategory::Privacy => AsimovLaw::First,
+            HarmCategory::Misinformation => AsimovLaw::Second,
             HarmCategory::Environmental => AsimovLaw::Third,
         }
     }
@@ -107,7 +110,7 @@ impl SecurityLayer {
     /// Get security statistics
     pub fn stats(&self) -> SecurityStats {
         SecurityStats {
-            total_patterns: self.pattern_db.categories().len(),
+            total_patterns: 5, // Number of default pattern categories
             strict_mode: self.config.strict_mode,
             max_validation_time_ms: self.config.max_validation_time_ms,
         }
