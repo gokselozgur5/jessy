@@ -1,9 +1,6 @@
 # Rust development and test environment
 FROM rust:1.82
 
-# Install cargo development tools
-RUN cargo install cargo-watch cargo-nextest
-
 # Set working directory
 WORKDIR /workspace
 
