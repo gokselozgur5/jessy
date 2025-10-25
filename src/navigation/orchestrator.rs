@@ -143,10 +143,16 @@ impl NavigationSystem {
         
         // Validate query
         if query.is_empty() {
+            tracing::error!("Empty query rejected");
             return Err(NavigationError::EmptyQuery);
         }
         
         if query.len() > 10_000 {
+            tracing::error!(
+                query_length = query.len(),
+                max_length = 10_000,
+                "Query too long rejected"
+            );
             return Err(NavigationError::QueryTooLong {
                 length: query.len(),
                 max_length: 10_000,
@@ -158,6 +164,21 @@ impl NavigationSystem {
         let analysis = self.query_analyzer.analyze(query)?;
         let query_analysis_duration_ms = analysis_start.elapsed().as_millis() as u64;
         
+        // Log query analysis results at DEBUG level (Task 10.3)
+        tracing::debug!(
+            query = %query,
+            keywords = ?analysis.keywords,
+            keyword_count = analysis.keywords.len(),
+            question_type = ?analysis.question_type,
+            urgency_level = ?analysis.urgency_level,
+            estimated_frequency = analysis.estimated_frequency,
+            estimated_complexity = analysis.estimated_complexity,
+            emotional_indicators = analysis.emotional_indicators.len(),
+            technical_indicators = analysis.technical_indicators.len(),
+            duration_ms = query_analysis_duration_ms,
+            "Query analysis completed"
+        );
+        
         // Step 2: Scan dimensions in parallel with timeout (track duration)
         // Requirement 9.1: Use timeout to ensure completion within 100ms
         // Returns partial results if timeout occurs
@@ -167,8 +188,30 @@ impl NavigationSystem {
             .await?;
         let dimension_scan_duration_ms = scan_start.elapsed().as_millis() as u64;
         
+        // Log dimension activations at DEBUG level (Task 10.3)
+        for activation in &activations {
+            tracing::debug!(
+                dimension_id = activation.dimension_id.0,
+                confidence = activation.confidence,
+                matched_keywords = ?activation.matched_keywords,
+                scan_duration_ms = activation.scan_duration_ms,
+                "Dimension activated"
+            );
+        }
+        
+        tracing::debug!(
+            total_activations = activations.len(),
+            scan_duration_ms = dimension_scan_duration_ms,
+            "Dimension scanning completed"
+        );
+        
         // Check if we have any activations
         if activations.is_empty() {
+            tracing::error!(
+                query = %query,
+                threshold = self.config.confidence_threshold,
+                "No dimensions activated: insufficient matches"
+            );
             return Err(NavigationError::InsufficientMatches {
                 threshold: self.config.confidence_threshold,
                 query: query.to_string(),
@@ -207,8 +250,27 @@ impl NavigationSystem {
         let return_to_source_triggered = complexity_check.should_return_to_source;
         
         if return_to_source_triggered {
+            // Log return-to-source trigger at WARN level (Task 10.3)
+            tracing::warn!(
+                original_count = complexity_check.original_count,
+                reduced_count = 3,
+                complexity_score = complexity_check.complexity_score,
+                "Return-to-source triggered: reducing dimensions"
+            );
+            
             self.path_selector.apply_return_to_source(&mut final_paths);
         }
+        
+        // Log path selection at INFO level (Task 10.3)
+        for path in &final_paths {
+            tracing::info!(
+                dimension_id = path.dimension_id.0,
+                confidence = path.confidence,
+                matched_keywords = path.keywords_matched.len(),
+                "Path selected"
+            );
+        }
+        
         let path_selection_duration_ms = selection_start.elapsed().as_millis() as u64;
         
         // Step 5: Navigate depth for each selected dimension (track duration)
