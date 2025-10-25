@@ -662,7 +662,7 @@ Starting from Task 3, this plan follows strict Test-Driven Development methodolo
     - Expose metrics endpoint for Prometheus/monitoring tools
     - _Requirements: 10.3-10.5_
   
-  - [-] 10.5 Add diagnostic events and tracing
+  - [x] 10.5 Add diagnostic events and tracing
     - Create `DiagnosticEvent` enum for all navigation events
     - Emit QueryAnalyzed event with keywords, type, urgency, frequency
     - Emit DimensionScanned event for each dimension with confidence
