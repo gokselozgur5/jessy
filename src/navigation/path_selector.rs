@@ -389,64 +389,421 @@ mod tests {
         assert_eq!(selector.config().max_dimensions, 5);
     }
     
+    // ============================================================================
+    // Task 5.2: Tests for keyword match score (RED phase)
+    // Requirements: 4.4
+    // ============================================================================
+    
     #[test]
-    fn test_keyword_match_score_basic() {
+    fn test_keyword_match_score_perfect_match() {
         let selector = PathSelector::new();
         
-        // Perfect match
-        assert_eq!(selector.calculate_keyword_match_score(5, 5), 1.0);
-        
-        // Partial match
-        assert_eq!(selector.calculate_keyword_match_score(3, 10), 0.3);
-        
-        // No match
-        assert_eq!(selector.calculate_keyword_match_score(0, 5), 0.0);
-        
-        // Edge case: zero total
-        assert_eq!(selector.calculate_keyword_match_score(0, 0), 0.0);
+        // Requirement 4.4: Perfect match should return 1.0
+        // When all keywords match, score should be 1.0
+        assert_eq!(
+            selector.calculate_keyword_match_score(5, 5),
+            1.0,
+            "Perfect match (5/5) should return 1.0"
+        );
     }
+    
+    #[test]
+    fn test_keyword_match_score_partial_match() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.4: Partial match should return ratio
+        // 3 matched out of 10 total should return 0.3
+        assert_eq!(
+            selector.calculate_keyword_match_score(3, 10),
+            0.3,
+            "Partial match (3/10) should return 0.3"
+        );
+        
+        // Additional partial match cases
+        assert_eq!(
+            selector.calculate_keyword_match_score(1, 2),
+            0.5,
+            "Partial match (1/2) should return 0.5"
+        );
+        
+        assert_eq!(
+            selector.calculate_keyword_match_score(7, 20),
+            0.35,
+            "Partial match (7/20) should return 0.35"
+        );
+    }
+    
+    #[test]
+    fn test_keyword_match_score_no_match() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.4: No match should return 0.0
+        // When no keywords match, score should be 0.0
+        assert_eq!(
+            selector.calculate_keyword_match_score(0, 5),
+            0.0,
+            "No match (0/5) should return 0.0"
+        );
+        
+        assert_eq!(
+            selector.calculate_keyword_match_score(0, 100),
+            0.0,
+            "No match (0/100) should return 0.0"
+        );
+    }
+    
+    #[test]
+    fn test_keyword_match_score_edge_case_zero_total() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.4: Edge case - zero total keywords should return 0.0
+        // This prevents division by zero and represents "no keywords to match"
+        assert_eq!(
+            selector.calculate_keyword_match_score(0, 0),
+            0.0,
+            "Zero total keywords (0/0) should return 0.0"
+        );
+    }
+    
+    #[test]
+    fn test_keyword_match_score_range_validation() {
+        let selector = PathSelector::new();
+        
+        // Verify score is always in [0.0, 1.0] range
+        let test_cases = vec![
+            (0, 1),
+            (1, 1),
+            (5, 10),
+            (10, 10),
+            (0, 0),
+            (1, 100),
+            (99, 100),
+        ];
+        
+        for (matched, total) in test_cases {
+            let score = selector.calculate_keyword_match_score(matched, total);
+            assert!(
+                score >= 0.0 && score <= 1.0,
+                "Score for {}/{} should be in [0.0, 1.0], got {}",
+                matched,
+                total,
+                score
+            );
+        }
+    }
+    
+    // ============================================================================
+    // Task 5.4: Tests for frequency alignment (RED phase)
+    // Requirements: 4.5-4.7, 15.1-15.8
+    // ============================================================================
     
     #[test]
     fn test_frequency_alignment_in_range() {
         let selector = PathSelector::new();
         
-        // Query frequency within range
+        // Requirement 4.6: Query frequency within dimension range should return 1.0
+        // Test case from task: query=2.0Hz, dim=(1.5-2.5Hz) → 1.0
         let score = selector.calculate_frequency_alignment(2.0, 1.5, 2.5);
-        assert_eq!(score, 1.0);
+        assert_eq!(
+            score, 1.0,
+            "Query frequency 2.0Hz within range [1.5-2.5Hz] should return 1.0"
+        );
         
+        // Additional in-range tests
         // Query at lower boundary
         let score = selector.calculate_frequency_alignment(1.5, 1.5, 2.5);
-        assert_eq!(score, 1.0);
+        assert_eq!(
+            score, 1.0,
+            "Query frequency at lower boundary should return 1.0"
+        );
         
         // Query at upper boundary
         let score = selector.calculate_frequency_alignment(2.5, 1.5, 2.5);
-        assert_eq!(score, 1.0);
+        assert_eq!(
+            score, 1.0,
+            "Query frequency at upper boundary should return 1.0"
+        );
+        
+        // Query in middle of range
+        let score = selector.calculate_frequency_alignment(3.0, 2.0, 4.0);
+        assert_eq!(
+            score, 1.0,
+            "Query frequency in middle of range should return 1.0"
+        );
+        
+        // Test with various frequency ranges (Requirements 15.1-15.8)
+        // Low urgency base: 0.5 Hz
+        let score = selector.calculate_frequency_alignment(0.5, 0.1, 1.0);
+        assert_eq!(
+            score, 1.0,
+            "Low urgency frequency 0.5Hz within range should return 1.0"
+        );
+        
+        // Medium urgency base: 2.0 Hz
+        let score = selector.calculate_frequency_alignment(2.0, 1.5, 2.5);
+        assert_eq!(
+            score, 1.0,
+            "Medium urgency frequency 2.0Hz within range should return 1.0"
+        );
+        
+        // High urgency base: 3.5 Hz
+        let score = selector.calculate_frequency_alignment(3.5, 3.0, 4.0);
+        assert_eq!(
+            score, 1.0,
+            "High urgency frequency 3.5Hz within range should return 1.0"
+        );
     }
     
     #[test]
     fn test_frequency_alignment_near_range() {
         let selector = PathSelector::new();
         
-        // Within 0.5 Hz below range
+        // Requirement 4.6: Query frequency within 0.5 Hz of range should return 0.5
+        // Test case from task: query=1.0Hz, dim=(1.3-2.0Hz) → 0.5 (within 0.5Hz)
         let score = selector.calculate_frequency_alignment(1.0, 1.3, 2.0);
-        assert_eq!(score, 0.5);
+        assert_eq!(
+            score, 0.5,
+            "Query frequency 1.0Hz within 0.5Hz of range [1.3-2.0Hz] should return 0.5"
+        );
         
-        // Within 0.5 Hz above range
+        // Within 0.5 Hz below lower boundary
+        let score = selector.calculate_frequency_alignment(1.0, 1.3, 2.0);
+        assert_eq!(
+            score, 0.5,
+            "Query 0.3Hz below lower boundary should return 0.5"
+        );
+        
+        // Exactly 0.5 Hz below lower boundary
+        let score = selector.calculate_frequency_alignment(1.0, 1.5, 2.5);
+        assert_eq!(
+            score, 0.5,
+            "Query exactly 0.5Hz below lower boundary should return 0.5"
+        );
+        
+        // Within 0.5 Hz above upper boundary
         let score = selector.calculate_frequency_alignment(2.5, 1.5, 2.0);
-        assert_eq!(score, 0.5);
+        assert_eq!(
+            score, 0.5,
+            "Query 0.5Hz above upper boundary should return 0.5"
+        );
+        
+        // Exactly 0.5 Hz above upper boundary
+        let score = selector.calculate_frequency_alignment(3.0, 1.5, 2.5);
+        assert_eq!(
+            score, 0.5,
+            "Query exactly 0.5Hz above upper boundary should return 0.5"
+        );
+        
+        // Near range from below (0.2 Hz away)
+        let score = selector.calculate_frequency_alignment(1.8, 2.0, 3.0);
+        assert_eq!(
+            score, 0.5,
+            "Query 0.2Hz below range should return 0.5"
+        );
+        
+        // Near range from above (0.4 Hz away)
+        let score = selector.calculate_frequency_alignment(3.4, 2.0, 3.0);
+        assert_eq!(
+            score, 0.5,
+            "Query 0.4Hz above range should return 0.5"
+        );
     }
     
     #[test]
     fn test_frequency_alignment_far_outside() {
         let selector = PathSelector::new();
         
-        // Far below range
+        // Requirement 4.6: Query frequency more than 0.5 Hz outside range should return 0.0
+        // Test case from task: query=1.0Hz, dim=(2.0-3.0Hz) → 0.0
         let score = selector.calculate_frequency_alignment(1.0, 2.0, 3.0);
-        assert_eq!(score, 0.0);
+        assert_eq!(
+            score, 0.0,
+            "Query frequency 1.0Hz far from range [2.0-3.0Hz] should return 0.0"
+        );
         
-        // Far above range
+        // Far below range (more than 0.5 Hz)
+        let score = selector.calculate_frequency_alignment(0.5, 2.0, 3.0);
+        assert_eq!(
+            score, 0.0,
+            "Query 1.5Hz below lower boundary should return 0.0"
+        );
+        
+        // Far above range (more than 0.5 Hz)
         let score = selector.calculate_frequency_alignment(4.0, 1.0, 2.0);
-        assert_eq!(score, 0.0);
+        assert_eq!(
+            score, 0.0,
+            "Query 2.0Hz above upper boundary should return 0.0"
+        );
+        
+        // Very far below
+        let score = selector.calculate_frequency_alignment(0.1, 3.0, 4.5);
+        assert_eq!(
+            score, 0.0,
+            "Query 2.9Hz below range should return 0.0"
+        );
+        
+        // Very far above
+        let score = selector.calculate_frequency_alignment(4.5, 0.1, 1.0);
+        assert_eq!(
+            score, 0.0,
+            "Query 3.5Hz above range should return 0.0"
+        );
+    }
+    
+    #[test]
+    fn test_frequency_alignment_boundary_cases() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.5-4.7: Test boundary conditions
+        
+        // Exactly at 0.5 Hz threshold below
+        let score = selector.calculate_frequency_alignment(1.0, 1.5, 2.5);
+        assert_eq!(
+            score, 0.5,
+            "Query exactly 0.5Hz below should return 0.5"
+        );
+        
+        // Just over 0.5 Hz threshold below (0.51 Hz away)
+        let score = selector.calculate_frequency_alignment(0.99, 1.5, 2.5);
+        assert_eq!(
+            score, 0.0,
+            "Query 0.51Hz below should return 0.0"
+        );
+        
+        // Exactly at 0.5 Hz threshold above
+        let score = selector.calculate_frequency_alignment(3.0, 1.5, 2.5);
+        assert_eq!(
+            score, 0.5,
+            "Query exactly 0.5Hz above should return 0.5"
+        );
+        
+        // Just over 0.5 Hz threshold above (0.51 Hz away)
+        let score = selector.calculate_frequency_alignment(3.01, 1.5, 2.5);
+        assert_eq!(
+            score, 0.0,
+            "Query 0.51Hz above should return 0.0"
+        );
+        
+        // Minimum frequency (0.1 Hz) - Requirement 15.7
+        let score = selector.calculate_frequency_alignment(0.1, 0.1, 0.5);
+        assert_eq!(
+            score, 1.0,
+            "Minimum frequency 0.1Hz at lower boundary should return 1.0"
+        );
+        
+        // Maximum frequency (4.5 Hz) - Requirement 15.7
+        let score = selector.calculate_frequency_alignment(4.5, 4.0, 4.5);
+        assert_eq!(
+            score, 1.0,
+            "Maximum frequency 4.5Hz at upper boundary should return 1.0"
+        );
+        
+        // Single point range (min == max)
+        let score = selector.calculate_frequency_alignment(2.0, 2.0, 2.0);
+        assert_eq!(
+            score, 1.0,
+            "Query matching single-point range should return 1.0"
+        );
+        
+        // Near single point range
+        let score = selector.calculate_frequency_alignment(2.3, 2.0, 2.0);
+        assert_eq!(
+            score, 0.5,
+            "Query 0.3Hz from single-point range should return 0.5"
+        );
+        
+        // Far from single point range
+        let score = selector.calculate_frequency_alignment(3.0, 2.0, 2.0);
+        assert_eq!(
+            score, 0.0,
+            "Query 1.0Hz from single-point range should return 0.0"
+        );
+    }
+    
+    #[test]
+    fn test_frequency_alignment_with_adjustments() {
+        let selector = PathSelector::new();
+        
+        // Test frequency alignment with typical query frequency adjustments
+        // Requirements 15.1-15.8
+        
+        // Philosophical adjustment: base 2.0 - 0.5 = 1.5 Hz
+        let philosophical_freq = 1.5;
+        let score = selector.calculate_frequency_alignment(philosophical_freq, 1.0, 2.0);
+        assert_eq!(
+            score, 1.0,
+            "Philosophical frequency 1.5Hz should align with [1.0-2.0Hz]"
+        );
+        
+        // Technical adjustment: base 2.0 + 0.5 = 2.5 Hz
+        let technical_freq = 2.5;
+        let score = selector.calculate_frequency_alignment(technical_freq, 2.0, 3.0);
+        assert_eq!(
+            score, 1.0,
+            "Technical frequency 2.5Hz should align with [2.0-3.0Hz]"
+        );
+        
+        // High-intensity emotional: base 2.0 + 1.0 = 3.0 Hz
+        let emotional_freq = 3.0;
+        let score = selector.calculate_frequency_alignment(emotional_freq, 2.5, 3.5);
+        assert_eq!(
+            score, 1.0,
+            "High-intensity emotional frequency 3.0Hz should align with [2.5-3.5Hz]"
+        );
+        
+        // Clamped to minimum: 0.1 Hz
+        let clamped_min = 0.1;
+        let score = selector.calculate_frequency_alignment(clamped_min, 0.1, 0.5);
+        assert_eq!(
+            score, 1.0,
+            "Clamped minimum frequency 0.1Hz should align with [0.1-0.5Hz]"
+        );
+        
+        // Clamped to maximum: 4.5 Hz
+        let clamped_max = 4.5;
+        let score = selector.calculate_frequency_alignment(clamped_max, 4.0, 4.5);
+        assert_eq!(
+            score, 1.0,
+            "Clamped maximum frequency 4.5Hz should align with [4.0-4.5Hz]"
+        );
+    }
+    
+    #[test]
+    fn test_frequency_alignment_return_values() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.6: Verify only valid return values (1.0, 0.5, 0.0)
+        
+        let test_cases = vec![
+            // (query_freq, min_freq, max_freq, expected_score)
+            (2.0, 1.5, 2.5, 1.0),   // In range
+            (1.5, 1.5, 2.5, 1.0),   // At lower boundary
+            (2.5, 1.5, 2.5, 1.0),   // At upper boundary
+            (1.0, 1.3, 2.0, 0.5),   // Near range (below)
+            (2.5, 1.5, 2.0, 0.5),   // Near range (above)
+            (1.0, 1.5, 2.5, 0.5),   // Exactly 0.5 Hz below
+            (3.0, 1.5, 2.5, 0.5),   // Exactly 0.5 Hz above
+            (1.0, 2.0, 3.0, 0.0),   // Far outside (below)
+            (4.0, 1.0, 2.0, 0.0),   // Far outside (above)
+            (0.5, 2.0, 3.0, 0.0),   // Very far below
+            (4.5, 0.1, 1.0, 0.0),   // Very far above
+        ];
+        
+        for (query_freq, min_freq, max_freq, expected) in test_cases {
+            let score = selector.calculate_frequency_alignment(query_freq, min_freq, max_freq);
+            assert_eq!(
+                score, expected,
+                "Frequency alignment for query={}, range=[{}-{}] should return {}",
+                query_freq, min_freq, max_freq, expected
+            );
+            
+            // Verify score is one of the three valid values
+            assert!(
+                score == 0.0 || score == 0.5 || score == 1.0,
+                "Frequency alignment score must be 0.0, 0.5, or 1.0, got {}",
+                score
+            );
+        }
     }
     
     #[test]
