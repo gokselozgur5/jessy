@@ -11,6 +11,7 @@ pub mod path_selector;
 pub mod query_analyzer;
 pub mod parallel_scanner;
 pub mod depth_navigator;
+pub mod orchestrator;
 
 // Re-export core types
 pub use types::{
@@ -24,6 +25,7 @@ pub use path_selector::PathSelector;
 pub use query_analyzer::QueryAnalyzer;
 pub use parallel_scanner::{ParallelScanner, DimensionActivation};
 pub use depth_navigator::DepthNavigator;
+pub use orchestrator::NavigationSystem;
 
 use crate::{DimensionId, LayerId, Frequency};
 use std::collections::HashMap;
