@@ -42,6 +42,12 @@ pub struct MmapManager {
     // AtomicUsize enables lock-free memory tracking across threads
     // Compare-and-swap operations are faster than mutex locks
     current_allocated_bytes: AtomicUsize,
+    
+    // Task 8.1: Monitoring counters
+    allocation_failure_count: AtomicUsize,
+    total_allocations: AtomicUsize,
+    total_deallocations: AtomicUsize,
+    peak_concurrent_readers: AtomicUsize,
 }
 
 /// Location information for a layer
@@ -106,6 +112,12 @@ impl MmapManager {
             total_limit_mb: total_memory_mb,
             // AtomicUsize::new(0) is a const fn - happens at compile time when possible
             current_allocated_bytes: AtomicUsize::new(0),
+            
+            // Initialize monitoring counters
+            allocation_failure_count: AtomicUsize::new(0),
+            total_allocations: AtomicUsize::new(0),
+            total_deallocations: AtomicUsize::new(0),
+            peak_concurrent_readers: AtomicUsize::new(0),
         })
     }
     
@@ -385,9 +397,16 @@ impl MmapManager {
         // Try to allocate from pool
         // ? operator: if Err, convert and return early; if Ok, unwrap value
         let offset = self.pool_allocator.allocate(size)
-            .map_err(|e| ConsciousnessError::AllocationFailed(
-                format!("Pool allocation failed for {} bytes: {}", size, e)
-            ))?;
+            .map_err(|e| {
+                // Track allocation failure
+                self.allocation_failure_count.fetch_add(1, Ordering::Relaxed);
+                ConsciousnessError::AllocationFailed(
+                    format!("Pool allocation failed for {} bytes: {}", size, e)
+                )
+            })?;
+        
+        // Track successful allocation
+        self.total_allocations.fetch_add(1, Ordering::Relaxed);
         
         // fetch_add is atomic read-modify-write: returns OLD value, then adds
         // This is implemented as a CPU compare-and-swap loop - lock-free
@@ -408,6 +427,9 @@ impl MmapManager {
     /// Deallocate previously allocated space
     pub fn deallocate(&mut self, offset: MmapOffset, size: usize) -> Result<()> {
         self.pool_allocator.deallocate(offset)?;
+        
+        // Track deallocation
+        self.total_deallocations.fetch_add(1, Ordering::Relaxed);
         
         // Update allocated bytes counter
         self.current_allocated_bytes.fetch_sub(size, Ordering::Relaxed);
@@ -431,6 +453,26 @@ impl MmapManager {
             .map(|l| l.len())
             .unwrap_or(0);
         
+        // Load monitoring counters
+        let allocation_failures = self.allocation_failure_count.load(Ordering::Relaxed);
+        let total_allocs = self.total_allocations.load(Ordering::Relaxed);
+        let total_deallocs = self.total_deallocations.load(Ordering::Relaxed);
+        let peak_readers = self.peak_concurrent_readers.load(Ordering::Relaxed);
+        
+        // Calculate fragmentation ratio
+        // Fragmentation = (allocated - used) / allocated
+        // For now, use a simple estimate based on pool stats
+        let fragmentation = if pool_stats.total_size > 0 {
+            let wasted = pool_stats.total_size.saturating_sub(pool_stats.allocated_size);
+            (wasted as f32 / pool_stats.total_size as f32) * 100.0
+        } else {
+            0.0
+        };
+        
+        // TODO: Get per-pool utilization from PoolAllocator
+        // For now, return empty vec - will be enhanced in future
+        let per_pool_util = Vec::new();
+        
         MemoryStats {
             total_limit_mb: self.total_limit_mb,
             current_allocated_mb: current_mb,
@@ -438,6 +480,14 @@ impl MmapManager {
             regions_loaded: regions_count,
             layers_indexed: layers_count,
             utilization_percent: (current_mb as f32 / self.total_limit_mb as f32) * 100.0,
+            
+            // Task 8.1: Detailed monitoring
+            per_pool_utilization: per_pool_util,
+            fragmentation_ratio: fragmentation,
+            allocation_failure_count: allocation_failures,
+            peak_concurrent_readers: peak_readers,
+            total_allocations: total_allocs,
+            total_deallocations: total_deallocs,
         }
     }
     
@@ -612,13 +662,33 @@ pub struct NavigationPath {
 }
 
 /// Memory usage statistics
-#[derive(Debug)]
+///
+/// Comprehensive monitoring data for operational visibility
+#[derive(Debug, Clone)]
 pub struct MemoryStats {
     pub total_limit_mb: usize,
     pub current_allocated_mb: usize,
     pub pool_stats: PoolStats,
     pub regions_loaded: usize,
     pub layers_indexed: usize,
+    pub utilization_percent: f32,
+    
+    // Task 8.1: Detailed tracking
+    pub per_pool_utilization: Vec<PoolUtilization>,
+    pub fragmentation_ratio: f32,
+    pub allocation_failure_count: usize,
+    pub peak_concurrent_readers: usize,
+    pub total_allocations: usize,
+    pub total_deallocations: usize,
+}
+
+/// Per-pool utilization details
+#[derive(Debug, Clone)]
+pub struct PoolUtilization {
+    pub pool_id: usize,
+    pub block_size: usize,
+    pub total_blocks: usize,
+    pub used_blocks: usize,
     pub utilization_percent: f32,
 }
 
