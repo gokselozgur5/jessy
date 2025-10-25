@@ -38,8 +38,10 @@
 //! ```
 
 pub mod interference_simple;
+pub mod orchestrator;
 
 pub use interference_simple::create_simple_interference;
+pub use orchestrator::ConsciousnessOrchestrator;
 
 use crate::{Result, ConsciousnessError, DimensionId, Frequency};
 use crate::navigation::NavigationSystem;
