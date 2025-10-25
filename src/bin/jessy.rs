@@ -179,44 +179,68 @@ async fn main() -> std::io::Result<()> {
     // Handle graceful shutdown
     let server_handle = server.handle();
     
-    // Setup signal handlers for both SIGTERM and SIGINT (Ctrl+C)
+    // Setup signal handlers - different approach for Unix vs non-Unix
     #[cfg(unix)]
-    let mut sigterm = tokio::signal::unix::signal(
-        tokio::signal::unix::SignalKind::terminate()
-    ).expect("Failed to setup SIGTERM handler");
+    {
+        use tokio::signal::unix::{signal, SignalKind};
+        let mut sigterm = signal(SignalKind::terminate())
+            .expect("Failed to setup SIGTERM handler");
+        
+        tokio::select! {
+            result = server => {
+                result?;
+            }
+            _ = tokio::signal::ctrl_c() => {
+                info!(
+                    service = "jessy-core",
+                    event = "shutdown_initiated",
+                    signal = "SIGINT",
+                    "Received shutdown signal, gracefully stopping"
+                );
+                server_handle.stop(true).await;
+                info!(
+                    service = "jessy-core",
+                    event = "shutdown_complete",
+                    "Shutdown complete"
+                );
+            }
+            _ = sigterm.recv() => {
+                info!(
+                    service = "jessy-core",
+                    event = "shutdown_initiated",
+                    signal = "SIGTERM",
+                    "Received shutdown signal, gracefully stopping"
+                );
+                server_handle.stop(true).await;
+                info!(
+                    service = "jessy-core",
+                    event = "shutdown_complete",
+                    "Shutdown complete"
+                );
+            }
+        }
+    }
     
-    tokio::select! {
-        result = server => {
-            result?;
-        }
-        _ = tokio::signal::ctrl_c() => {
-            info!(
-                service = "jessy-core",
-                event = "shutdown_initiated",
-                signal = "SIGINT",
-                "Received shutdown signal, gracefully stopping"
-            );
-            server_handle.stop(true).await;
-            info!(
-                service = "jessy-core",
-                event = "shutdown_complete",
-                "Shutdown complete"
-            );
-        }
-        #[cfg(unix)]
-        _ = sigterm.recv() => {
-            info!(
-                service = "jessy-core",
-                event = "shutdown_initiated",
-                signal = "SIGTERM",
-                "Received shutdown signal, gracefully stopping"
-            );
-            server_handle.stop(true).await;
-            info!(
-                service = "jessy-core",
-                event = "shutdown_complete",
-                "Shutdown complete"
-            );
+    #[cfg(not(unix))]
+    {
+        tokio::select! {
+            result = server => {
+                result?;
+            }
+            _ = tokio::signal::ctrl_c() => {
+                info!(
+                    service = "jessy-core",
+                    event = "shutdown_initiated",
+                    signal = "SIGINT",
+                    "Received shutdown signal, gracefully stopping"
+                );
+                server_handle.stop(true).await;
+                info!(
+                    service = "jessy-core",
+                    event = "shutdown_complete",
+                    "Shutdown complete"
+                );
+            }
         }
     }
 
