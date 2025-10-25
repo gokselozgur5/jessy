@@ -25,6 +25,7 @@ pub mod interference;
 pub mod iteration;
 pub mod learning;
 pub mod security;
+pub mod consciousness;
 
 use std::collections::HashMap;
 use thiserror::Error;
