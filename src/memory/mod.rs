@@ -20,6 +20,7 @@ pub mod pool;
 pub mod region;
 pub mod manager;
 pub mod optimization;
+pub mod diagnostics;
 
 #[cfg(test)]
 mod error_tests;
