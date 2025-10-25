@@ -4,6 +4,7 @@
 use crate::{Result, Frequency};
 use super::{InterferenceResult, InterferencePattern, ModulationSuggestion};
 
+#[derive(Debug)]
 pub struct InterferenceEngine;
 
 impl InterferenceEngine {

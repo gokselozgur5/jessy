@@ -47,6 +47,7 @@ impl RedirectionStrategy {
 }
 
 /// Redirection engine for generating constructive alternatives
+#[derive(Debug)]
 pub struct RedirectionEngine {
     templates: std::collections::HashMap<RedirectionStrategy, Vec<String>>,
 }

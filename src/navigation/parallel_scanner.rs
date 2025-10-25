@@ -290,12 +290,20 @@ impl ParallelScanner {
                     }
                 }
                 Ok(Err(e)) => {
-                    // Log error but continue with other dimensions
-                    eprintln!("Failed to scan dimension {}: {}", dim_id, e);
+                    // Log error but continue with other dimensions (Task 10.3)
+                    tracing::error!(
+                        dimension_id = dim_id,
+                        error = %e,
+                        "Failed to scan dimension"
+                    );
                 }
                 Err(e) => {
-                    // Task panicked or was cancelled
-                    eprintln!("Task failed for dimension {}: {}", dim_id, e);
+                    // Task panicked or was cancelled (Task 10.3)
+                    tracing::error!(
+                        dimension_id = dim_id,
+                        error = %e,
+                        "Task failed for dimension"
+                    );
                 }
             }
         }
@@ -344,9 +352,10 @@ impl ParallelScanner {
             Err(_) => {
                 // Timeout occurred - this shouldn't happen with our implementation
                 // since scan_all waits for all tasks, but we handle it gracefully
-                eprintln!(
-                    "Scan timeout after {}ms - this indicates a performance issue",
-                    self.config.scan_timeout_ms
+                // Log timeout event at WARN level (Task 10.3)
+                tracing::warn!(
+                    timeout_ms = self.config.scan_timeout_ms,
+                    "Scan timeout occurred - performance issue detected"
                 );
                 
                 // Return empty results on timeout

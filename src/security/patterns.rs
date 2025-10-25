@@ -78,6 +78,7 @@ impl HarmCategory {
 }
 
 /// Pattern matcher for harm detection
+#[derive(Debug)]
 pub struct PatternMatcher {
     patterns: Vec<HarmPattern>,
 }

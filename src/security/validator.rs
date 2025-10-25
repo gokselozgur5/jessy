@@ -7,6 +7,7 @@ use crate::{Result, ConsciousnessError};
 use std::time::{Instant, Duration};
 
 /// Main security layer for query validation
+#[derive(Debug)]
 pub struct SecurityLayer {
     config: SecurityConfig,
     pattern_matcher: PatternMatcher,
