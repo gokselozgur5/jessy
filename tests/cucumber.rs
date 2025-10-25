@@ -207,10 +207,26 @@ async fn response_characteristic(world: &mut ConsciousnessWorld, _characteristic
     assert!(world.response.is_some(), "Expected response");
 }
 
+// Import memory manager BDD steps
+mod bdd;
+use bdd::memory_steps::MemoryWorld;
+use bdd::layer_access_steps::LayerAccessWorld;
+
 // Main test runner
 #[tokio::main]
 async fn main() {
+    // Run consciousness system BDD tests
     ConsciousnessWorld::cucumber()
         .run("tests/bdd/features/dimension_navigation.feature")
+        .await;
+    
+    // Run memory manager BDD tests
+    MemoryWorld::cucumber()
+        .run("tests/bdd/features/memory_manager.feature")
+        .await;
+    
+    // Run layer access BDD tests
+    LayerAccessWorld::cucumber()
+        .run("tests/bdd/features/layer_access.feature")
         .await;
 }
