@@ -1,3 +1,5 @@
+name: jessy
+
 services:
   # Rust Core Service
   jessy-core:
