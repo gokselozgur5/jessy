@@ -117,6 +117,11 @@ impl PoolAllocator {
         stats
     }
     
+    /// Get the number of pools
+    pub fn pool_count(&self) -> usize {
+        self.pools.len()
+    }
+    
     /// Get raw pointer to allocated block
     ///
     /// # Safety
