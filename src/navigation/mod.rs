@@ -8,6 +8,7 @@ pub mod registry;
 pub mod navigator;
 pub mod synesthetic;
 pub mod path_selector;
+pub mod query_analyzer;
 
 // Re-export core types
 pub use types::{
@@ -18,6 +19,7 @@ pub use registry::{DimensionMetadata, LayerMetadata, DimensionRegistry};
 pub use navigator::MultiverseNavigator;
 pub use synesthetic::SynestheticEngine;
 pub use path_selector::PathSelector;
+pub use query_analyzer::QueryAnalyzer;
 
 use crate::{DimensionId, LayerId, Frequency};
 use std::collections::HashMap;
