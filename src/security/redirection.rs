@@ -3,7 +3,7 @@
 use super::{SecurityViolation, HarmCategory};
 
 /// Redirection strategy for different harm categories
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RedirectionStrategy {
     /// Empathetic support for self-harm
     EmpatheticSupport,

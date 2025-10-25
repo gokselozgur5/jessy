@@ -235,7 +235,6 @@ mod error_handling_tests {
         let mut manager = MmapManager::new(280).unwrap();
         
         // Record initial state
-        let initial_region_id = manager.next_region_id;
         let initial_regions = manager.get_stats().regions_loaded;
         let initial_layers = manager.get_stats().layers_indexed;
         
