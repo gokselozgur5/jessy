@@ -1,0 +1,200 @@
+   [1m[94m|[0m             [1m[33m^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/lib.rs:29:5
+   [1m[94m|[0m
+[1m[94m29[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+   [1m[94m--> [0msrc/navigation/orchestrator.rs:241:13
+    [1m[94m|[0m
+[1m[94m241[0m [1m[94m|[0m         let mut paths: Vec<NavigationPath> = activations
+    [1m[94m|[0m             [1m[94m----[0m[1m[33m^^^^^[0m
+    [1m[94m|[0m             [1m[94m|[0m
+    [1m[94m|[0m             [1m[94mhelp: remove this `mut`[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused variable: `dimension`[0m
+   [1m[94m--> [0msrc/navigation/parallel_scanner.rs:189:13
+    [1m[94m|[0m
+[1m[94m189[0m [1m[94m|[0m         let dimension = self.registry
+    [1m[94m|[0m             [1m[33m^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_dimension`[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: value assigned to `return_to_source_triggered` is never read[0m
+  [1m[94m--> [0msrc/iteration/processor.rs:39:46
+   [1m[94m|[0m
+[1m[94m39[0m [1m[94m|[0m         let mut return_to_source_triggered = false;
+   [1m[94m|[0m                                              [1m[33m^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mhelp[0m: maybe it is overwritten before being read?
+   [1m[94m= [0m[1mnote[0m: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused variable: `contexts`[0m
+   [1m[94m--> [0msrc/iteration/processor.rs:120:9
+    [1m[94m|[0m
+[1m[94m120[0m [1m[94m|[0m         contexts: &ContextCollection,
+    [1m[94m|[0m         [1m[33m^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_contexts`[0m
+
+[1m[33mwarning[0m[1m: unused variable: `previous_steps`[0m
+   [1m[94m--> [0msrc/iteration/processor.rs:121:9
+    [1m[94m|[0m
+[1m[94m121[0m [1m[94m|[0m         previous_steps: &[IterationStep],
+    [1m[94m|[0m         [1m[33m^^^^^^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_previous_steps`[0m
+
+[1m[33mwarning[0m[1m: field `config` is never read[0m
+   [1m[94m--> [0msrc/lib.rs:161:5
+    [1m[94m|[0m
+[1m[94m160[0m [1m[94m|[0m pub struct ConsciousnessSystem {
+    [1m[94m|[0m            [1m[94m-------------------[0m [1m[94mfield in this struct[0m
+[1m[94m161[0m [1m[94m|[0m     config: ConsciousnessConfig,
+    [1m[94m|[0m     [1m[33m^^^^^^[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `ConsciousnessSystem` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+    [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: field `dimensions` is never read[0m
+ [1m[94m--> [0msrc/dimensions/registry.rs:7:5
+  [1m[94m|[0m
+[1m[94m6[0m [1m[94m|[0m pub struct DimensionRegistry {
+  [1m[94m|[0m            [1m[94m-----------------[0m [1m[94mfield in this struct[0m
+[1m[94m7[0m [1m[94m|[0m     dimensions: Vec<Dimension>,
+  [1m[94m|[0m     [1m[33m^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: method `determine_violated_law` is never used[0m
+  [1m[94m--> [0msrc/security/validator.rs:95:8
+   [1m[94m|[0m
+[1m[94m17[0m [1m[94m|[0m impl SecurityLayer {
+   [1m[94m|[0m [1m[94m------------------[0m [1m[94mmethod in this implementation[0m
+[1m[94m...[0m
+[1m[94m95[0m [1m[94m|[0m     fn determine_violated_law(&self, category: HarmCategory) -> AsimovLaw {
+   [1m[94m|[0m        [1m[33m^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m: `jessy` (lib) generated 38 warnings (32 duplicates) (run `cargo fix --lib -p jessy` to apply 2 suggestions)
+[1m[33mwarning[0m: `jessy` (lib) generated 38 warnings (6 duplicates) (run `cargo fix --lib -p jessy` to apply 32 suggestions)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 1m 04s
+[1m[92m     Running[0m benches/navigation_benchmarks.rs (target/release/deps/navigation_benchmarks-4e77df5e8ee42b85)
+Gnuplot not found, using plotters backend
+Benchmarking registry_lookup/get_dimension
+Benchmarking registry_lookup/get_dimension: Warming up for 3.0000 s
+Benchmarking registry_lookup/get_dimension: Collecting 100 samples in estimated 5.0000 s (574M iterations)
+Benchmarking registry_lookup/get_dimension: Analyzing
+registry_lookup/get_dimension
+                        time:   [8.5539 ns 8.6739 ns 8.8294 ns]
+                        change: [-39.074% -32.388% -25.594%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  5 (5.00%) high mild
+  8 (8.00%) high severe
+Benchmarking registry_lookup/get_layer
+Benchmarking registry_lookup/get_layer: Warming up for 3.0000 s
+Benchmarking registry_lookup/get_layer: Collecting 100 samples in estimated 5.0000 s (473M iterations)
+Benchmarking registry_lookup/get_layer: Analyzing
+registry_lookup/get_layer
+                        time:   [10.235 ns 10.509 ns 10.839 ns]
+                        change: [-41.034% -35.781% -29.895%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 11 outliers among 100 measurements (11.00%)
+  2 (2.00%) high mild
+  9 (9.00%) high severe
+Benchmarking registry_lookup/get_child_layers
+Benchmarking registry_lookup/get_child_layers: Warming up for 3.0000 s
+Benchmarking registry_lookup/get_child_layers: Collecting 100 samples in estimated 5.0000 s (490M iterations)
+Benchmarking registry_lookup/get_child_layers: Analyzing
+registry_lookup/get_child_layers
+                        time:   [9.3990 ns 9.5989 ns 9.8379 ns]
+                        change: [-36.881% -32.946% -28.832%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  16 (16.00%) high severe
+
+Benchmarking full_navigation/navigate/0
+Benchmarking full_navigation/navigate/0: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/0: Collecting 50 samples in estimated 20.028 s (636k iterations)
+Benchmarking full_navigation/navigate/0: Analyzing
+full_navigation/navigate/0
+                        time:   [29.264 µs 30.249 µs 31.499 µs]
+                        change: [-42.326% -36.753% -30.182%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 50 measurements (6.00%)
+  3 (6.00%) high mild
+Benchmarking full_navigation/navigate/1
+Benchmarking full_navigation/navigate/1: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/1: Collecting 50 samples in estimated 20.008 s (646k iterations)
+Benchmarking full_navigation/navigate/1: Analyzing
+full_navigation/navigate/1
+                        time:   [29.274 µs 30.800 µs 32.587 µs]
+                        change: [-26.034% -17.946% -8.9772%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 5 outliers among 50 measurements (10.00%)
+  1 (2.00%) low severe
+  1 (2.00%) low mild
+  3 (6.00%) high severe
+Benchmarking full_navigation/navigate/2
+Benchmarking full_navigation/navigate/2: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/2: Collecting 50 samples in estimated 20.024 s (565k iterations)
+Benchmarking full_navigation/navigate/2: Analyzing
+full_navigation/navigate/2
+                        time:   [33.313 µs 34.031 µs 34.647 µs]
+                        change: [+4.9939% +12.644% +20.084%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 50 measurements (2.00%)
+  1 (2.00%) low mild
+Benchmarking full_navigation/navigate/3
+Benchmarking full_navigation/navigate/3: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/3: Collecting 50 samples in estimated 20.041 s (445k iterations)
+Benchmarking full_navigation/navigate/3: Analyzing
+full_navigation/navigate/3
+                        time:   [41.050 µs 41.400 µs 41.852 µs]
+                        change: [+21.874% +28.907% +35.910%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 50 measurements (12.00%)
+  3 (6.00%) high mild
+  3 (6.00%) high severe
+Benchmarking full_navigation/navigate/4
+Benchmarking full_navigation/navigate/4: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/4: Collecting 50 samples in estimated 20.015 s (495k iterations)
+Benchmarking full_navigation/navigate/4: Analyzing
+full_navigation/navigate/4
+                        time:   [36.965 µs 37.238 µs 37.558 µs]
+                        change: [+23.689% +29.298% +34.874%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 50 measurements (10.00%)
+  1 (2.00%) low severe
+  2 (4.00%) high mild
+  2 (4.00%) high severe
+
+Benchmarking concurrent_navigation/1
+Benchmarking concurrent_navigation/1: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/1: Collecting 30 samples in estimated 20.010 s (494k iterations)
+Benchmarking concurrent_navigation/1: Analyzing
+concurrent_navigation/1 time:   [47.169 µs 48.589 µs 49.943 µs]
+                        change: [+181.16% +211.91% +244.25%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) low mild
+Benchmarking concurrent_navigation/2
+Benchmarking concurrent_navigation/2: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/2: Collecting 30 samples in estimated 20.004 s (349k iterations)
+Benchmarking concurrent_navigation/2: Analyzing
+concurrent_navigation/2 time:   [57.343 µs 57.865 µs 58.334 µs]
+                        change: [+12.644% +16.417% +20.301%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 30 measurements (13.33%)
+  2 (6.67%) low mild
+  2 (6.67%) high mild
+Benchmarking concurrent_navigation/4
+Benchmarking concurrent_navigation/4: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/4: Collecting 30 samples in estimated 20.034 s (253k iterations)
+Benchmarking concurrent_navigation/4: Analyzing
+concurrent_navigation/4 time:   [77.592 µs 78.247 µs 79.055 µs]
+                        change: [-1.9619% -0.6569% +0.5538%] (p = 0.33 > 0.05)
+                        No change in performance detected.
+Found 2 outliers among 30 measurements (6.67%)
+  2 (6.67%) high mild
+Benchmarking concurrent_navigation/8
+Benchmarking concurrent_navigation/8: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/8: Collecting 30 samples in estimated 20.026 s (176k iterations)
