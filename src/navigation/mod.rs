@@ -4,6 +4,7 @@
 //! and path selection for navigating through consciousness layers.
 
 pub mod types;
+pub mod registry;
 pub mod navigator;
 pub mod synesthetic;
 pub mod path_selector;
@@ -13,6 +14,7 @@ pub use types::{
     NavigationConfig, NavigationError, ProtoDimensionId, QuestionType, SystemState, UrgencyLevel,
 };
 
+pub use registry::{DimensionMetadata, LayerMetadata, DimensionRegistry};
 pub use navigator::MultiverseNavigator;
 pub use synesthetic::SynestheticEngine;
 pub use path_selector::PathSelector;
