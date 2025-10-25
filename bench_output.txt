@@ -1,0 +1,35 @@
+[0;34m⚡ Running performance benchmarks...[0m 
+warning: output filename collision at /app/target/release/deps/libjessy.so
+  |
+  = note: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /app/target/release/deps/libjessy.so.dwp
+  |
+  = note: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /app/target/release/deps/libjessy.rlib
+  |
+  = note: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+   Compiling pyo3-build-config v0.21.2
+error: failed to run custom build command for `pyo3-build-config v0.21.2`
+note: To improve backtraces for build dependencies, set the CARGO_PROFILE_BENCH_BUILD_OVERRIDE_DEBUG=true environment variable to enable debug information generation.
+
+Caused by:
+  process didn't exit successfully: `/app/target/release/build/pyo3-build-config-927127853af3c27f/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=PYO3_CONFIG_FILE
+  cargo:rerun-if-env-changed=PYO3_NO_PYTHON
+  cargo:rerun-if-env-changed=PYO3_ENVIRONMENT_SIGNATURE
+  cargo:rerun-if-env-changed=PYO3_PYTHON
+  cargo:rerun-if-env-changed=VIRTUAL_ENV
+  cargo:rerun-if-env-changed=CONDA_PREFIX
+  cargo:rerun-if-env-changed=PATH
+
+  --- stderr
+  error: no Python 3.x interpreter found
+warning: build failed, waiting for other jobs to finish...
+make: *** [bench] Error 101
