@@ -1,0 +1,13 @@
+# Ignore all MMAP data files
+*.mmap
+*.dat
+
+# Ignore temporary files
+temp/*
+
+# Ignore proto-dimensions
+proto/*
+
+# Keep directory structure
+!.gitignore
+!README.md

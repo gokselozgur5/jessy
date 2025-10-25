@@ -11,16 +11,28 @@ use super::{
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Main memory manager for the consciousness system
+///
+/// Design note: This struct doesn't implement Clone because it manages
+/// exclusive ownership of memory-mapped regions. Use Arc<RwLock<MmapManager>>
+/// for shared access across threads.
 #[derive(Debug)]
 pub struct MmapManager {
     pool_allocator: PoolAllocator,
+    // HashMap provides O(1) lookups - critical for hot path performance
+    // u32 keys are smaller than String/PathBuf, reducing memory overhead
     regions: HashMap<u32, MmapRegion>,
+    // Separate index for layers enables fast lookup without scanning all regions
+    // This is the "index everything" pattern - trade space for time
     layer_index: HashMap<LayerId, LayerLocation>,
     next_region_id: u32,
     base_path: PathBuf,
-    total_allocated_mb: usize,
+    total_limit_mb: usize,
+    // AtomicUsize enables lock-free memory tracking across threads
+    // Compare-and-swap operations are faster than mutex locks
+    current_allocated_bytes: AtomicUsize,
 }
 
 /// Location information for a layer
@@ -35,20 +47,31 @@ impl MmapManager {
     pub fn new(total_memory_mb: usize) -> Result<Self> {
         let mut pool_allocator = PoolAllocator::new();
         
-        // Initialize standard pools with different block sizes
+        // Multi-pool strategy: different block sizes for different use cases
+        // This reduces fragmentation - small allocations don't waste large blocks
+        // Similar to how malloc uses size classes internally
+        
         // 4KB blocks for small layers (metadata, simple content)
+        // 4KB matches typical OS page size - efficient for memory mapping
         pool_allocator.add_pool(32, 4096)?; // 32MB of 4KB blocks
         
         // 16KB blocks for medium layers (typical layer content)
+        // Most consciousness layers fall into this category
         pool_allocator.add_pool(128, 16384)?; // 128MB of 16KB blocks
         
         // 64KB blocks for large layers (complex hierarchies)
+        // Larger blocks reduce allocation overhead for big content
         pool_allocator.add_pool(80, 65536)?; // 80MB of 64KB blocks
         
         // 256KB blocks for very large dimensions
+        // Rare but necessary for comprehensive dimensional data
         pool_allocator.add_pool(40, 262144)?; // 40MB of 256KB blocks
         
+        // PathBuf is the owned version of Path - like String vs &str
+        // We need owned here because it's stored in the struct
         let base_path = std::env::current_dir()
+            // map_err transforms io::Error into our ConsciousnessError
+            // This is the functional approach to error handling - no try-catch needed
             .map_err(|e| ConsciousnessError::MemoryError(
                 format!("Failed to get current directory: {}", e)
             ))?
@@ -56,6 +79,7 @@ impl MmapManager {
             .join("consciousness");
         
         // Ensure base directory exists
+        // create_dir_all is idempotent - safe to call multiple times
         std::fs::create_dir_all(&base_path)
             .map_err(|e| ConsciousnessError::MemoryError(
                 format!("Failed to create base directory: {}", e)
@@ -63,46 +87,85 @@ impl MmapManager {
         
         Ok(Self {
             pool_allocator,
+            // HashMap::new() doesn't allocate until first insert - zero-cost until used
             regions: HashMap::new(),
             layer_index: HashMap::new(),
             next_region_id: 0,
             base_path,
-            total_allocated_mb: total_memory_mb,
+            total_limit_mb: total_memory_mb,
+            // AtomicUsize::new(0) is a const fn - happens at compile time when possible
+            current_allocated_bytes: AtomicUsize::new(0),
         })
     }
     
     /// Load a dimension from file system
+    ///
+    /// Takes &mut self because it modifies internal state (regions, layer_index)
+    /// Returns u32 region_id for tracking - small integer IDs are cache-friendly
     pub fn load_dimension(&mut self, dimension_id: DimensionId) -> Result<u32> {
+        // format! allocates a new String - acceptable here since this isn't hot path
+        // In hot paths, we'd use a pre-allocated buffer or stack array
         let dimension_path = self.base_path
             .join(format!("D{:02}", dimension_id.0));
         
+        // Early return pattern - fail fast, don't nest deeply
+        // This keeps cognitive complexity low
         if !dimension_path.exists() {
-            return Err(ConsciousnessError::MemoryError(
-                format!("Dimension directory not found: {:?}", dimension_path)
-            ));
+            return Err(ConsciousnessError::DimensionNotFound {
+                dimension: dimension_id.0,
+            });
         }
         
         // Find the main region file for this dimension
         let region_file = dimension_path.join("region.mmap");
         if !region_file.exists() {
-            return Err(ConsciousnessError::MemoryError(
-                format!("Region file not found: {:?}", region_file)
-            ));
+            return Err(ConsciousnessError::DimensionNotFound {
+                dimension: dimension_id.0,
+            });
         }
         
+        // Allocate region ID before loading - enables rollback on failure
+        // This is the "reserve then commit" pattern for transactional operations
         let region_id = self.next_region_id;
         self.next_region_id += 1;
         
-        // Load the MMAP region
-        let region = MmapRegion::from_file(region_id, dimension_id, &region_file)?;
+        // match for explicit error handling - more visible than ? operator here
+        // We need custom cleanup logic, so match is clearer than map_err
+        let region = match MmapRegion::from_file(region_id, dimension_id, &region_file) {
+            Ok(r) => r,
+            Err(e) => {
+                // Rollback: restore state to before this operation
+                // Critical for maintaining consistency after failures
+                self.next_region_id -= 1;
+                return Err(e);
+            }
+        };
+        
+        // Track layers added for potential rollback
+        // Vec::new() doesn't allocate - allocation happens on first push
+        let mut added_layers = Vec::new();
         
         // Index all layers in this region
+        // This builds an O(1) lookup table - trading memory for speed
         for layer_id in region.list_layers() {
-            let layer_info = region.get_layer_info(layer_id)
-                .ok_or_else(|| ConsciousnessError::MemoryError(
-                    format!("Layer info not found for {:?}", layer_id)
-                ))?;
+            let layer_info = match region.get_layer_info(layer_id) {
+                Some(info) => info,
+                None => {
+                    // Cleanup: remove already-added layers
+                    // This is the "all or nothing" transaction pattern
+                    // Either all layers load successfully, or none do
+                    for lid in added_layers {
+                        self.layer_index.remove(&lid);
+                    }
+                    self.next_region_id -= 1;
+                    return Err(ConsciousnessError::MemoryError(
+                        format!("Layer info not found for {:?}", layer_id)
+                    ));
+                }
+            };
             
+            // Struct initialization - all fields must be specified
+            // Compiler ensures we don't forget any fields
             let location = LayerLocation {
                 region_id,
                 content_location: ContentLocation::Mmap {
@@ -113,9 +176,17 @@ impl MmapManager {
             };
             
             self.layer_index.insert(layer_id, location);
+            added_layers.push(layer_id);
         }
         
         self.regions.insert(region_id, region);
+        
+        tracing::debug!(
+            "Loaded dimension {:?} as region {} with {} layers",
+            dimension_id,
+            region_id,
+            added_layers.len()
+        );
         
         Ok(region_id)
     }
@@ -137,16 +208,17 @@ impl MmapManager {
     /// Load context for a specific layer
     pub fn load_layer_context(&self, layer_id: LayerId) -> Result<LoadedContext> {
         let location = self.layer_index.get(&layer_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError(
-                format!("Layer not found in index: {:?}", layer_id)
-            ))?;
+            .ok_or_else(|| ConsciousnessError::LayerNotFound {
+                dimension: layer_id.dimension.0,
+                layer: layer_id.layer,
+            })?;
         
         match &location.content_location {
             ContentLocation::Mmap { offset, size, region_id } => {
                 let region = self.regions.get(region_id)
-                    .ok_or_else(|| ConsciousnessError::MemoryError(
-                        format!("Region not found: {}", region_id)
-                    ))?;
+                    .ok_or_else(|| ConsciousnessError::RegionNotFound {
+                        region_id: *region_id,
+                    })?;
                 
                 let content = region.read_string(*offset, *size)?;
                 let layer_info = region.get_layer_info(layer_id).unwrap();
@@ -177,9 +249,9 @@ impl MmapManager {
             
             ContentLocation::Hybrid { mmap_base, mmap_size, heap_overlay, region_id } => {
                 let region = self.regions.get(region_id)
-                    .ok_or_else(|| ConsciousnessError::MemoryError(
-                        format!("Region not found: {}", region_id)
-                    ))?;
+                    .ok_or_else(|| ConsciousnessError::RegionNotFound {
+                        region_id: *region_id,
+                    })?;
                 
                 let mmap_content = region.read_string(*mmap_base, *mmap_size)?;
                 let heap_content = String::from_utf8(heap_overlay.clone())
@@ -201,25 +273,111 @@ impl MmapManager {
     }
     
     /// Allocate space for new content (for learning system)
+    ///
+    /// Uses atomic operations for thread-safe memory tracking without locks
+    /// This is faster than Mutex<usize> because it's lock-free
     pub fn allocate(&mut self, size: usize) -> Result<MmapOffset> {
-        self.pool_allocator.allocate(size)
+        // AtomicUsize::load reads the current value atomically
+        // Ordering::Relaxed is sufficient here - we only need atomicity, not ordering
+        // Relaxed is fastest: no memory barriers, just atomic read
+        // Use Acquire/Release when coordinating with other memory operations
+        let current_bytes = self.current_allocated_bytes.load(Ordering::Relaxed);
+        let limit_bytes = self.total_limit_mb * 1024 * 1024;
+        let new_total = current_bytes + size;
+        
+        // Calculate utilization percentage
+        // as f32 cast is explicit - Rust doesn't do implicit numeric conversions
+        // This prevents subtle bugs from unexpected type coercion
+        let utilization = (new_total as f32 / limit_bytes as f32) * 100.0;
+        
+        // Graduated warning system - fail gracefully, not catastrophically
+        // This is the "circuit breaker" pattern from distributed systems
+        if utilization > 95.0 {
+            // Critical: reject allocation to prevent OOM
+            tracing::error!(
+                "Memory critically high: {:.1}% ({} MB / {} MB), rejecting allocation of {} bytes",
+                utilization,
+                current_bytes / (1024 * 1024),
+                self.total_limit_mb,
+                size
+            );
+            return Err(ConsciousnessError::LimitExceeded {
+                current_mb: current_bytes / (1024 * 1024),
+                limit_mb: self.total_limit_mb,
+                requested_mb: (size + 1024 * 1024 - 1) / (1024 * 1024),
+            });
+        } else if utilization > 85.0 {
+            // High pressure: warn but allow allocation
+            tracing::warn!(
+                "Memory pressure high: {:.1}% ({} MB / {} MB), consider eviction",
+                utilization,
+                current_bytes / (1024 * 1024),
+                self.total_limit_mb
+            );
+        } else if utilization > 75.0 {
+            // Elevated: informational warning
+            tracing::warn!(
+                "Memory usage elevated: {:.1}% ({} MB / {} MB)",
+                utilization,
+                current_bytes / (1024 * 1024),
+                self.total_limit_mb
+            );
+        }
+        
+        if new_total > limit_bytes {
+            return Err(ConsciousnessError::LimitExceeded {
+                current_mb: current_bytes / (1024 * 1024),
+                limit_mb: self.total_limit_mb,
+                requested_mb: (size + 1024 * 1024 - 1) / (1024 * 1024),
+            });
+        }
+        
+        // Try to allocate from pool
+        // ? operator: if Err, convert and return early; if Ok, unwrap value
+        let offset = self.pool_allocator.allocate(size)
+            .map_err(|e| ConsciousnessError::AllocationFailed(
+                format!("Pool allocation failed for {} bytes: {}", size, e)
+            ))?;
+        
+        // fetch_add is atomic read-modify-write: returns OLD value, then adds
+        // This is implemented as a CPU compare-and-swap loop - lock-free
+        // Much faster than Mutex::lock() -> value += size -> Mutex::unlock()
+        self.current_allocated_bytes.fetch_add(size, Ordering::Relaxed);
+        
+        tracing::debug!(
+            "Allocated {} bytes at pool {} offset {}, total usage: {:.1}%",
+            size,
+            offset.pool_id,
+            offset.offset,
+            utilization
+        );
+        
+        Ok(offset)
     }
     
     /// Deallocate previously allocated space
-    pub fn deallocate(&mut self, offset: MmapOffset) -> Result<()> {
-        self.pool_allocator.deallocate(offset)
+    pub fn deallocate(&mut self, offset: MmapOffset, size: usize) -> Result<()> {
+        self.pool_allocator.deallocate(offset)?;
+        
+        // Update allocated bytes counter
+        self.current_allocated_bytes.fetch_sub(size, Ordering::Relaxed);
+        
+        Ok(())
     }
     
     /// Get memory usage statistics
     pub fn get_stats(&self) -> MemoryStats {
         let pool_stats = self.pool_allocator.get_stats();
+        let current_bytes = self.current_allocated_bytes.load(Ordering::Relaxed);
+        let current_mb = current_bytes / (1024 * 1024);
         
         MemoryStats {
-            total_allocated_mb: self.total_allocated_mb,
+            total_limit_mb: self.total_limit_mb,
+            current_allocated_mb: current_mb,
             pool_stats,
             regions_loaded: self.regions.len(),
             layers_indexed: self.layer_index.len(),
-            utilization_percent: pool_stats.utilization(),
+            utilization_percent: (current_mb as f32 / self.total_limit_mb as f32) * 100.0,
         }
     }
     
@@ -288,9 +446,10 @@ impl MmapManager {
         layer_id: LayerId,
     ) -> Result<()> {
         let location = self.layer_index.get(&layer_id)
-            .ok_or_else(|| ConsciousnessError::MemoryError(
-                format!("Proto-dimension not found: {:?}", layer_id)
-            ))?;
+            .ok_or_else(|| ConsciousnessError::LayerNotFound {
+                dimension: layer_id.dimension.0,
+                layer: layer_id.layer,
+            })?;
         
         if let ContentLocation::Heap { data, .. } = &location.content_location {
             // Allocate space in reserve pool
@@ -337,7 +496,8 @@ pub struct NavigationPath {
 /// Memory usage statistics
 #[derive(Debug)]
 pub struct MemoryStats {
-    pub total_allocated_mb: usize,
+    pub total_limit_mb: usize,
+    pub current_allocated_mb: usize,
     pub pool_stats: PoolStats,
     pub regions_loaded: usize,
     pub layers_indexed: usize,
@@ -352,8 +512,22 @@ impl MemoryStats {
     
     /// Get available memory in MB
     pub fn available_mb(&self) -> usize {
-        let used_mb = (self.pool_stats.allocated_size as f32 / (1024.0 * 1024.0)) as usize;
-        self.total_allocated_mb.saturating_sub(used_mb)
+        self.total_limit_mb.saturating_sub(self.current_allocated_mb)
+    }
+    
+    /// Check if at warning threshold (75%)
+    pub fn is_at_warning_threshold(&self) -> bool {
+        self.utilization_percent > 75.0
+    }
+    
+    /// Check if should trigger eviction (85%)
+    pub fn should_trigger_eviction(&self) -> bool {
+        self.utilization_percent > 85.0
+    }
+    
+    /// Check if should reject allocations (95%)
+    pub fn should_reject_allocations(&self) -> bool {
+        self.utilization_percent > 95.0
     }
 }
 
@@ -367,7 +541,7 @@ mod tests {
         let manager = MmapManager::new(280).unwrap();
         let stats = manager.get_stats();
         
-        assert_eq!(stats.total_allocated_mb, 280);
+        assert_eq!(stats.total_limit_mb, 280);
         assert_eq!(stats.regions_loaded, 0);
         assert_eq!(stats.layers_indexed, 0);
     }

@@ -35,6 +35,39 @@ pub enum ConsciousnessError {
     #[error("Memory mapping failed: {0}")]
     MemoryError(String),
     
+    #[error("Memory allocation failed: {0}")]
+    AllocationFailed(String),
+    
+    #[error("Memory limit exceeded: current={current_mb}MB, limit={limit_mb}MB, requested={requested_mb}MB")]
+    LimitExceeded {
+        current_mb: usize,
+        limit_mb: usize,
+        requested_mb: usize,
+    },
+    
+    #[error("Layer not found: dimension={dimension}, layer={layer}")]
+    LayerNotFound {
+        dimension: u8,
+        layer: u16,
+    },
+    
+    #[error("Region not found: region_id={region_id}")]
+    RegionNotFound {
+        region_id: u32,
+    },
+    
+    #[error("Out of bounds access: offset={offset}, size={size}, region_size={region_size}")]
+    OutOfBounds {
+        offset: usize,
+        size: usize,
+        region_size: usize,
+    },
+    
+    #[error("Dimension not found: dimension={dimension}")]
+    DimensionNotFound {
+        dimension: u8,
+    },
+    
     #[error("Security violation detected: {0}")]
     SecurityViolation(String),
     

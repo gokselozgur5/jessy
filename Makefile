@@ -189,3 +189,24 @@ rebuild: down build up ## Rebuild and restart all services
 setup-hooks: ## Setup pre-commit hooks for development
 	@echo "$(BLUE)🔧 Setting up development hooks...$(NC)"
 	@./scripts/setup-hooks.sh
+
+init-mmap: ## Initialize MMAP volume structure
+	@echo "$(BLUE)🗂️  Initializing MMAP volumes...$(NC)"
+	@./scripts/init-mmap-volumes.sh
+
+test-mmap: ## Test MMAP volume access from containers
+	@echo "$(BLUE)🧪 Testing MMAP volume access...$(NC)"
+	@./scripts/test-mmap-access.sh
+
+mmap-info: ## Show MMAP volume information
+	@echo "$(BLUE)📊 MMAP Volume Information$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Host directory:$(NC)"
+	@ls -lah ./data/mmap 2>/dev/null || echo "  Not initialized (run 'make init-mmap')"
+	@echo ""
+	@echo "$(YELLOW)Docker volume:$(NC)"
+	@docker volume inspect jessy_mmap-data 2>/dev/null | grep -A 5 "Mountpoint" || echo "  Volume not created (run 'docker-compose up')"
+	@echo ""
+	@echo "$(YELLOW)Container mounts:$(NC)"
+	@docker-compose ps -q jessy-core 2>/dev/null | xargs -I {} docker inspect {} --format='  Rust: {{range .Mounts}}{{if eq .Destination "/app/data/mmap"}}{{.Source}} -> {{.Destination}} ({{.Mode}}){{end}}{{end}}' 2>/dev/null || echo "  Rust service not running"
+	@docker-compose ps -q jessy-api 2>/dev/null | xargs -I {} docker inspect {} --format='  Go: {{range .Mounts}}{{if eq .Destination "/app/data/mmap"}}{{.Source}} -> {{.Destination}} ({{.Mode}}){{end}}{{end}}' 2>/dev/null || echo "  Go service not running"

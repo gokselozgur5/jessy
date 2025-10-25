@@ -2,42 +2,70 @@
 //!
 //! Handles individual MMAP regions with content location tracking
 //! and hybrid storage for static + dynamic content.
+//!
+//! # Design Pattern: Hybrid Storage
+//!
+//! Static content (crystallized knowledge) → MMAP (fast, persistent)
+//! Dynamic content (learning) → Heap (flexible, temporary)
+//! Combined → Hybrid (base in MMAP, updates in heap overlay)
 
 use crate::{Result, ConsciousnessError, LayerId, Frequency};
 use memmap2::{Mmap, MmapOptions};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};  // For JSON metadata serialization
 use std::collections::HashMap;
 use std::path::Path;
 
 /// Location of layer content in memory
+///
+/// This is an enum with data - each variant carries different information
+/// This is more type-safe than a struct with optional fields
+/// Impossible to have "region_id when in Heap mode" bugs
+///
+/// Clone is derived because we need to duplicate location info
+/// Debug is derived for debugging output
 #[derive(Debug, Clone)]
 pub enum ContentLocation {
-    /// Content stored in memory-mapped file
+    /// Content stored in memory-mapped file (zero-copy, persistent)
+    ///
+    /// This is the fast path - no allocation, just pointer arithmetic
     Mmap { 
-        offset: usize, 
-        size: usize,
-        region_id: u32,
+        offset: usize,  // Byte offset into MMAP region
+        size: usize,    // Size in bytes
+        region_id: u32, // Which region contains this content
     },
-    /// Content stored in heap memory (temporary)
+    /// Content stored in heap memory (temporary, for learning)
+    ///
+    /// Used for proto-dimensions before crystallization
+    /// Vec<u8> is heap-allocated, growable byte array
     Heap { 
-        data: Vec<u8>,
-        created_at: std::time::SystemTime,
+        data: Vec<u8>,  // Owned data on heap
+        created_at: std::time::SystemTime,  // For aging/eviction
     },
     /// Hybrid: base content in MMAP + overlay in heap
+    ///
+    /// This enables incremental updates without rewriting MMAP files
+    /// Read base from MMAP, apply overlay from heap
     Hybrid { 
-        mmap_base: usize, 
-        mmap_size: usize,
-        heap_overlay: Vec<u8>,
+        mmap_base: usize,       // Offset of base content in MMAP
+        mmap_size: usize,       // Size of base content
+        heap_overlay: Vec<u8>,  // Additional/updated content
         region_id: u32,
     },
 }
 
 impl ContentLocation {
     /// Get the total size of content
+    ///
+    /// match is exhaustive - compiler ensures we handle all variants
+    /// If we add a new variant, this will fail to compile until we handle it
     pub fn size(&self) -> usize {
         match self {
+            // .. syntax ignores other fields - we only need size
+            // *size dereferences the &usize to usize
             ContentLocation::Mmap { size, .. } => *size,
+            // Vec::len() is O(1) - just returns stored length
             ContentLocation::Heap { data, .. } => data.len(),
+            // Hybrid size is sum of base + overlay
             ContentLocation::Hybrid { mmap_size, heap_overlay, .. } => {
                 mmap_size + heap_overlay.len()
             }
@@ -45,6 +73,9 @@ impl ContentLocation {
     }
     
     /// Check if content is in permanent storage (MMAP)
+    ///
+    /// matches! macro is like match but returns bool
+    /// More concise than match { ... => true, _ => false }
     pub fn is_permanent(&self) -> bool {
         matches!(self, ContentLocation::Mmap { .. } | ContentLocation::Hybrid { .. })
     }
@@ -56,38 +87,52 @@ impl ContentLocation {
 }
 
 /// Memory-mapped region for consciousness layers
+///
+/// Represents one dimension's data mapped into memory
+/// Mmap (not MmapMut) because regions are read-only after creation
+/// This enables lock-free concurrent reads - multiple threads can read safely
 #[derive(Debug)]
 pub struct MmapRegion {
     pub region_id: u32,
     pub dimension_id: crate::DimensionId,
-    pub file_path: std::path::PathBuf,
-    pub mmap: Mmap,
-    pub metadata: RegionMetadata,
+    pub file_path: std::path::PathBuf,  // Keep path for debugging/logging
+    pub mmap: Mmap,  // Immutable MMAP - read-only, thread-safe
+    pub metadata: RegionMetadata,  // Parsed from file header
 }
 
 impl MmapRegion {
     /// Create new MMAP region from file
+    ///
+    /// Generic over P: AsRef<Path> - accepts &str, String, Path, PathBuf
+    /// This is Rust's way of "function overloading" - one function, many types
     pub fn from_file<P: AsRef<Path>>(
         region_id: u32,
         dimension_id: crate::DimensionId,
         file_path: P,
     ) -> Result<Self> {
+        // as_ref() converts P to &Path, then to_path_buf() makes it owned
+        // We need owned PathBuf because we're storing it in the struct
         let file_path = file_path.as_ref().to_path_buf();
         
+        // Open file - this gets a file descriptor from the OS
         let file = std::fs::File::open(&file_path)
             .map_err(|e| ConsciousnessError::MemoryError(
                 format!("Failed to open file {:?}: {}", file_path, e)
             ))?;
         
+        // unsafe block: MMAP is inherently unsafe
+        // The file could be modified by another process while we're reading
+        // We accept this risk for performance - it's the MMAP trade-off
         let mmap = unsafe {
             MmapOptions::new()
-                .map(&file)
+                .map(&file)  // Map file into virtual memory
                 .map_err(|e| ConsciousnessError::MemoryError(
                     format!("Failed to mmap file {:?}: {}", file_path, e)
                 ))?
         };
         
-        // Parse metadata from file header or separate metadata file
+        // Parse metadata from file header
+        // This reads the first 1KB to get layer information
         let metadata = Self::parse_metadata(&mmap)?;
         
         Ok(Self {
@@ -100,20 +145,35 @@ impl MmapRegion {
     }
     
     /// Read content at specific offset and size
+    ///
+    /// Returns &[u8] (borrowed slice) - zero-copy, no allocation
+    /// The slice borrows from self.mmap, so it can't outlive this region
+    /// This is Rust's borrow checker preventing use-after-free bugs
     pub fn read_content(&self, offset: usize, size: usize) -> Result<&[u8]> {
+        // Bounds check prevents buffer overruns
+        // This is why safe Rust can't have buffer overflow vulnerabilities
         if offset + size > self.mmap.len() {
-            return Err(ConsciousnessError::MemoryError(
-                format!("Read beyond region bounds: {}+{} > {}", 
-                    offset, size, self.mmap.len())
-            ));
+            return Err(ConsciousnessError::OutOfBounds {
+                offset,
+                size,
+                region_size: self.mmap.len(),
+            });
         }
         
+        // Slice creation is zero-cost - just creates a fat pointer (ptr + len)
+        // No copying, no allocation - this is why MMAP is fast
         Ok(&self.mmap[offset..offset + size])
     }
     
     /// Read content as UTF-8 string
+    ///
+    /// Note: This DOES allocate (String) because we need owned data
+    /// If you just need to read, use read_content() and from_utf8() for &str
     pub fn read_string(&self, offset: usize, size: usize) -> Result<String> {
         let bytes = self.read_content(offset, size)?;
+        // to_vec() copies bytes to heap - necessary because String needs owned data
+        // from_utf8 validates UTF-8 and creates String
+        // This is the one place we copy - can't avoid it for String ownership
         String::from_utf8(bytes.to_vec())
             .map_err(|e| ConsciousnessError::MemoryError(
                 format!("Invalid UTF-8 content: {}", e)
