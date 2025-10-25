@@ -1,7 +1,7 @@
-# ============================================
-# Test Runner Dockerfile
-# ============================================
-FROM rust:latest
+# Test environment for Jessy
+# Uses Rust nightly to support all dependencies including edition2024
+
+FROM rustlang/rust:nightly-slim
 
 WORKDIR /app
 
@@ -10,7 +10,17 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
+
+# Install test tools
+RUN cargo install cargo-nextest cargo-tarpaulin
+
+# Create necessary directories
+RUN mkdir -p /app/data/consciousness && \
+    mkdir -p /app/data/mmap && \
+    mkdir -p /app/test-results && \
+    chmod -R 755 /app/data
 
 # Copy project files
 COPY Cargo.toml Cargo.lock ./
@@ -18,8 +28,8 @@ COPY src ./src
 COPY tests ./tests
 COPY benches ./benches
 
-# Create test results directory
-RUN mkdir -p /app/test-results
+# Pre-fetch dependencies
+RUN cargo fetch
 
-# Default: Run all tests
-CMD ["cargo", "test", "--all-features", "--workspace"]
+# Default command runs all tests
+CMD ["cargo", "test", "--all-features", "--", "--nocapture"]

@@ -182,12 +182,12 @@ impl MmapRegion {
     
     /// Get layer information by layer ID
     pub fn get_layer_info(&self, layer_id: LayerId) -> Option<&LayerInfo> {
-        self.metadata.layers.get(&layer_id)
+        self.metadata.layers.iter().find(|info| info.layer_id == layer_id)
     }
     
     /// List all layers in this region
     pub fn list_layers(&self) -> Vec<LayerId> {
-        self.metadata.layers.keys().copied().collect()
+        self.metadata.layers.iter().map(|info| info.layer_id).collect()
     }
     
     /// Parse metadata from MMAP content
@@ -230,7 +230,9 @@ pub struct RegionMetadata {
     pub dimension_name: String,
     pub total_size: usize,
     pub content_offset: usize, // Where actual content starts (after metadata)
-    pub layers: HashMap<LayerId, LayerInfo>,
+    // Use Vec instead of HashMap for JSON serialization compatibility
+    // LayerId as HashMap key doesn't serialize well to JSON (keys must be strings)
+    pub layers: Vec<LayerInfo>,
 }
 
 impl Default for RegionMetadata {
@@ -244,7 +246,7 @@ impl Default for RegionMetadata {
             dimension_name: "unknown".to_string(),
             total_size: 0,
             content_offset: 1024, // Skip first 1KB for metadata
-            layers: HashMap::new(),
+            layers: Vec::new(),
         }
     }
 }
@@ -364,12 +366,12 @@ impl RegionBuilder {
             dimension_name: self.dimension_name.clone(),
             total_size: self.total_size,
             content_offset: 1024,
-            layers: HashMap::new(),
+            layers: Vec::new(),
         };
         
         // Add layer info to metadata
         for (layer_info, _) in &self.layers {
-            metadata.layers.insert(layer_info.layer_id, layer_info.clone());
+            metadata.layers.push(layer_info.clone());
         }
         
         // Create file and write content

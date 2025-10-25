@@ -311,7 +311,7 @@ impl MmapPool {
 }
 
 /// Statistics for pool allocator
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct PoolStats {
     pub total_pools: usize,
     pub total_size: usize,
