@@ -19,9 +19,13 @@
 pub mod pool;
 pub mod region;
 pub mod manager;
+pub mod optimization;
 
 #[cfg(test)]
 mod error_tests;
+
+#[cfg(test)]
+mod perf_tests;
 
 // Re-export main types for convenience
 // Users can write `use memory::MmapManager` instead of `use memory::manager::MmapManager`
