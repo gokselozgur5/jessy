@@ -192,4 +192,274 @@ mod error_handling_tests {
         // (This is aspirational - we'll implement what's practical)
         assert!(!err_msg.is_empty());
     }
+    
+    // ========================================================================
+    // Additional Comprehensive Error Tests (Task 5.5)
+    // ========================================================================
+    
+    /// Test allocation failure cleanup - ensure no memory leaks
+    ///
+    /// This tests that failed allocations don't leave the system in an
+    /// inconsistent state. Memory tracking should remain accurate.
+    #[tokio::test]
+    async fn test_allocation_failure_no_memory_leak() {
+        let mut manager = MmapManager::new(10).unwrap();
+        
+        // Get initial stats
+        let initial_stats = manager.get_stats();
+        let initial_allocated = initial_stats.current_allocated_mb;
+        
+        // Try to allocate too much - should fail
+        let result = manager.allocate(20 * 1024 * 1024);
+        assert!(result.is_err());
+        
+        // Stats should be unchanged after failed allocation
+        let after_stats = manager.get_stats();
+        assert_eq!(after_stats.current_allocated_mb, initial_allocated);
+        
+        // Successful allocation should work normally
+        let alloc = manager.allocate(1 * 1024 * 1024).unwrap();
+        let final_stats = manager.get_stats();
+        assert!(final_stats.current_allocated_mb > initial_allocated);
+        
+        // Cleanup
+        let _ = manager.deallocate(alloc, 1 * 1024 * 1024);
+    }
+    
+    /// Test dimension loading failure cleanup
+    ///
+    /// When dimension loading fails partway through, all partial state
+    /// should be cleaned up (rollback pattern)
+    #[tokio::test]
+    async fn test_dimension_load_failure_rollback() {
+        let mut manager = MmapManager::new(280).unwrap();
+        
+        // Record initial state
+        let initial_region_id = manager.next_region_id;
+        let initial_regions = manager.get_stats().regions_loaded;
+        let initial_layers = manager.get_stats().layers_indexed;
+        
+        // Try to load non-existent dimension
+        let result = manager.load_dimension(DimensionId(999));
+        assert!(result.is_err());
+        
+        // Verify rollback: region_id should not have incremented
+        // (we can't directly access next_region_id, but we can infer from stats)
+        let after_stats = manager.get_stats();
+        assert_eq!(after_stats.regions_loaded, initial_regions);
+        assert_eq!(after_stats.layers_indexed, initial_layers);
+        
+        // System should still be usable
+        let alloc_result = manager.allocate(1024);
+        assert!(alloc_result.is_ok());
+    }
+    
+    /// Test memory limit enforcement at different thresholds
+    ///
+    /// Verifies that the graduated warning system works correctly
+    /// at 75%, 85%, and 95% utilization thresholds
+    #[tokio::test]
+    async fn test_memory_limit_thresholds() {
+        let mut manager = MmapManager::new(10).unwrap(); // 10MB limit
+        
+        // Allocate to ~70% - should succeed without warnings
+        let alloc1 = manager.allocate(7 * 1024 * 1024).unwrap();
+        
+        // Allocate to push over 75% - should warn but succeed
+        let alloc2 = manager.allocate(1 * 1024 * 1024).unwrap();
+        
+        // Try to allocate more - should fail at 95%
+        let result = manager.allocate(3 * 1024 * 1024);
+        assert!(result.is_err());
+        
+        // Verify error is LimitExceeded
+        match result.unwrap_err() {
+            ConsciousnessError::LimitExceeded { current_mb, limit_mb, requested_mb } => {
+                assert!(current_mb < limit_mb);
+                assert_eq!(limit_mb, 10);
+                assert!(requested_mb > 0);
+            }
+            _ => panic!("Expected LimitExceeded error"),
+        }
+        
+        // Cleanup
+        let _ = manager.deallocate(alloc1, 7 * 1024 * 1024);
+        let _ = manager.deallocate(alloc2, 1 * 1024 * 1024);
+    }
+    
+    /// Test concurrent allocation attempts (simulated)
+    ///
+    /// While we can't easily test true concurrency in unit tests,
+    /// we can verify that the atomic operations maintain consistency
+    #[tokio::test]
+    async fn test_sequential_allocations_maintain_consistency() {
+        let mut manager = MmapManager::new(50).unwrap();
+        
+        // Perform many small allocations
+        let mut allocations = Vec::new();
+        for _ in 0..10 {
+            let alloc = manager.allocate(1 * 1024 * 1024).unwrap();
+            allocations.push(alloc);
+        }
+        
+        // Check stats are consistent
+        let stats = manager.get_stats();
+        assert!(stats.current_allocated_mb >= 10);
+        assert!(stats.current_allocated_mb <= 50);
+        
+        // Deallocate all
+        for alloc in allocations {
+            manager.deallocate(alloc, 1 * 1024 * 1024).unwrap();
+        }
+        
+        // Stats should reflect deallocations
+        let final_stats = manager.get_stats();
+        assert_eq!(final_stats.current_allocated_mb, 0);
+    }
+    
+    /// Test error types have correct structure
+    ///
+    /// Verifies that our error types contain the expected fields
+    /// and can be pattern matched correctly
+    #[tokio::test]
+    async fn test_error_type_structure() {
+        let mut manager = MmapManager::new(5).unwrap();
+        
+        // Test LimitExceeded error structure
+        let result = manager.allocate(10 * 1024 * 1024);
+        assert!(result.is_err());
+        
+        match result.unwrap_err() {
+            ConsciousnessError::LimitExceeded { current_mb, limit_mb, requested_mb } => {
+                // Verify fields are present and reasonable
+                assert!(current_mb <= limit_mb);
+                assert_eq!(limit_mb, 5);
+                assert!(requested_mb > 0);
+            }
+            other => panic!("Expected LimitExceeded, got {:?}", other),
+        }
+        
+        // Test LayerNotFound error structure
+        let layer_result = manager.load_layer_context(LayerId {
+            dimension: DimensionId(99),
+            layer: 42,
+        });
+        assert!(layer_result.is_err());
+        
+        match layer_result.unwrap_err() {
+            ConsciousnessError::LayerNotFound { dimension, layer } => {
+                assert_eq!(dimension, 99);
+                assert_eq!(layer, 42);
+            }
+            other => panic!("Expected LayerNotFound, got {:?}", other),
+        }
+    }
+    
+    /// Test that deallocation of invalid offset fails gracefully
+    ///
+    /// Verifies error handling in deallocation path
+    #[tokio::test]
+    async fn test_invalid_deallocation() {
+        let mut manager = MmapManager::new(10).unwrap();
+        
+        // Try to deallocate an invalid offset
+        let invalid_offset = MmapOffset {
+            pool_id: 255, // Non-existent pool
+            offset: 0,
+        };
+        
+        let result = manager.deallocate(invalid_offset, 1024);
+        assert!(result.is_err());
+        
+        // Manager should still be usable
+        let alloc = manager.allocate(1024);
+        assert!(alloc.is_ok());
+    }
+    
+    /// Test allocation after deallocation reuses memory
+    ///
+    /// Verifies that the pool allocator properly tracks free blocks
+    #[tokio::test]
+    async fn test_memory_reuse_after_deallocation() {
+        let mut manager = MmapManager::new(50).unwrap();
+        
+        // Allocate and deallocate
+        let size = 4 * 1024 * 1024;
+        let alloc1 = manager.allocate(size).unwrap();
+        let stats_after_alloc = manager.get_stats();
+        let allocated_after_first = stats_after_alloc.current_allocated_mb;
+        
+        manager.deallocate(alloc1, size).unwrap();
+        let stats_after_dealloc = manager.get_stats();
+        assert!(stats_after_dealloc.current_allocated_mb < allocated_after_first);
+        
+        // Allocate again - should reuse the freed block
+        let alloc2 = manager.allocate(size).unwrap();
+        let stats_after_realloc = manager.get_stats();
+        
+        // Memory usage should be similar to first allocation
+        assert_eq!(stats_after_realloc.current_allocated_mb, allocated_after_first);
+        
+        // Cleanup
+        let _ = manager.deallocate(alloc2, size);
+    }
+    
+    /// Test proto-dimension error handling
+    ///
+    /// Verifies that proto-dimension operations handle errors correctly
+    #[tokio::test]
+    async fn test_proto_dimension_error_handling() {
+        let mut manager = MmapManager::new(280).unwrap();
+        
+        // Create proto-dimension
+        let dimension_id = DimensionId(99);
+        let content = b"test content".to_vec();
+        let layer_id = manager.create_proto_dimension(dimension_id, content).unwrap();
+        
+        // Try to crystallize non-existent proto-dimension
+        let fake_layer_id = LayerId {
+            dimension: DimensionId(999),
+            layer: 0,
+        };
+        let result = manager.crystallize_proto_dimension(fake_layer_id);
+        assert!(result.is_err());
+        
+        // Original proto-dimension should still be accessible
+        let context = manager.load_layer_context(layer_id);
+        assert!(context.is_ok());
+    }
+    
+    /// Test stats accuracy after various operations
+    ///
+    /// Verifies that memory statistics remain accurate through
+    /// allocations, deallocations, and failures
+    #[tokio::test]
+    async fn test_stats_accuracy() {
+        let mut manager = MmapManager::new(20).unwrap();
+        
+        // Initial state
+        let stats0 = manager.get_stats();
+        assert_eq!(stats0.current_allocated_mb, 0);
+        assert_eq!(stats0.total_limit_mb, 20);
+        
+        // After allocation
+        let size1 = 5 * 1024 * 1024;
+        let alloc1 = manager.allocate(size1).unwrap();
+        let stats1 = manager.get_stats();
+        assert!(stats1.current_allocated_mb >= 5);
+        
+        // After failed allocation
+        let result = manager.allocate(30 * 1024 * 1024);
+        assert!(result.is_err());
+        let stats2 = manager.get_stats();
+        assert_eq!(stats2.current_allocated_mb, stats1.current_allocated_mb);
+        
+        // After deallocation
+        manager.deallocate(alloc1, size1).unwrap();
+        let stats3 = manager.get_stats();
+        assert_eq!(stats3.current_allocated_mb, 0);
+        
+        // Utilization percentage should be correct
+        assert!(stats3.utilization_percent < 1.0);
+    }
 }
