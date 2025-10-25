@@ -16,7 +16,7 @@ use crate::{DimensionId, LayerId};
 use super::{
     NavigationError, NavigationConfig, NavigationResult, NavigationPath,
     QueryAnalyzer, ParallelScanner, PathSelector, DepthNavigator,
-    DimensionRegistry, QueryAnalysis,
+    DimensionRegistry, QueryAnalysis, UrgencyLevel,
 };
 use std::sync::Arc;
 use std::time::Instant;
@@ -141,6 +141,18 @@ impl NavigationSystem {
     pub async fn navigate(&self, query: &str) -> Result<NavigationResult, NavigationError> {
         let start_time = Instant::now();
         
+        // Validate query
+        if query.is_empty() {
+            return Err(NavigationError::EmptyQuery);
+        }
+        
+        if query.len() > 10_000 {
+            return Err(NavigationError::QueryTooLong {
+                length: query.len(),
+                max_length: 10_000,
+            });
+        }
+        
         // Step 1: Analyze query
         let analysis = self.query_analyzer.analyze(query)?;
         
@@ -209,7 +221,47 @@ impl NavigationSystem {
         // Track total duration
         let total_duration = start_time.elapsed();
         
+        // Log navigation completion
+        tracing::info!(
+            query = %query,
+            dimensions = result.dimensions.len(),
+            paths = result.paths.len(),
+            return_to_source = return_to_source_triggered,
+            duration_ms = total_duration.as_millis(),
+            "Navigation completed"
+        );
+        
         Ok(result)
+    }
+    
+    /// Validate query before processing
+    ///
+    /// Checks for:
+    /// - Empty query
+    /// - Query too long (> 10,000 chars)
+    /// - Invalid characters
+    ///
+    /// Requirement 9.6-9.7
+    pub fn validate_query(&self, query: &str) -> Result<(), NavigationError> {
+        if query.is_empty() {
+            return Err(NavigationError::EmptyQuery);
+        }
+        
+        if query.len() > 10_000 {
+            return Err(NavigationError::QueryTooLong {
+                length: query.len(),
+                max_length: 10_000,
+            });
+        }
+        
+        // Check for null bytes
+        if query.contains('\0') {
+            return Err(NavigationError::InvalidCharacters {
+                details: "Query contains null bytes".to_string(),
+            });
+        }
+        
+        Ok(())
     }
     
     /// Get reference to configuration
@@ -318,5 +370,172 @@ mod tests {
         
         // Should complete reasonably fast regardless of result
         assert!(duration.as_millis() < 200);
+    }
+    
+    // Integration tests for complex scenarios
+    
+    #[tokio::test]
+    async fn test_integration_mixed_query() {
+        let system = create_test_system();
+        
+        // Query mixing emotional, technical, and philosophical elements
+        let result = system.navigate(
+            "I feel anxious about implementing algorithms and wonder about the meaning of code"
+        ).await;
+        
+        match result {
+            Ok(result) => {
+                // Should activate multiple dimension types
+                assert!(result.paths.len() >= 1);
+                // Should have layer sequences
+                for path in &result.paths {
+                    assert!(!path.layer_sequence.is_empty());
+                }
+            }
+            Err(NavigationError::InsufficientMatches { .. }) => {
+                println!("No matches - acceptable for complex query");
+            }
+            Err(e) => panic!("Unexpected error: {:?}", e),
+        }
+    }
+    
+    #[tokio::test]
+    async fn test_integration_return_to_source_trigger() {
+        let system = create_test_system();
+        
+        // Query with many diverse keywords to potentially trigger return-to-source
+        let result = system.navigate(
+            "empathy compassion love understanding algorithm code system \
+             meaning purpose truth creativity art design balance harmony"
+        ).await;
+        
+        match result {
+            Ok(result) => {
+                // If many dimensions activated, should trigger return-to-source
+                if result.paths.len() > 6 {
+                    assert!(result.return_to_source_triggered);
+                    assert!(result.paths.len() <= 3); // Reduced to top 3
+                } else {
+                    // Otherwise should not trigger
+                    assert!(!result.return_to_source_triggered);
+                }
+            }
+            Err(NavigationError::InsufficientMatches { .. }) => {
+                println!("No matches - acceptable");
+            }
+            Err(e) => panic!("Unexpected error: {:?}", e),
+        }
+    }
+    
+    #[tokio::test]
+    async fn test_integration_philosophical_query() {
+        let system = create_test_system();
+        
+        let result = system.navigate("What is the meaning of existence and consciousness?").await;
+        
+        match result {
+            Ok(result) => {
+                // Should activate philosophical dimension (D06)
+                let has_philosophical = result.dimensions.iter()
+                    .any(|d| d.0 == 6);
+                
+                if has_philosophical {
+                    println!("Philosophical dimension activated ✓");
+                }
+                
+                assert!(!result.paths.is_empty());
+            }
+            Err(NavigationError::InsufficientMatches { .. }) => {
+                println!("No matches - acceptable");
+            }
+            Err(e) => panic!("Unexpected error: {:?}", e),
+        }
+    }
+    
+    #[tokio::test]
+    async fn test_integration_high_urgency_query() {
+        let system = create_test_system();
+        
+        let result = system.navigate("URGENT: I need immediate help with critical problem!").await;
+        
+        match result {
+            Ok(result) => {
+                // Query analysis should detect high urgency
+                assert_eq!(result.query_analysis.urgency_level, UrgencyLevel::High);
+                // Should have higher estimated frequency
+                assert!(result.query_analysis.estimated_frequency > 2.5);
+            }
+            Err(NavigationError::InsufficientMatches { .. }) => {
+                println!("No matches - acceptable");
+            }
+            Err(e) => panic!("Unexpected error: {:?}", e),
+        }
+    }
+    
+    #[tokio::test]
+    async fn test_integration_edge_case_very_long_query() {
+        let system = create_test_system();
+        
+        // Very long query with many keywords
+        let long_query = (0..100)
+            .map(|i| format!("keyword{}", i))
+            .collect::<Vec<_>>()
+            .join(" ");
+        
+        let result = system.navigate(&long_query).await;
+        
+        // Should handle gracefully
+        match result {
+            Ok(result) => {
+                // Should limit keywords (max 50)
+                assert!(result.query_analysis.keywords.len() <= 50);
+            }
+            Err(NavigationError::InsufficientMatches { .. }) => {
+                println!("No matches - acceptable");
+            }
+            Err(e) => panic!("Unexpected error: {:?}", e),
+        }
+    }
+    
+    #[tokio::test]
+    async fn test_integration_edge_case_all_stopwords() {
+        let system = create_test_system();
+        
+        // Query with only stopwords
+        let result = system.navigate("the a an and or but").await;
+        
+        // Should handle gracefully
+        match result {
+            Ok(_) => {
+                // If somehow matches, that's okay
+            }
+            Err(NavigationError::InsufficientMatches { .. }) => {
+                // Expected - no meaningful keywords
+                println!("No matches for stopwords - expected");
+            }
+            Err(e) => panic!("Unexpected error: {:?}", e),
+        }
+    }
+    
+    #[tokio::test]
+    async fn test_integration_performance_p95() {
+        let system = create_test_system();
+        
+        // Run multiple navigations and check p95 latency
+        let mut durations = Vec::new();
+        
+        for i in 0..20 {
+            let query = format!("test query number {}", i);
+            let start = Instant::now();
+            let _ = system.navigate(&query).await;
+            durations.push(start.elapsed().as_millis());
+        }
+        
+        durations.sort();
+        let p95_index = (durations.len() as f32 * 0.95) as usize;
+        let p95_latency = durations[p95_index];
+        
+        // P95 should be under 150ms (Requirement 7.7)
+        assert!(p95_latency < 150, "P95 latency {}ms exceeds 150ms target", p95_latency);
     }
 }
