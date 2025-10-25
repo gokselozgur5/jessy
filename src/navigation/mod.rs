@@ -9,6 +9,7 @@ pub mod navigator;
 pub mod synesthetic;
 pub mod path_selector;
 pub mod query_analyzer;
+pub mod parallel_scanner;
 
 // Re-export core types
 pub use types::{
@@ -20,6 +21,7 @@ pub use navigator::MultiverseNavigator;
 pub use synesthetic::SynestheticEngine;
 pub use path_selector::PathSelector;
 pub use query_analyzer::QueryAnalyzer;
+pub use parallel_scanner::{ParallelScanner, DimensionActivation};
 
 use crate::{DimensionId, LayerId, Frequency};
 use std::collections::HashMap;
