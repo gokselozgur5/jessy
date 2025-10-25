@@ -45,6 +45,10 @@ RUN apt-get update && apt-get install -y \
 RUN rustup toolchain install nightly && \
     cargo +nightly install cargo-watch
 
+# Create MMAP data directory with proper permissions
+RUN mkdir -p /app/data/mmap && \
+    chmod 755 /app/data/mmap
+
 # Copy source
 COPY . .
 
@@ -68,8 +72,9 @@ RUN apt-get update && apt-get install -y \
 # Copy binary from builder
 COPY --from=builder /app/target/release/jessy /app/jessy
 
-# Create non-root user
+# Create non-root user and MMAP data directory
 RUN useradd -m -u 1000 jessy && \
+    mkdir -p /app/data/mmap && \
     chown -R jessy:jessy /app
 
 USER jessy
