@@ -37,6 +37,10 @@
 //! # }
 //! ```
 
+pub mod interference_simple;
+
+pub use interference_simple::create_simple_interference;
+
 use crate::{Result, ConsciousnessError, DimensionId, Frequency};
 use crate::navigation::NavigationSystem;
 use crate::memory::MmapManager;
