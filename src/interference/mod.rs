@@ -264,7 +264,7 @@ mod tests {
         
         assert!(freq1.is_constructive_with(&freq2, 0.2));
         assert!(!freq1.is_destructive_with(&freq2, 2.0));
-        assert_eq!(freq1.phase_difference(&freq2), 0.1);
+        assert!((freq1.phase_difference(&freq2) - 0.1).abs() < 0.001);
     }
     
     #[test]
