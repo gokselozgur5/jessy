@@ -1,0 +1,151 @@
+# Common English stopwords to filter from keyword extraction
+# These words carry little semantic meaning for navigation
+
+# Articles
+a
+an
+the
+
+# Pronouns
+i
+me
+my
+mine
+myself
+you
+your
+yours
+yourself
+he
+him
+his
+himself
+she
+her
+hers
+herself
+it
+its
+itself
+we
+us
+our
+ours
+ourselves
+they
+them
+their
+theirs
+themselves
+
+# Prepositions
+in
+on
+at
+to
+for
+of
+with
+from
+by
+about
+as
+into
+through
+during
+before
+after
+above
+below
+between
+among
+under
+over
+against
+within
+
+# Conjunctions
+and
+or
+but
+nor
+so
+yet
+because
+although
+though
+while
+if
+unless
+until
+since
+when
+where
+whether
+
+# Common verbs
+is
+am
+are
+was
+were
+be
+been
+being
+have
+has
+had
+having
+do
+does
+did
+doing
+will
+would
+should
+could
+may
+might
+must
+can
+
+# Question words (kept minimal - some are useful for classification)
+# what
+# when
+# where
+# who
+# why
+# how
+
+# Other common words
+this
+that
+these
+those
+here
+there
+then
+now
+very
+too
+also
+just
+only
+such
+some
+any
+all
+each
+every
+both
+few
+many
+much
+more
+most
+less
+least
+other
+another
+same
+different

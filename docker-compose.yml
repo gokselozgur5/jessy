@@ -13,6 +13,7 @@ services:
       - ./src:/app/src
       - ./Cargo.toml:/app/Cargo.toml
       - ./Cargo.lock:/app/Cargo.lock
+      - ./data:/app/data
       # Cache volumes for faster rebuilds
       - cargo-cache:/usr/local/cargo/registry
       - target-cache:/app/target
