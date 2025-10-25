@@ -8,6 +8,7 @@ use super::{
     pool::{PoolAllocator, PoolStats},
     region::{MmapRegion, ContentLocation},
     MmapOffset, MmapHandle, LoadedContext, ContextCollection,
+    diagnostics::*,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -489,6 +490,97 @@ impl MmapManager {
             total_allocations: total_allocs,
             total_deallocations: total_deallocs,
         }
+    }
+    
+    /// Dump complete memory manager state for diagnostics
+    ///
+    /// Task 8.2: Creates comprehensive snapshot including:
+    /// - All loaded regions with metadata
+    /// - Complete layer index
+    /// - Pool allocator state
+    /// - Current memory usage
+    /// - Historical statistics
+    ///
+    /// This is invaluable for debugging production issues
+    pub fn dump_state(&self) -> MemoryStateDump {
+        let mut dump = MemoryStateDump::new();
+        
+        // Capture memory usage
+        let stats = self.get_stats();
+        dump.memory_usage = MemoryUsageDump {
+            total_limit_mb: stats.total_limit_mb,
+            current_allocated_mb: stats.current_allocated_mb,
+            available_mb: stats.available_mb(),
+            utilization_percent: stats.utilization_percent,
+            fragmentation_ratio: stats.fragmentation_ratio,
+        };
+        
+        // Capture statistics
+        dump.statistics = StatisticsDump {
+            total_allocations: stats.total_allocations,
+            total_deallocations: stats.total_deallocations,
+            allocation_failures: stats.allocation_failure_count,
+            peak_concurrent_readers: stats.peak_concurrent_readers,
+            regions_loaded: stats.regions_loaded,
+            layers_indexed: stats.layers_indexed,
+        };
+        
+        // Capture regions (with read lock)
+        if let Ok(regions) = self.regions.read() {
+            for (region_id, region) in regions.iter() {
+                let layers: Vec<LayerDump> = region.list_layers()
+                    .iter()
+                    .filter_map(|&layer_id| {
+                        region.get_layer_info(layer_id).map(|info| LayerDump {
+                            layer_id: format!("{:?}", layer_id),
+                            name: info.name.clone(),
+                            offset: info.offset,
+                            size: info.size,
+                            frequency: info.frequency().value(),
+                            keywords: info.keywords.clone(),
+                        })
+                    })
+                    .collect();
+                
+                dump.regions.push(RegionDump {
+                    region_id: *region_id,
+                    dimension_id: 0, // TODO: Get from region
+                    dimension_name: format!("D{:02}", region_id),
+                    file_path: String::from("unknown"), // TODO: Store path in region
+                    size_bytes: 0, // TODO: Get from region
+                    layer_count: layers.len(),
+                    layers,
+                });
+            }
+        }
+        
+        // Capture layer index (with read lock)
+        if let Ok(layer_index) = self.layer_index.read() {
+            for (layer_id, location) in layer_index.iter() {
+                let (location_type, offset, size) = match &location.content_location {
+                    ContentLocation::Mmap { offset, size, .. } => ("MMAP", *offset, *size),
+                    ContentLocation::Heap { data, .. } => ("Heap", 0, data.len()),
+                    ContentLocation::Hybrid { mmap_size, heap_overlay, .. } => 
+                        ("Hybrid", 0, mmap_size + heap_overlay.len()),
+                };
+                
+                dump.layer_index.push(LayerIndexEntry {
+                    layer_id: format!("{:?}", layer_id),
+                    dimension: layer_id.dimension.0,
+                    layer: layer_id.layer,
+                    location_type: location_type.to_string(),
+                    region_id: location.region_id,
+                    offset,
+                    size,
+                });
+            }
+        }
+        
+        // TODO: Capture pool state from PoolAllocator
+        // For now, just set total_pools
+        dump.pool_state.total_pools = 4; // We have 4 pools
+        
+        dump
     }
     
     /// Pre-allocate space for core dimensions (fast initialization)
