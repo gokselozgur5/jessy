@@ -75,6 +75,11 @@ harness = false
 name = "navigation_benchmarks"
 harness = false
 
+[[bench]]
+name = "interference_benchmarks"
+path = "benches/interference_benchmarks.rs"
+harness = false
+
 [dev-dependencies]
 cucumber = "0.21"
 criterion = { version = "0.5", features = ["html_reports"] }

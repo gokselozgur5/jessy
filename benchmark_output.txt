@@ -1,0 +1,4 @@
+[1m[31merror[0m[1m:[0m failed to parse manifest at `/app/Cargo.toml`
+
+Caused by:
+  can't find `navigation_benchmarks` bench at `benches/navigation_benchmarks.rs` or `benches/navigation_benchmarks/main.rs`. Please specify bench.path if you want to use a non-default path.
