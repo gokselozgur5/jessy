@@ -57,3 +57,6 @@ wheels/
 
 # Test files
 sonnet4545.txt
+
+# Agent rules (private, session-specific)
+AGENT_RULES.md
