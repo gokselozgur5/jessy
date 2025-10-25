@@ -16,6 +16,9 @@ pub mod validation;
 pub mod metrics;
 pub mod diagnostics;
 
+#[cfg(test)]
+mod concurrency_tests;
+
 // Re-export core types
 pub use types::{
     NavigationConfig, NavigationError, ProtoDimensionId, QuestionType, SystemState, UrgencyLevel,
