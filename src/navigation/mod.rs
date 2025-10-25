@@ -14,6 +14,7 @@ pub mod depth_navigator;
 pub mod orchestrator;
 pub mod validation;
 pub mod metrics;
+pub mod diagnostics;
 
 // Re-export core types
 pub use types::{
