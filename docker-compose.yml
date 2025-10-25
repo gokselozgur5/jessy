@@ -149,7 +149,7 @@ services:
       - RUST_TEST_THREADS=1
       - RUST_BACKTRACE=1
       - CARGO_TERM_COLOR=always
-    command: ["cargo", "test", "--lib", "--all-features", "--color=always", "--", "--nocapture"]
+    command: ["cargo", "test", "--lib", "--no-default-features", "--color=always", "--", "--nocapture"]
     networks:
       - jessy-network
     profiles:
