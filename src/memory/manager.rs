@@ -198,11 +198,19 @@ impl MmapManager {
             regions.insert(region_id, region);
         } // Locks released here automatically
         
+        let layer_count = {
+            let layer_index = self.layer_index.read()
+                .map_err(|e| ConsciousnessError::MemoryError(
+                    format!("Failed to acquire layer_index read lock: {}", e)
+                ))?;
+            layer_index.values().filter(|loc| loc.region_id == region_id).count()
+        };
+        
         tracing::debug!(
             "Loaded dimension {:?} as region {} with {} layers",
             dimension_id,
             region_id,
-            added_layers.len()
+            layer_count
         );
         
         Ok(region_id)
