@@ -164,6 +164,42 @@ impl ContextCollection {
         formatted  // Return ownership of the String
     }
     
+    /// Task 9.2: Format contexts with frequency and keywords for LLM
+    ///
+    /// Enhanced formatting that includes:
+    /// - Dimension metadata
+    /// - Frequency information
+    /// - Keywords for each layer
+    /// - Structured format for better LLM understanding
+    pub fn format_with_metadata(&self) -> String {
+        let mut formatted = String::with_capacity(self.total_size + 2048);
+        
+        formatted.push_str("=== DIMENSIONAL CONSCIOUSNESS CONTEXT ===\n\n");
+        formatted.push_str(&format!("Total Layers: {}\n", self.contexts.len()));
+        formatted.push_str(&format!("Total Content Size: {} bytes\n\n", self.total_size));
+        
+        for (i, context) in self.contexts.iter().enumerate() {
+            formatted.push_str(&format!("--- Layer {} ---\n", i + 1));
+            formatted.push_str(&format!("Dimension: D{:02}\n", context.layer_id.dimension.0));
+            formatted.push_str(&format!("Layer ID: {:?}\n", context.layer_id));
+            formatted.push_str(&format!("Frequency: {:.2} Hz\n", context.frequency.hz()));
+            
+            // Add keywords if present
+            if !context.keywords.is_empty() {
+                formatted.push_str("Keywords: ");
+                formatted.push_str(&context.keywords.join(", "));
+                formatted.push_str("\n");
+            }
+            
+            formatted.push_str("\nContent:\n");
+            formatted.push_str(&context.content);
+            formatted.push_str("\n\n");
+        }
+        
+        formatted.push_str("=== END DIMENSIONAL CONTEXT ===\n");
+        formatted
+    }
+    
     /// Get the number of loaded contexts
     ///
     /// Vec::len() is O(1) - just returns the stored length field
