@@ -33,6 +33,7 @@ uuid = { version = "1.0", features = ["v4"] }
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
 
 # Python bindings (v0.21+ supports Python 3.13)
 pyo3 = { version = "0.21", features = ["extension-module"], optional = true }
