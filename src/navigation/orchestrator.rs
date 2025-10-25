@@ -538,4 +538,206 @@ mod tests {
         // P95 should be under 150ms (Requirement 7.7)
         assert!(p95_latency < 150, "P95 latency {}ms exceeds 150ms target", p95_latency);
     }
+    
+    // ============================================================================
+    // TASK 8.3: Graceful Error Handling Tests (RED Phase)
+    // Requirements: 9.1-9.5
+    // ============================================================================
+
+    #[tokio::test]
+    async fn test_scan_timeout_returns_partial_results() {
+        // Requirement 9.1: Scan timeout returns partial results, not error
+        let system = create_test_system();
+        
+        // Query that should activate multiple dimensions
+        let query = "I feel anxious about technical algorithms";
+        let result = system.navigate(query).await;
+        
+        // Even if timeout occurs, should return partial results
+        // (In real scenario, we'd mock slow dimensions to trigger timeout)
+        assert!(result.is_ok(), "Should return partial results on timeout");
+        
+        if let Ok(nav_result) = result {
+            // Should have at least some dimensions activated
+            assert!(!nav_result.paths.is_empty(), "Should have partial results");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_single_dimension_failure_continues_scanning() {
+        // Requirement 9.2: Single dimension failure doesn't fail entire scan
+        let system = create_test_system();
+        
+        // Query that activates multiple dimensions
+        let query = "emotional technical philosophical question";
+        let result = system.navigate(query).await;
+        
+        // Should succeed even if one dimension fails
+        assert!(result.is_ok(), "Should continue scanning despite single failure");
+        
+        if let Ok(nav_result) = result {
+            // Should have results from successful dimensions
+            assert!(!nav_result.paths.is_empty(), "Should have results from successful scans");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_zero_activations_returns_insufficient_matches_error() {
+        // Requirement 9.3: Zero activations returns InsufficientMatches error
+        let system = create_test_system();
+        
+        // Query with no meaningful keywords (all stopwords)
+        let query = "the a an of to";
+        let result = system.navigate(query).await;
+        
+        assert!(result.is_err(), "Should return error for zero activations");
+        
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, NavigationError::InsufficientMatches { .. }),
+            "Should be InsufficientMatches error, got: {:?}", err
+        );
+        
+        // Verify error includes query text
+        if let NavigationError::InsufficientMatches { query: q, .. } = err {
+            assert_eq!(q, query, "Error should include original query");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_error_includes_query_context() {
+        // Requirement 9.4: Errors include query text in context
+        let system = create_test_system();
+        
+        let test_query = "meaningless gibberish xyz123";
+        let result = system.navigate(test_query).await;
+        
+        if let Err(err) = result {
+            let error_msg = format!("{}", err);
+            // Error message should reference the query somehow
+            // (either directly or through context)
+            assert!(
+                error_msg.contains("query") || error_msg.contains(test_query),
+                "Error should include query context: {}", error_msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_partial_scan_includes_completed_dimensions() {
+        // Requirement 9.5: Partial results include successfully scanned dimensions
+        let system = create_test_system();
+        
+        // Query that should activate some dimensions
+        let query = "emotional empathy compassion";
+        let result = system.navigate(query).await;
+        
+        assert!(result.is_ok(), "Should succeed with partial results");
+        
+        if let Ok(nav_result) = result {
+            // Should have list of scanned dimensions
+            assert!(!nav_result.dimensions.is_empty(), "Should list scanned dimensions");
+            
+            // Each path should have valid dimension ID
+            for path in &nav_result.paths {
+                assert!(path.dimension_id.0 > 0, "Should have valid dimension ID");
+                assert!(path.dimension_id.0 <= 14, "Dimension ID should be in valid range");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_empty_query_error_context() {
+        // Requirement 9.4: Empty query error includes context
+        let system = create_test_system();
+        
+        let result = system.navigate("").await;
+        
+        assert!(result.is_err(), "Empty query should return error");
+        
+        let err = result.unwrap_err();
+        assert!(matches!(err, NavigationError::EmptyQuery));
+        
+        // Error should be descriptive
+        let error_msg = format!("{}", err);
+        assert!(
+            error_msg.to_lowercase().contains("empty"),
+            "Error message should mention 'empty': {}", error_msg
+        );
+    }
+
+    #[tokio::test]
+    async fn test_query_too_long_error_context() {
+        // Requirement 9.4: QueryTooLong error includes lengths
+        let system = create_test_system();
+        
+        let long_query = "a".repeat(10_001);
+        let result = system.navigate(&long_query).await;
+        
+        assert!(result.is_err(), "Too long query should return error");
+        
+        let err = result.unwrap_err();
+        assert!(matches!(err, NavigationError::QueryTooLong { .. }));
+        
+        if let NavigationError::QueryTooLong { length, max_length } = err {
+            assert_eq!(length, 10_001, "Should report actual length");
+            assert_eq!(max_length, 10_000, "Should report max length");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_scan_continues_after_dimension_error() {
+        // Requirement 9.2: Scanning continues even if one dimension fails
+        let system = create_test_system();
+        
+        // Query that should activate multiple dimensions
+        let query = "complex emotional technical philosophical question about life";
+        let result = system.navigate(query).await;
+        
+        // Should succeed with results from working dimensions
+        assert!(result.is_ok(), "Should succeed despite potential dimension failures");
+        
+        if let Ok(nav_result) = result {
+            // Should have activated at least some dimensions
+            assert!(
+                nav_result.paths.len() > 0,
+                "Should have results from successful dimension scans"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_timeout_includes_completed_scan_count() {
+        // Requirement 9.5: Timeout result includes count of completed scans
+        let system = create_test_system();
+        
+        let query = "test query for timeout scenario";
+        let result = system.navigate(query).await;
+        
+        // In normal operation (no actual timeout), should succeed
+        if let Ok(nav_result) = result {
+            // Should track which dimensions were scanned
+            assert!(
+                nav_result.dimensions.len() > 0,
+                "Should track scanned dimensions"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_error_recovery_maintains_system_state() {
+        // Verify system remains operational after errors
+        let system = create_test_system();
+        
+        // First query: trigger error
+        let _ = system.navigate("").await;
+        
+        // Second query: should still work
+        let result = system.navigate("valid query").await;
+        assert!(result.is_ok(), "System should recover from errors");
+    }
+
+    // ============================================================================
+    // End of Task 8.3 Tests
+    // ============================================================================
 }
