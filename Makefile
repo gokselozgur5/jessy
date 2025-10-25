@@ -193,7 +193,7 @@ test-hot-reload: ## Test hot reload functionality
 
 bench: ## Run performance benchmarks
 	@echo "$(BLUE)⚡ Running performance benchmarks...$(NC)"
-	@docker-compose run --rm jessy-test cargo bench --all-features
+	@docker-compose run --rm $(RUST_SERVICE) cargo bench --bench navigation_benchmarks --no-default-features
 	@if [ $? -eq 0 ]; then \
 		echo "$(GREEN)✅ Benchmarks complete!$(NC)"; \
 		echo "$(YELLOW)📊 Reports available at: target/criterion/$(NC)"; \
@@ -205,8 +205,13 @@ bench: ## Run performance benchmarks
 
 bench-baseline: ## Save benchmark baseline for regression detection
 	@echo "$(BLUE)📊 Saving benchmark baseline...$(NC)"
-	@docker-compose run --rm jessy-test cargo bench --all-features -- --save-baseline main
+	@docker-compose run --rm $(RUST_SERVICE) cargo bench --bench navigation_benchmarks --no-default-features -- --save-baseline main
 	@echo "$(GREEN)✅ Baseline saved!$(NC)"
+
+bench-compare: ## Compare benchmarks against baseline
+	@echo "$(BLUE)📊 Comparing benchmarks against baseline...$(NC)"
+	@docker-compose run --rm $(RUST_SERVICE) cargo bench --bench navigation_benchmarks --no-default-features -- --baseline main
+	@echo "$(GREEN)✅ Comparison complete!$(NC)"
 
 bench-compare: ## Compare benchmarks against baseline
 	@echo "$(BLUE)📊 Comparing benchmarks against baseline...$(NC)"
