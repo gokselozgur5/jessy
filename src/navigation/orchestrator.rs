@@ -153,15 +153,19 @@ impl NavigationSystem {
             });
         }
         
-        // Step 1: Analyze query
+        // Step 1: Analyze query (track duration)
+        let analysis_start = Instant::now();
         let analysis = self.query_analyzer.analyze(query)?;
+        let query_analysis_duration_ms = analysis_start.elapsed().as_millis() as u64;
         
-        // Step 2: Scan dimensions in parallel with timeout
+        // Step 2: Scan dimensions in parallel with timeout (track duration)
         // Requirement 9.1: Use timeout to ensure completion within 100ms
         // Returns partial results if timeout occurs
+        let scan_start = Instant::now();
         let activations = self.parallel_scanner
             .scan_all_with_timeout(&analysis.keywords)
             .await?;
+        let dimension_scan_duration_ms = scan_start.elapsed().as_millis() as u64;
         
         // Check if we have any activations
         if activations.is_empty() {
@@ -171,7 +175,8 @@ impl NavigationSystem {
             });
         }
         
-        // Step 3: Convert activations to paths and select
+        // Step 3: Convert activations to paths and select (track duration)
+        let selection_start = Instant::now();
         let mut paths: Vec<NavigationPath> = activations
             .into_iter()
             .map(|activation| {
@@ -204,13 +209,16 @@ impl NavigationSystem {
         if return_to_source_triggered {
             self.path_selector.apply_return_to_source(&mut final_paths);
         }
+        let path_selection_duration_ms = selection_start.elapsed().as_millis() as u64;
         
-        // Step 5: Navigate depth for each selected dimension
+        // Step 5: Navigate depth for each selected dimension (track duration)
+        let depth_start = Instant::now();
         for path in &mut final_paths {
             let layers = self.depth_navigator
                 .navigate_depth(path.dimension_id, &analysis.keywords)?;
             path.layer_sequence = layers;
         }
+        let depth_navigation_duration_ms = depth_start.elapsed().as_millis() as u64;
         
         // Step 6: Assemble result
         let mut result = NavigationResult::new(analysis);
@@ -220,16 +228,25 @@ impl NavigationSystem {
         result.calculate_complexity();
         result.return_to_source_triggered = return_to_source_triggered;
         
-        // Track total duration
+        // Track all durations (Task 10.1)
         let total_duration = start_time.elapsed();
+        result.query_analysis_duration_ms = query_analysis_duration_ms;
+        result.dimension_scan_duration_ms = dimension_scan_duration_ms;
+        result.path_selection_duration_ms = path_selection_duration_ms;
+        result.depth_navigation_duration_ms = depth_navigation_duration_ms;
+        result.total_duration_ms = total_duration.as_millis() as u64;
         
-        // Log navigation completion
+        // Log navigation completion with detailed durations
         tracing::info!(
             query = %query,
             dimensions = result.dimensions.len(),
             paths = result.paths.len(),
             return_to_source = return_to_source_triggered,
-            duration_ms = total_duration.as_millis(),
+            total_duration_ms = result.total_duration_ms,
+            query_analysis_ms = query_analysis_duration_ms,
+            dimension_scan_ms = dimension_scan_duration_ms,
+            path_selection_ms = path_selection_duration_ms,
+            depth_navigation_ms = depth_navigation_duration_ms,
             "Navigation completed"
         );
         
