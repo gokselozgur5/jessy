@@ -40,6 +40,9 @@
 pub mod interference_simple;
 pub mod orchestrator;
 
+#[cfg(test)]
+mod integration_tests;
+
 pub use interference_simple::create_simple_interference;
 pub use orchestrator::ConsciousnessOrchestrator;
 
