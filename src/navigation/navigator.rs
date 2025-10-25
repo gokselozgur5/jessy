@@ -3,6 +3,7 @@
 
 use crate::{Result, memory::manager::NavigationPath, DimensionId};
 
+#[derive(Debug)]
 pub struct MultiverseNavigator;
 
 pub struct NavigationResult {

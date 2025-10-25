@@ -156,6 +156,7 @@ impl Default for ConsciousnessConfig {
 }
 
 /// Main consciousness system entry point
+#[derive(Debug)]
 pub struct ConsciousnessSystem {
     config: ConsciousnessConfig,
     memory_manager: memory::MmapManager,

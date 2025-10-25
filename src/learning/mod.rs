@@ -3,6 +3,7 @@
 
 use crate::Result;
 
+#[derive(Debug)]
 pub struct LearningSystem;
 
 impl LearningSystem {

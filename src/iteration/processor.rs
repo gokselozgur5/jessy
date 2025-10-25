@@ -6,6 +6,7 @@ use crate::memory::ContextCollection;
 use crate::interference::InterferenceResult;
 
 /// Main iteration processor for 9-iteration deep thinking
+#[derive(Debug)]
 pub struct IterationProcessor {
     config: IterationConfig,
 }

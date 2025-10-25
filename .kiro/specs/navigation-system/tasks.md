@@ -620,8 +620,8 @@ Starting from Task 3, this plan follows strict Test-Driven Development methodolo
     - Refactor for final clarity
     - _Requirements: 14.1-14.13_
 
-- [ ] 10. Implement observability and diagnostics
-  - [ ] 10.1 Add duration tracking
+- [-] 10. Implement observability and diagnostics
+  - [x] 10.1 Add duration tracking
     - Track query analysis duration
     - Track individual dimension scan durations
     - Track path selection duration
@@ -629,7 +629,7 @@ Starting from Task 3, this plan follows strict Test-Driven Development methodolo
     - Include durations in NavigationResult
     - _Requirements: 10.1-10.2_
   
-  - [ ] 10.2 Set up logging infrastructure
+  - [x] 10.2 Set up logging infrastructure
     - Add `tracing` and `tracing-subscriber` dependencies to Cargo.toml
     - Configure structured logging with JSON formatter
     - Set up log levels: ERROR, WARN, INFO, DEBUG, TRACE
@@ -638,7 +638,7 @@ Starting from Task 3, this plan follows strict Test-Driven Development methodolo
     - Initialize logging in main() before system startup
     - _Requirements: 10.1-10.5_
   
-  - [ ] 10.3 Add diagnostic logging throughout system
+  - [-] 10.3 Add diagnostic logging throughout system
     - Log query analysis results at DEBUG level with structured fields
     - Log dimension activations at DEBUG level with dimension_id, confidence, matched_keywords
     - Log path selection at INFO level with selected dimensions and confidences
