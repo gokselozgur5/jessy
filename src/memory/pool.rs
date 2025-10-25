@@ -194,8 +194,20 @@ pub struct MmapPool {
 impl MmapPool {
     /// Create new memory pool
     ///
-    /// Uses anonymous MMAP (not backed by file) - pure virtual memory
-    /// OS allocates physical pages lazily as we write to them
+    /// Task 11.1: Cross-platform MMAP using memmap2
+    /// 
+    /// Platform-specific behavior:
+    /// - Linux: Uses mmap() with MAP_ANONYMOUS flag
+    /// - macOS: Uses mmap() with MAP_ANON flag (same as Linux)
+    /// - Windows: Uses CreateFileMapping with INVALID_HANDLE_VALUE
+    ///
+    /// Page sizes:
+    /// - Linux/Intel: 4KB pages
+    /// - macOS Intel: 4KB pages
+    /// - macOS Apple Silicon: 16KB pages (handled automatically by memmap2)
+    /// - Windows: 4KB or 64KB pages
+    ///
+    /// memmap2 crate abstracts all platform differences
     pub fn new(pool_id: u8, size_mb: usize, block_size: usize) -> Result<Self> {
         let total_size = size_mb * 1024 * 1024;
         let num_blocks = total_size / block_size;
@@ -203,9 +215,12 @@ impl MmapPool {
         // map_anon() creates anonymous mapping - not backed by file
         // This is like malloc() but using MMAP for better control
         // OS doesn't allocate physical memory until we write to pages
+        // memmap2 handles platform differences:
+        // - Unix: mmap(MAP_ANONYMOUS or MAP_ANON)
+        // - Windows: CreateFileMapping(INVALID_HANDLE_VALUE)
         let mmap = MmapOptions::new()
             .len(total_size)
-            .map_anon()  // Anonymous = no file backing
+            .map_anon()  // Cross-platform anonymous mapping
             .map_err(|e| ConsciousnessError::MemoryError(
                 format!("Failed to create mmap: {}", e)
             ))?;
