@@ -1,5 +1,8 @@
 .PHONY: help up down build test test-unit test-integration test-bdd clean logs shell
 
+# Docker Compose service name for Rust commands
+RUST_SERVICE := unit-tests
+
 # Colors for output
 BLUE := \033[0;34m
 GREEN := \033[0;32m
@@ -144,16 +147,37 @@ cargo: ## Run cargo commands in Docker (usage: make cargo ARGS="test --lib")
 		exit 1; \
 	fi
 	@echo "$(BLUE)🦀 Running: cargo $(ARGS)$(NC)"
-	@docker-compose run --rm unit-tests cargo $(ARGS)
+	@echo "$(YELLOW)📦 Using service: $(RUST_SERVICE)$(NC)"
+	@docker-compose run --rm $(RUST_SERVICE) cargo $(ARGS)
+
+services: ## List all available Docker Compose services
+	@echo "$(BLUE)📋 Available Docker Compose Services:$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Main Services:$(NC)"
+	@docker-compose config --services 2>/dev/null | while read service; do \
+		echo "  • $$service"; \
+	done
+	@echo ""
+	@echo "$(YELLOW)Test Services (profile: test):$(NC)"
+	@docker-compose --profile test config --services 2>/dev/null | grep -E "(test|coverage|bdd)" | while read service; do \
+		if [ "$$service" = "$(RUST_SERVICE)" ]; then \
+			echo "  • $(GREEN)$$service$(NC) ⭐ (current Rust service)"; \
+		else \
+			echo "  • $$service"; \
+		fi; \
+	done
+	@echo ""
+	@echo "$(YELLOW)💡 Current Rust service: $(GREEN)$(RUST_SERVICE)$(NC)$(NC)"
+	@echo "$(YELLOW)💡 To change, edit RUST_SERVICE in Makefile$(NC)"
 
 fmt: ## Format code
 	@echo "$(BLUE)🎨 Formatting code...$(NC)"
-	docker-compose run --rm unit-tests cargo fmt --all
+	@docker-compose run --rm $(RUST_SERVICE) cargo fmt --all
 	@echo "$(GREEN)✅ Code formatted$(NC)"
 
 clippy: ## Run clippy linter
 	@echo "$(BLUE)📎 Running clippy...$(NC)"
-	docker-compose run --rm unit-tests cargo clippy --all-features -- -D warnings
+	@docker-compose run --rm $(RUST_SERVICE) cargo clippy --all-features -- -D warnings
 	@echo "$(GREEN)✅ Clippy checks passed$(NC)"
 
 ci: fmt clippy test ## Run full CI pipeline locally
