@@ -17,6 +17,7 @@ use super::{
     NavigationError, NavigationConfig, NavigationResult, NavigationPath,
     QueryAnalyzer, ParallelScanner, PathSelector, DepthNavigator,
     DimensionRegistry, QueryAnalysis, UrgencyLevel,
+    metrics::NavigationMetrics,
 };
 use std::sync::Arc;
 use std::time::Instant;
@@ -56,6 +57,9 @@ pub struct NavigationSystem {
     
     /// Configuration parameters
     config: NavigationConfig,
+    
+    /// Metrics collector (Task 10.4)
+    metrics: Arc<NavigationMetrics>,
 }
 
 impl NavigationSystem {
@@ -84,6 +88,7 @@ impl NavigationSystem {
             path_selector: PathSelector::new(),
             depth_navigator: DepthNavigator::new(registry),
             config,
+            metrics: Arc::new(NavigationMetrics::new()),
         })
     }
     
@@ -102,6 +107,7 @@ impl NavigationSystem {
             path_selector: PathSelector::with_config(config.clone()),
             depth_navigator: DepthNavigator::new(registry),
             config,
+            metrics: Arc::new(NavigationMetrics::new()),
         })
     }
     
@@ -141,9 +147,19 @@ impl NavigationSystem {
     pub async fn navigate(&self, query: &str) -> Result<NavigationResult, NavigationError> {
         let start_time = Instant::now();
         
+        // Track concurrent requests (Task 10.4)
+        self.metrics.increment_concurrent_requests();
+        
+        // Ensure we decrement on exit (using guard pattern)
+        let _guard = ConcurrentRequestGuard::new(Arc::clone(&self.metrics));
+        
+        // Record query (Task 10.4)
+        self.metrics.record_query();
+        
         // Validate query
         if query.is_empty() {
             tracing::error!("Empty query rejected");
+            self.metrics.record_validation_error();
             return Err(NavigationError::EmptyQuery);
         }
         
@@ -153,6 +169,7 @@ impl NavigationSystem {
                 max_length = 10_000,
                 "Query too long rejected"
             );
+            self.metrics.record_validation_error();
             return Err(NavigationError::QueryTooLong {
                 length: query.len(),
                 max_length: 10_000,
@@ -212,6 +229,7 @@ impl NavigationSystem {
                 threshold = self.config.confidence_threshold,
                 "No dimensions activated: insufficient matches"
             );
+            self.metrics.record_insufficient_matches();
             return Err(NavigationError::InsufficientMatches {
                 threshold: self.config.confidence_threshold,
                 query: query.to_string(),
@@ -258,6 +276,9 @@ impl NavigationSystem {
                 "Return-to-source triggered: reducing dimensions"
             );
             
+            // Record return-to-source metric (Task 10.4)
+            self.metrics.record_return_to_source();
+            
             self.path_selector.apply_return_to_source(&mut final_paths);
         }
         
@@ -285,10 +306,15 @@ impl NavigationSystem {
         // Step 6: Assemble result
         let mut result = NavigationResult::new(analysis);
         for path in final_paths {
+            // Record confidence scores (Task 10.4)
+            self.metrics.record_confidence(path.confidence);
             result.add_path(path);
         }
         result.calculate_complexity();
         result.return_to_source_triggered = return_to_source_triggered;
+        
+        // Record dimensions activated (Task 10.4)
+        self.metrics.record_dimensions_activated(result.paths.len());
         
         // Track all durations (Task 10.1)
         let total_duration = start_time.elapsed();
@@ -348,6 +374,28 @@ impl NavigationSystem {
     /// Get reference to configuration
     pub fn config(&self) -> &NavigationConfig {
         &self.config
+    }
+    
+    /// Get reference to metrics (Task 10.4)
+    pub fn metrics(&self) -> &Arc<NavigationMetrics> {
+        &self.metrics
+    }
+}
+
+/// Guard to automatically decrement concurrent requests on drop
+struct ConcurrentRequestGuard {
+    metrics: Arc<NavigationMetrics>,
+}
+
+impl ConcurrentRequestGuard {
+    fn new(metrics: Arc<NavigationMetrics>) -> Self {
+        Self { metrics }
+    }
+}
+
+impl Drop for ConcurrentRequestGuard {
+    fn drop(&mut self) {
+        self.metrics.decrement_concurrent_requests();
     }
 }
 
