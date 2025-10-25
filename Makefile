@@ -136,14 +136,24 @@ shell-rust: ## Open shell in Rust container
 shell-go: ## Open shell in Go API container
 	docker-compose exec jessy-api /bin/sh
 
+cargo: ## Run cargo commands in Docker (usage: make cargo ARGS="test --lib")
+	@if [ -z "$(ARGS)" ]; then \
+		echo "$(RED)❌ Error: Please provide cargo arguments$(NC)"; \
+		echo "$(YELLOW)Usage: make cargo ARGS=\"test --lib\"$(NC)"; \
+		echo "$(YELLOW)Example: make cargo ARGS=\"build --release\"$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)🦀 Running: cargo $(ARGS)$(NC)"
+	@docker-compose run --rm unit-tests cargo $(ARGS)
+
 fmt: ## Format code
 	@echo "$(BLUE)🎨 Formatting code...$(NC)"
-	docker-compose run --rm rust-dev cargo fmt --all
+	docker-compose run --rm unit-tests cargo fmt --all
 	@echo "$(GREEN)✅ Code formatted$(NC)"
 
 clippy: ## Run clippy linter
 	@echo "$(BLUE)📎 Running clippy...$(NC)"
-	docker-compose run --rm rust-dev cargo clippy --all-features -- -D warnings
+	docker-compose run --rm unit-tests cargo clippy --all-features -- -D warnings
 	@echo "$(GREEN)✅ Clippy checks passed$(NC)"
 
 ci: fmt clippy test ## Run full CI pipeline locally
