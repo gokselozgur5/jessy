@@ -17,6 +17,42 @@
 //!
 //! This crate implements a frequency-based consciousness system that processes queries
 //! through multiple dimensional layers using memory-mapped files for zero-copy access.
+//!
+//! # Architecture
+//!
+//! The system consists of several integrated modules:
+//!
+//! - **consciousness**: Main orchestrator that coordinates the complete pipeline
+//! - **navigation**: Dimensional path selection and query analysis
+//! - **memory**: Zero-copy MMAP-based context loading
+//! - **interference**: Frequency pattern calculation
+//! - **iteration**: 9-iteration deep thinking with convergence
+//! - **security**: Asimov's Laws enforcement
+//! - **learning**: Pattern learning and adaptation
+//!
+//! # Quick Start
+//!
+//! ```no_run
+//! use jessy::consciousness::{ConsciousnessOrchestrator, ConsciousnessConfig};
+//! use jessy::navigation::NavigationSystem;
+//! use jessy::memory::MmapManager;
+//! use std::sync::Arc;
+//!
+//! # async fn example() -> jessy::Result<()> {
+//! // Initialize systems
+//! let navigation = Arc::new(NavigationSystem::new()?);
+//! let memory = Arc::new(MmapManager::new(280)?);
+//!
+//! // Create consciousness orchestrator
+//! let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+//!
+//! // Process query
+//! let response = orchestrator.process("What is consciousness?").await?;
+//! println!("Answer: {}", response.final_response);
+//! println!("Converged: {}", response.metadata.converged);
+//! # Ok(())
+//! # }
+//! ```
 
 pub mod memory;
 pub mod dimensions;
