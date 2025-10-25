@@ -349,4 +349,80 @@ mod tests {
         assert!(layers.len() <= 4);
         assert!(layers.len() >= 1); // At least root
     }
+    
+    // Integration tests with real dimension registry
+    
+    #[test]
+    fn test_integration_real_registry() {
+        let registry = create_test_registry();
+        let navigator = DepthNavigator::new(registry);
+        
+        // Test with all 14 dimensions
+        for dim_id in 1..=14 {
+            let result = navigator.navigate_depth(DimensionId(dim_id), &vec!["test".to_string()]);
+            assert!(result.is_ok(), "Failed to navigate dimension {}", dim_id);
+            
+            let layers = result.unwrap();
+            assert!(!layers.is_empty(), "Dimension {} has no layers", dim_id);
+            assert!(layers.len() <= 4, "Dimension {} exceeds max depth", dim_id);
+        }
+    }
+    
+    #[test]
+    fn test_integration_various_query_types() {
+        let registry = create_test_registry();
+        let navigator = DepthNavigator::new(registry);
+        
+        // Emotional query
+        let emotional_keywords = vec!["empathy".to_string(), "compassion".to_string(), "love".to_string()];
+        let layers = navigator.navigate_depth(DimensionId(1), &emotional_keywords).unwrap();
+        assert!(!layers.is_empty());
+        
+        // Technical query
+        let technical_keywords = vec!["algorithm".to_string(), "code".to_string(), "system".to_string()];
+        let layers = navigator.navigate_depth(DimensionId(7), &technical_keywords).unwrap();
+        assert!(!layers.is_empty());
+        
+        // Philosophical query
+        let philosophical_keywords = vec!["meaning".to_string(), "existence".to_string(), "truth".to_string()];
+        let layers = navigator.navigate_depth(DimensionId(6), &philosophical_keywords).unwrap();
+        assert!(!layers.is_empty());
+    }
+    
+    #[test]
+    fn test_integration_edge_cases() {
+        let registry = create_test_registry();
+        let navigator = DepthNavigator::new(registry);
+        
+        // Empty keywords
+        let layers = navigator.navigate_depth(DimensionId(1), &vec![]).unwrap();
+        assert_eq!(layers.len(), 1); // Only root
+        
+        // Very long keyword list
+        let many_keywords: Vec<String> = (0..100).map(|i| format!("keyword{}", i)).collect();
+        let layers = navigator.navigate_depth(DimensionId(1), &many_keywords).unwrap();
+        assert!(!layers.is_empty());
+        
+        // Invalid dimension
+        let result = navigator.navigate_depth(DimensionId(99), &vec!["test".to_string()]);
+        assert!(result.is_err());
+    }
+    
+    #[test]
+    fn test_integration_performance() {
+        let registry = create_test_registry();
+        let navigator = DepthNavigator::new(registry);
+        
+        let keywords = vec!["test".to_string(), "query".to_string()];
+        
+        // Should complete quickly even with multiple navigations
+        let start = std::time::Instant::now();
+        for _ in 0..100 {
+            let _ = navigator.navigate_depth(DimensionId(1), &keywords);
+        }
+        let duration = start.elapsed();
+        
+        // 100 navigations should complete in under 100ms
+        assert!(duration.as_millis() < 100, "Navigation too slow: {:?}", duration);
+    }
 }
