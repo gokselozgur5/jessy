@@ -28,7 +28,7 @@ impl PathSelector {
         
         // Take top paths up to max_dimensions
         paths.into_iter()
-            .filter(|p| p.is_viable(self.config.min_confidence))
+            .filter(|p| p.is_viable(self.config.confidence_threshold))
             .take(self.config.max_dimensions)
             .collect()
     }
@@ -90,17 +90,20 @@ mod tests {
         
         let mut path1 = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
         path1.confidence = 0.9;
+        path1.add_layer(LayerId { dimension: DimensionId(1), layer: 0 }, 0.0);
         
         let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
         path2.confidence = 0.5;
+        path2.add_layer(LayerId { dimension: DimensionId(2), layer: 0 }, 0.0);
         
         let mut path3 = NavigationPath::new(DimensionId(3), Frequency::new(2.0));
         path3.confidence = 0.2; // Below threshold
+        path3.add_layer(LayerId { dimension: DimensionId(3), layer: 0 }, 0.0);
         
         let paths = vec![path1, path2, path3];
         let selected = selector.select_top_paths(paths);
         
-        assert_eq!(selected.len(), 2); // Only viable paths
+        assert_eq!(selected.len(), 2); // Only viable paths (above 0.3 threshold)
         assert_eq!(selected[0].dimension_id, DimensionId(1)); // Highest confidence first
     }
     
