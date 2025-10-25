@@ -139,9 +139,13 @@ impl PoolAllocator {
             ))?;
         
         // unsafe block: pointer arithmetic with add()
-        // as_mut_ptr() returns *mut u8 - raw pointer to MMAP memory
+        // as_ptr() returns *const u8, we cast to *mut for write access
+        // This is safe because MmapMut provides interior mutability
         // add() is unsafe because it can create out-of-bounds pointers
-        Ok(unsafe { pool.mmap.as_mut_ptr().add(mmap_offset.offset) })
+        Ok(unsafe { 
+            let ptr = pool.mmap.as_ptr() as *mut u8;
+            ptr.add(mmap_offset.offset)
+        })
     }
     
     /// Get slice reference to allocated block

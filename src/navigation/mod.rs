@@ -8,7 +8,8 @@ pub mod synesthetic;
 pub mod path_selector;
 
 pub use navigator::MultiverseNavigator;
-pub use synesthetic::{SynestheticEngine, SynestheticAssociation};
+pub use synesthetic::SynestheticEngine;
+// pub use synesthetic::SynestheticAssociation; // TODO: Implement this type
 pub use path_selector::PathSelector;
 
 use crate::{Result, DimensionId, LayerId, Frequency};

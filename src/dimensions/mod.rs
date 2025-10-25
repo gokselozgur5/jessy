@@ -7,8 +7,8 @@ pub mod dimension;
 pub mod layer;
 pub mod registry;
 
-pub use dimension::{Dimension, DimensionInfo};
-pub use layer::{LayerInfo, LayerHierarchy};
+pub use dimension::Dimension;
+// pub use layer::{LayerInfo, LayerHierarchy}; // TODO: Implement these types
 pub use registry::DimensionRegistry;
 
 use crate::{DimensionId, LayerId, Frequency, Result};
