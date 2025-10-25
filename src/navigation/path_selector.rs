@@ -806,21 +806,250 @@ mod tests {
         }
     }
     
+    // ============================================================================
+    // Task 5.6: Tests for overall confidence calculation (RED phase)
+    // Requirements: 4.8
+    // ============================================================================
+    
     #[test]
-    fn test_confidence_calculation() {
+    fn test_confidence_calculation_weighted_average() {
         let selector = PathSelector::new();
         
-        // Test weighted average: 0.5 * 0.8 + 0.3 * 0.6 + 0.2 * 1.0
+        // Requirement 4.7-4.8: Weighted average formula
+        // confidence = 0.5 * keyword + 0.3 * synesthetic + 0.2 * frequency
+        
+        // Test case from task: keyword=0.8, freq=1.0 (assuming synesthetic=0.6)
+        // Expected: 0.5 * 0.8 + 0.3 * 0.6 + 0.2 * 1.0 = 0.4 + 0.18 + 0.2 = 0.78
         let confidence = selector.calculate_confidence(0.8, 0.6, 1.0);
-        assert!((confidence - 0.78).abs() < 0.001);
+        assert!(
+            (confidence - 0.78).abs() < 0.001,
+            "Weighted average (0.8, 0.6, 1.0) should be 0.78, got {}",
+            confidence
+        );
         
-        // Test clamping (shouldn't exceed 1.0)
+        // Test with different values
+        // 0.5 * 0.5 + 0.3 * 0.5 + 0.2 * 0.5 = 0.25 + 0.15 + 0.1 = 0.5
+        let confidence = selector.calculate_confidence(0.5, 0.5, 0.5);
+        assert!(
+            (confidence - 0.5).abs() < 0.001,
+            "Weighted average (0.5, 0.5, 0.5) should be 0.5, got {}",
+            confidence
+        );
+        
+        // Test with high keyword, low others
+        // 0.5 * 1.0 + 0.3 * 0.2 + 0.2 * 0.3 = 0.5 + 0.06 + 0.06 = 0.62
+        let confidence = selector.calculate_confidence(1.0, 0.2, 0.3);
+        assert!(
+            (confidence - 0.62).abs() < 0.001,
+            "Weighted average (1.0, 0.2, 0.3) should be 0.62, got {}",
+            confidence
+        );
+        
+        // Test with low keyword, high others
+        // 0.5 * 0.2 + 0.3 * 1.0 + 0.2 * 1.0 = 0.1 + 0.3 + 0.2 = 0.6
+        let confidence = selector.calculate_confidence(0.2, 1.0, 1.0);
+        assert!(
+            (confidence - 0.6).abs() < 0.001,
+            "Weighted average (0.2, 1.0, 1.0) should be 0.6, got {}",
+            confidence
+        );
+        
+        // Test with varied scores
+        // 0.5 * 0.7 + 0.3 * 0.4 + 0.2 * 0.9 = 0.35 + 0.12 + 0.18 = 0.65
+        let confidence = selector.calculate_confidence(0.7, 0.4, 0.9);
+        assert!(
+            (confidence - 0.65).abs() < 0.001,
+            "Weighted average (0.7, 0.4, 0.9) should be 0.65, got {}",
+            confidence
+        );
+    }
+    
+    #[test]
+    fn test_confidence_calculation_clamping_upper() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.8: Confidence must be clamped to [0.0, 1.0]
+        
+        // All maximum scores should clamp to 1.0
         let confidence = selector.calculate_confidence(1.0, 1.0, 1.0);
-        assert_eq!(confidence, 1.0);
+        assert_eq!(
+            confidence, 1.0,
+            "Maximum scores (1.0, 1.0, 1.0) should clamp to 1.0"
+        );
         
-        // Test zero scores
+        // Even if formula would exceed 1.0 (shouldn't happen with valid inputs)
+        // the result should be clamped
+        let confidence = selector.calculate_confidence(1.0, 1.0, 1.0);
+        assert!(
+            confidence <= 1.0,
+            "Confidence should never exceed 1.0, got {}",
+            confidence
+        );
+        
+        // High scores that sum to exactly 1.0
+        // 0.5 * 1.0 + 0.3 * 1.0 + 0.2 * 1.0 = 1.0
+        let confidence = selector.calculate_confidence(1.0, 1.0, 1.0);
+        assert_eq!(confidence, 1.0, "Perfect scores should equal 1.0");
+    }
+    
+    #[test]
+    fn test_confidence_calculation_clamping_lower() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.8: Confidence must be clamped to [0.0, 1.0]
+        
+        // All zero scores should result in 0.0
         let confidence = selector.calculate_confidence(0.0, 0.0, 0.0);
-        assert_eq!(confidence, 0.0);
+        assert_eq!(
+            confidence, 0.0,
+            "Zero scores (0.0, 0.0, 0.0) should result in 0.0"
+        );
+        
+        // Very low scores
+        let confidence = selector.calculate_confidence(0.01, 0.01, 0.01);
+        assert!(
+            confidence >= 0.0,
+            "Confidence should never be negative, got {}",
+            confidence
+        );
+        assert!(
+            (confidence - 0.01).abs() < 0.001,
+            "Low scores should calculate correctly"
+        );
+    }
+    
+    #[test]
+    fn test_confidence_calculation_various_combinations() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.8: Test various score combinations
+        
+        let test_cases = vec![
+            // (keyword, synesthetic, frequency, expected)
+            (0.0, 0.0, 0.0, 0.0),
+            (1.0, 1.0, 1.0, 1.0),
+            (0.5, 0.5, 0.5, 0.5),
+            (0.8, 0.6, 1.0, 0.78),
+            (1.0, 0.0, 0.0, 0.5),   // Only keyword: 0.5 * 1.0 = 0.5
+            (0.0, 1.0, 0.0, 0.3),   // Only synesthetic: 0.3 * 1.0 = 0.3
+            (0.0, 0.0, 1.0, 0.2),   // Only frequency: 0.2 * 1.0 = 0.2
+            (0.6, 0.8, 0.5, 0.64),  // 0.5*0.6 + 0.3*0.8 + 0.2*0.5 = 0.3+0.24+0.1 = 0.64
+            (0.3, 0.7, 0.9, 0.54),  // 0.5*0.3 + 0.3*0.7 + 0.2*0.9 = 0.15+0.21+0.18 = 0.54
+            (0.9, 0.3, 0.6, 0.66),  // 0.5*0.9 + 0.3*0.3 + 0.2*0.6 = 0.45+0.09+0.12 = 0.66
+        ];
+        
+        for (keyword, synesthetic, frequency, expected) in test_cases {
+            let confidence = selector.calculate_confidence(keyword, synesthetic, frequency);
+            assert!(
+                (confidence - expected).abs() < 0.01,
+                "Confidence for ({}, {}, {}) should be {}, got {}",
+                keyword,
+                synesthetic,
+                frequency,
+                expected,
+                confidence
+            );
+        }
+    }
+    
+    #[test]
+    fn test_confidence_calculation_weight_distribution() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.7: Verify weight distribution (50% keyword, 30% synesthetic, 20% frequency)
+        
+        // When only keyword score is 1.0, confidence should be 0.5
+        let confidence = selector.calculate_confidence(1.0, 0.0, 0.0);
+        assert!(
+            (confidence - 0.5).abs() < 0.001,
+            "Keyword-only score should contribute 50% (0.5), got {}",
+            confidence
+        );
+        
+        // When only synesthetic score is 1.0, confidence should be 0.3
+        let confidence = selector.calculate_confidence(0.0, 1.0, 0.0);
+        assert!(
+            (confidence - 0.3).abs() < 0.001,
+            "Synesthetic-only score should contribute 30% (0.3), got {}",
+            confidence
+        );
+        
+        // When only frequency score is 1.0, confidence should be 0.2
+        let confidence = selector.calculate_confidence(0.0, 0.0, 1.0);
+        assert!(
+            (confidence - 0.2).abs() < 0.001,
+            "Frequency-only score should contribute 20% (0.2), got {}",
+            confidence
+        );
+        
+        // Verify weights sum to 1.0
+        let confidence = selector.calculate_confidence(1.0, 1.0, 1.0);
+        assert!(
+            (confidence - 1.0).abs() < 0.001,
+            "All perfect scores should sum to 1.0, got {}",
+            confidence
+        );
+    }
+    
+    #[test]
+    fn test_confidence_calculation_range_validation() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.8: Confidence must always be in [0.0, 1.0] range
+        
+        // Test many random-like combinations to ensure range is maintained
+        let test_cases = vec![
+            (0.0, 0.0, 0.0),
+            (0.1, 0.2, 0.3),
+            (0.25, 0.5, 0.75),
+            (0.33, 0.66, 0.99),
+            (0.5, 0.5, 0.5),
+            (0.7, 0.3, 0.8),
+            (0.9, 0.9, 0.9),
+            (1.0, 0.0, 0.5),
+            (0.5, 1.0, 0.0),
+            (0.0, 0.5, 1.0),
+            (1.0, 1.0, 1.0),
+        ];
+        
+        for (keyword, synesthetic, frequency) in test_cases {
+            let confidence = selector.calculate_confidence(keyword, synesthetic, frequency);
+            assert!(
+                confidence >= 0.0 && confidence <= 1.0,
+                "Confidence for ({}, {}, {}) must be in [0.0, 1.0], got {}",
+                keyword,
+                synesthetic,
+                frequency,
+                confidence
+            );
+        }
+    }
+    
+    #[test]
+    fn test_confidence_calculation_edge_cases() {
+        let selector = PathSelector::new();
+        
+        // Test edge cases and boundary conditions
+        
+        // Very small positive values
+        let confidence = selector.calculate_confidence(0.001, 0.001, 0.001);
+        assert!(confidence >= 0.0 && confidence <= 1.0);
+        assert!(confidence > 0.0, "Small positive values should yield positive confidence");
+        
+        // Values very close to 1.0
+        let confidence = selector.calculate_confidence(0.999, 0.999, 0.999);
+        assert!(confidence >= 0.0 && confidence <= 1.0);
+        assert!(confidence < 1.0 || (confidence - 1.0).abs() < 0.001);
+        
+        // Mixed: some zero, some non-zero
+        let confidence = selector.calculate_confidence(0.0, 0.5, 0.0);
+        assert_eq!(confidence, 0.15, "Only synesthetic 0.5 should give 0.3 * 0.5 = 0.15");
+        
+        let confidence = selector.calculate_confidence(0.5, 0.0, 0.0);
+        assert_eq!(confidence, 0.25, "Only keyword 0.5 should give 0.5 * 0.5 = 0.25");
+        
+        let confidence = selector.calculate_confidence(0.0, 0.0, 0.5);
+        assert_eq!(confidence, 0.1, "Only frequency 0.5 should give 0.2 * 0.5 = 0.1");
     }
     
     #[test]
