@@ -191,7 +191,186 @@ volumes:
   target-cache:     # Rust build artifacts (~2GB)
   go-cache:         # Go module cache (~100MB)
   test-results:     # Test outputs and coverage reports
-  mmap-data:        # Dimensional layer data files
+  mmap-data:        # Dimensional layer data files (MMAP volumes)
+```
+
+### MMAP Volumes for Dimensional Data
+
+The `mmap-data` volume provides zero-copy access to dimensional layer data through memory-mapped files.
+
+#### Volume Structure
+
+```
+data/mmap/
+├── consciousness/       # Core dimensional layers
+│   ├── D01/            # Dimension 01 (Emotion)
+│   │   ├── region.mmap # Memory-mapped region file
+│   │   └── index.json  # Layer index metadata
+│   ├── D02/            # Dimension 02 (Cognition)
+│   ├── ...
+│   └── D14/            # Dimension 14 (Security)
+├── proto/              # Proto-dimensions (learning system)
+│   └── *.mmap          # Temporary proto-dimension files
+├── temp/               # Temporary MMAP operations
+└── README.md           # Volume documentation
+```
+
+#### Initialization
+
+Before first use, initialize the MMAP volume structure:
+
+```bash
+# Initialize MMAP directories and permissions
+make init-mmap
+
+# Verify structure
+ls -la data/mmap/consciousness/
+```
+
+#### Container Mounts
+
+The MMAP volume is mounted differently for each service:
+
+**Rust Service (jessy-core)**: Read-write access
+```yaml
+volumes:
+  - mmap-data:/app/data/mmap
+```
+
+**Go API (jessy-api)**: Read-only access
+```yaml
+volumes:
+  - mmap-data:/app/data/mmap:ro
+```
+
+**Test Containers**: Read-write access
+```yaml
+volumes:
+  - mmap-data:/app/data/mmap
+```
+
+#### Environment Variables
+
+Configure MMAP behavior via environment variables:
+
+```bash
+# Base path for MMAP files (inside container)
+MMAP_BASE_PATH=/app/data/mmap
+
+# Initial MMAP region size (1MB)
+MMAP_INITIAL_SIZE=1048576
+
+# Maximum MMAP region size (10MB)
+MMAP_MAX_SIZE=10485760
+```
+
+#### Testing MMAP Access
+
+Verify MMAP volumes are working correctly:
+
+```bash
+# Test MMAP access from containers
+make test-mmap
+
+# View MMAP volume information
+make mmap-info
+
+# Manual verification
+docker-compose exec jessy-core ls -la /app/data/mmap
+docker-compose exec jessy-api ls -la /app/data/mmap
+```
+
+#### MMAP File Format
+
+Each dimension directory contains:
+
+1. **region.mmap**: Binary memory-mapped file containing layer data
+2. **index.json**: Metadata index for fast layer lookup
+3. **layers/**: Optional directory for individual layer files
+
+Example index.json:
+```json
+{
+  "dimension_id": 1,
+  "layers": [
+    {
+      "layer_id": 1,
+      "offset": 0,
+      "size": 4096,
+      "frequency": 1.5,
+      "keywords": ["emotion", "feeling"]
+    }
+  ]
+}
+```
+
+#### Performance Characteristics
+
+- **Zero-copy access**: Direct memory mapping, no buffer copies
+- **Lazy loading**: Pages loaded on-demand via page faults
+- **OS-managed caching**: Kernel handles hot/cold data automatically
+- **Shared memory**: Multiple processes can access same data
+
+**Typical Performance**:
+- Layer load time: <1ms (cached), <10ms (cold)
+- Memory overhead: ~4KB per layer (page table entries)
+- Disk I/O: Only on page faults, then cached by OS
+
+#### Backup and Persistence
+
+MMAP data persists across container restarts:
+
+```bash
+# Backup MMAP data
+tar -czf mmap-backup.tar.gz data/mmap/consciousness/
+
+# Restore MMAP data
+tar -xzf mmap-backup.tar.gz
+
+# Copy to another host
+rsync -av data/mmap/ user@host:/path/to/mmap/
+```
+
+#### Troubleshooting MMAP Volumes
+
+**Problem**: Permission denied errors
+
+```bash
+# Check permissions
+docker-compose exec jessy-core ls -la /app/data/mmap
+
+# Fix permissions
+docker-compose exec jessy-core chown -R jessy:jessy /app/data/mmap
+```
+
+**Problem**: MMAP files not found
+
+```bash
+# Verify volume mount
+docker inspect jessy-core --format='{{range .Mounts}}{{.Source}} -> {{.Destination}}{{end}}'
+
+# Reinitialize structure
+make init-mmap
+docker-compose restart jessy-core
+```
+
+**Problem**: Out of memory errors
+
+```bash
+# Check MMAP size limits
+docker-compose exec jessy-core env | grep MMAP
+
+# Increase limits in .env
+MMAP_MAX_SIZE=20971520  # 20MB
+```
+
+**Problem**: Stale data after updates
+
+```bash
+# Clear MMAP cache
+docker-compose down
+rm -rf data/mmap/temp/*
+docker-compose up
 ```
 
 ### Inspecting Volumes

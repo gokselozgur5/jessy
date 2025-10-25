@@ -33,6 +33,10 @@ WORKDIR /app
 RUN apk add --no-cache wget git && \
     go install github.com/air-verse/air@v1.61.1
 
+# Create MMAP data directory with proper permissions
+RUN mkdir -p /app/data/mmap && \
+    chmod 755 /app/data/mmap
+
 # Copy go mod file first for caching
 COPY api/go.mod ./
 
@@ -65,8 +69,9 @@ RUN apk --no-cache add ca-certificates curl
 # Copy binary
 COPY --from=builder /app/jessy-api .
 
-# Create non-root user
+# Create non-root user and MMAP data directory
 RUN adduser -D -u 1000 jessy && \
+    mkdir -p /app/data/mmap && \
     chown -R jessy:jessy /app
 
 USER jessy
