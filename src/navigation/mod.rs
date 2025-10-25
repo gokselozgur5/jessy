@@ -106,6 +106,18 @@ pub struct NavigationResult {
     pub total_confidence: f32,
     pub complexity_score: f32,
     pub return_to_source_triggered: bool,
+    
+    // Duration tracking (Task 10.1)
+    /// Duration of query analysis phase in milliseconds
+    pub query_analysis_duration_ms: u64,
+    /// Duration of dimension scanning phase in milliseconds
+    pub dimension_scan_duration_ms: u64,
+    /// Duration of path selection phase in milliseconds
+    pub path_selection_duration_ms: u64,
+    /// Duration of depth navigation phase in milliseconds
+    pub depth_navigation_duration_ms: u64,
+    /// Total navigation duration in milliseconds
+    pub total_duration_ms: u64,
 }
 
 impl NavigationResult {
@@ -119,6 +131,11 @@ impl NavigationResult {
             total_confidence: 0.0,
             complexity_score: 0.0,
             return_to_source_triggered: false,
+            query_analysis_duration_ms: 0,
+            dimension_scan_duration_ms: 0,
+            path_selection_duration_ms: 0,
+            depth_navigation_duration_ms: 0,
+            total_duration_ms: 0,
         }
     }
     
