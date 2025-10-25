@@ -465,40 +465,48 @@ impl MmapManager {
         &mut self,
         layer_id: LayerId,
     ) -> Result<()> {
-        let location = self.layer_index.get(&layer_id)
-            .ok_or_else(|| ConsciousnessError::LayerNotFound {
-                dimension: layer_id.dimension.0,
-                layer: layer_id.layer,
-            })?;
-        
-        if let ContentLocation::Heap { data, .. } = &location.content_location {
-            // Allocate space in reserve pool
-            let mmap_offset = self.allocate(data.len())?;
+        // Clone data first to avoid borrow checker issues
+        let data = {
+            let location = self.layer_index.get(&layer_id)
+                .ok_or_else(|| ConsciousnessError::LayerNotFound {
+                    dimension: layer_id.dimension.0,
+                    layer: layer_id.layer,
+                })?;
             
-            // Copy data to MMAP region
-            let ptr = self.pool_allocator.get_ptr(mmap_offset)?;
-            unsafe {
-                std::ptr::copy_nonoverlapping(
-                    data.as_ptr(),
-                    ptr,
-                    data.len()
-                );
+            if let ContentLocation::Heap { data, .. } = &location.content_location {
+                data.clone()
+            } else {
+                return Ok(()); // Already crystallized or not heap
             }
-            
-            // Update location to MMAP
-            let new_location = LayerLocation {
-                region_id: mmap_offset.pool_id as u32,
-                content_location: ContentLocation::Mmap {
-                    offset: mmap_offset.offset,
-                    size: data.len(),
-                    region_id: mmap_offset.pool_id as u32,
-                },
-            };
-            
-            self.layer_index.insert(layer_id, new_location);
-            
-            tracing::info!("Crystallized proto-dimension {:?} to MMAP", layer_id);
+        };
+        
+        // Now we can mutably borrow self
+        let data_len = data.len();
+        let mmap_offset = self.allocate(data_len)?;
+        
+        // Copy data to MMAP region
+        let ptr = self.pool_allocator.get_ptr(mmap_offset)?;
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                data.as_ptr(),
+                ptr,
+                data_len,
+            );
         }
+        
+        // Update location to MMAP
+        let new_location = LayerLocation {
+            region_id: mmap_offset.pool_id as u32,
+            content_location: ContentLocation::Mmap {
+                offset: mmap_offset.offset,
+                size: data_len,
+                region_id: mmap_offset.pool_id as u32,
+            },
+        };
+        
+        self.layer_index.insert(layer_id, new_location);
+        
+        tracing::info!("Crystallized proto-dimension {:?} to MMAP", layer_id);
         
         Ok(())
     }

@@ -133,7 +133,7 @@ mod performance_tests {
         
         // Cleanup
         for offset in allocations {
-            let _ = manager.deallocate(offset);
+            let _ = manager.deallocate(offset, 4096);
         }
     }
 }

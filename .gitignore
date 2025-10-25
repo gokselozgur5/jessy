@@ -54,3 +54,6 @@ wheels/
 .kiro/
 # Ignore any files with kiro in the name
 *kiro*.*
+
+# Test files
+sonnet4545.txt

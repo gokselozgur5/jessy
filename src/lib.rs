@@ -222,7 +222,7 @@ impl ConsciousnessSystem {
         
         Ok(ConsciousnessResponse {
             answer: iteration_result.final_answer,
-            dominant_frequency: interference.dominant_frequency,
+            dominant_frequency: interference.pattern.dominant_frequency,
             dimensions_activated: navigation_result.dimensions,
             iterations_completed: iteration_result.iterations_completed,
             return_to_source_triggered: iteration_result.return_to_source_triggered,
