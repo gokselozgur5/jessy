@@ -12,22 +12,31 @@ use super::{
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, RwLock};
 
 /// Main memory manager for the consciousness system
 ///
+/// Thread Safety: RwLock enables multiple concurrent readers with exclusive writes
+/// - Multiple threads can read regions simultaneously (shared lock)
+/// - Only one thread can modify regions at a time (exclusive lock)
+/// - This is optimal for read-heavy workloads like query processing
+///
 /// Design note: This struct doesn't implement Clone because it manages
-/// exclusive ownership of memory-mapped regions. Use Arc<RwLock<MmapManager>>
-/// for shared access across threads.
+/// exclusive ownership of memory-mapped regions. Use Arc<MmapManager>
+/// for shared access across threads (RwLock is already internal).
 #[derive(Debug)]
 pub struct MmapManager {
     pool_allocator: PoolAllocator,
-    // HashMap provides O(1) lookups - critical for hot path performance
-    // u32 keys are smaller than String/PathBuf, reducing memory overhead
-    regions: HashMap<u32, MmapRegion>,
+    // RwLock enables concurrent reads, exclusive writes
+    // Multiple query threads can read regions simultaneously
+    // Only dimension loading needs exclusive write access
+    regions: RwLock<HashMap<u32, MmapRegion>>,
     // Separate index for layers enables fast lookup without scanning all regions
     // This is the "index everything" pattern - trade space for time
-    layer_index: HashMap<LayerId, LayerLocation>,
-    next_region_id: u32,
+    // Also wrapped in RwLock for thread-safe concurrent access
+    layer_index: RwLock<HashMap<LayerId, LayerLocation>>,
+    // AtomicU32 for thread-safe region ID generation
+    next_region_id: AtomicUsize,
     base_path: PathBuf,
     total_limit_mb: usize,
     // AtomicUsize enables lock-free memory tracking across threads
@@ -87,10 +96,12 @@ impl MmapManager {
         
         Ok(Self {
             pool_allocator,
-            // HashMap::new() doesn't allocate until first insert - zero-cost until used
-            regions: HashMap::new(),
-            layer_index: HashMap::new(),
-            next_region_id: 0,
+            // RwLock wraps HashMap for thread-safe concurrent access
+            // Multiple readers can access simultaneously, writes are exclusive
+            regions: RwLock::new(HashMap::new()),
+            layer_index: RwLock::new(HashMap::new()),
+            // AtomicUsize for thread-safe region ID generation
+            next_region_id: AtomicUsize::new(0),
             base_path,
             total_limit_mb: total_memory_mb,
             // AtomicUsize::new(0) is a const fn - happens at compile time when possible
@@ -100,9 +111,13 @@ impl MmapManager {
     
     /// Load a dimension from file system
     ///
-    /// Takes &mut self because it modifies internal state (regions, layer_index)
+    /// Thread Safety: Acquires write lock on regions map during load
+    /// This ensures exclusive access while modifying the regions HashMap
+    /// Other threads will block on dimension loading but can read concurrently after
+    ///
+    /// Takes &self (not &mut) because RwLock provides interior mutability
     /// Returns u32 region_id for tracking - small integer IDs are cache-friendly
-    pub fn load_dimension(&mut self, dimension_id: DimensionId) -> Result<u32> {
+    pub fn load_dimension(&self, dimension_id: DimensionId) -> Result<u32> {
         // format! allocates a new String - acceptable here since this isn't hot path
         // In hot paths, we'd use a pre-allocated buffer or stack array
         let dimension_path = self.base_path
@@ -124,48 +139,32 @@ impl MmapManager {
             });
         }
         
-        // Allocate region ID before loading - enables rollback on failure
-        // This is the "reserve then commit" pattern for transactional operations
-        let region_id = self.next_region_id;
-        self.next_region_id += 1;
+        // Allocate region ID atomically - thread-safe without locks
+        // fetch_add returns OLD value, then increments
+        let region_id = self.next_region_id.fetch_add(1, Ordering::SeqCst) as u32;
         
-        // match for explicit error handling - more visible than ? operator here
-        // We need custom cleanup logic, so match is clearer than map_err
-        let region = match MmapRegion::from_file(region_id, dimension_id, &region_file) {
-            Ok(r) => r,
-            Err(e) => {
-                // Rollback: restore state to before this operation
-                // Critical for maintaining consistency after failures
-                self.next_region_id -= 1;
-                return Err(e);
-            }
-        };
+        // Load region from file (no locks needed yet)
+        let region = MmapRegion::from_file(region_id, dimension_id, &region_file)
+            .map_err(|e| {
+                // Rollback region ID on failure
+                // fetch_sub atomically decrements
+                self.next_region_id.fetch_sub(1, Ordering::SeqCst);
+                e
+            })?;
         
-        // Track layers added for potential rollback
-        // Vec::new() doesn't allocate - allocation happens on first push
-        let mut added_layers = Vec::new();
-        
-        // Index all layers in this region
-        // This builds an O(1) lookup table - trading memory for speed
+        // Prepare layer locations before acquiring locks
+        // This minimizes time spent holding write locks
+        let mut layer_locations = Vec::new();
         for layer_id in region.list_layers() {
-            let layer_info = match region.get_layer_info(layer_id) {
-                Some(info) => info,
-                None => {
-                    // Cleanup: remove already-added layers
-                    // This is the "all or nothing" transaction pattern
-                    // Either all layers load successfully, or none do
-                    for lid in added_layers {
-                        self.layer_index.remove(&lid);
-                    }
-                    self.next_region_id -= 1;
-                    return Err(ConsciousnessError::MemoryError(
+            let layer_info = region.get_layer_info(layer_id)
+                .ok_or_else(|| {
+                    // Rollback on error
+                    self.next_region_id.fetch_sub(1, Ordering::SeqCst);
+                    ConsciousnessError::MemoryError(
                         format!("Layer info not found for {:?}", layer_id)
-                    ));
-                }
-            };
+                    )
+                })?;
             
-            // Struct initialization - all fields must be specified
-            // Compiler ensures we don't forget any fields
             let location = LayerLocation {
                 region_id,
                 content_location: ContentLocation::Mmap {
@@ -175,11 +174,29 @@ impl MmapManager {
                 },
             };
             
-            self.layer_index.insert(layer_id, location);
-            added_layers.push(layer_id);
+            layer_locations.push((layer_id, location));
         }
         
-        self.regions.insert(region_id, region);
+        // Now acquire write locks and commit changes atomically
+        // This is the critical section - keep it minimal
+        {
+            let mut regions = self.regions.write()
+                .map_err(|e| ConsciousnessError::MemoryError(
+                    format!("Failed to acquire regions write lock: {}", e)
+                ))?;
+            let mut layer_index = self.layer_index.write()
+                .map_err(|e| ConsciousnessError::MemoryError(
+                    format!("Failed to acquire layer_index write lock: {}", e)
+                ))?;
+            
+            // Insert all layers
+            for (layer_id, location) in layer_locations {
+                layer_index.insert(layer_id, location);
+            }
+            
+            // Insert region
+            regions.insert(region_id, region);
+        } // Locks released here automatically
         
         tracing::debug!(
             "Loaded dimension {:?} as region {} with {} layers",
@@ -206,16 +223,35 @@ impl MmapManager {
     }
     
     /// Load context for a specific layer
+    ///
+    /// Thread Safety: Uses read lock - multiple threads can call this simultaneously
+    /// This is the hot path for query processing, optimized for concurrent reads
     pub fn load_layer_context(&self, layer_id: LayerId) -> Result<LoadedContext> {
-        let location = self.layer_index.get(&layer_id)
+        // Acquire read lock on layer_index
+        // Multiple threads can hold read locks simultaneously
+        let layer_index = self.layer_index.read()
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to acquire layer_index read lock: {}", e)
+            ))?;
+        
+        let location = layer_index.get(&layer_id)
             .ok_or_else(|| ConsciousnessError::LayerNotFound {
                 dimension: layer_id.dimension.0,
                 layer: layer_id.layer,
-            })?;
+            })?.clone(); // Clone to release lock early
+        
+        // Release layer_index lock before acquiring regions lock
+        drop(layer_index);
         
         match &location.content_location {
             ContentLocation::Mmap { offset, size, region_id } => {
-                let region = self.regions.get(region_id)
+                // Acquire read lock on regions
+                let regions = self.regions.read()
+                    .map_err(|e| ConsciousnessError::MemoryError(
+                        format!("Failed to acquire regions read lock: {}", e)
+                    ))?;
+                
+                let region = regions.get(region_id)
                     .ok_or_else(|| ConsciousnessError::RegionNotFound {
                         region_id: *region_id,
                     })?;
@@ -248,7 +284,13 @@ impl MmapManager {
             }
             
             ContentLocation::Hybrid { mmap_base, mmap_size, heap_overlay, region_id } => {
-                let region = self.regions.get(region_id)
+                // Acquire read lock for hybrid content
+                let regions = self.regions.read()
+                    .map_err(|e| ConsciousnessError::MemoryError(
+                        format!("Failed to acquire regions read lock: {}", e)
+                    ))?;
+                
+                let region = regions.get(region_id)
                     .ok_or_else(|| ConsciousnessError::RegionNotFound {
                         region_id: *region_id,
                     })?;
@@ -366,17 +408,27 @@ impl MmapManager {
     }
     
     /// Get memory usage statistics
+    ///
+    /// Thread Safety: Uses read locks to safely access regions and layer_index
     pub fn get_stats(&self) -> MemoryStats {
         let pool_stats = self.pool_allocator.get_stats();
         let current_bytes = self.current_allocated_bytes.load(Ordering::Relaxed);
         let current_mb = current_bytes / (1024 * 1024);
         
+        // Acquire read locks to get counts
+        let regions_count = self.regions.read()
+            .map(|r| r.len())
+            .unwrap_or(0);
+        let layers_count = self.layer_index.read()
+            .map(|l| l.len())
+            .unwrap_or(0);
+        
         MemoryStats {
             total_limit_mb: self.total_limit_mb,
             current_allocated_mb: current_mb,
             pool_stats,
-            regions_loaded: self.regions.len(),
-            layers_indexed: self.layer_index.len(),
+            regions_loaded: regions_count,
+            layers_indexed: layers_count,
             utilization_percent: (current_mb as f32 / self.total_limit_mb as f32) * 100.0,
         }
     }
@@ -437,8 +489,10 @@ impl MmapManager {
     }
     
     /// Create a new proto-dimension in heap memory (for learning)
+    ///
+    /// Thread Safety: Acquires write lock on layer_index
     pub fn create_proto_dimension(
-        &mut self,
+        &self,
         dimension_id: DimensionId,
         content: Vec<u8>,
     ) -> Result<LayerId> {
@@ -455,19 +509,35 @@ impl MmapManager {
             },
         };
         
-        self.layer_index.insert(layer_id, location);
+        // Acquire write lock to insert
+        let mut layer_index = self.layer_index.write()
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to acquire layer_index write lock: {}", e)
+            ))?;
+        layer_index.insert(layer_id, location);
         
         Ok(layer_id)
     }
     
     /// Crystallize a proto-dimension from heap to MMAP
+    ///
+    /// Thread Safety: Atomic pointer swap ensures readers see consistent state
+    /// - Readers accessing heap version continue to work during crystallization
+    /// - Atomic swap ensures no reader sees partial/inconsistent state
+    /// - Old heap version stays valid until swap completes
+    /// - This implements Task 7.2: Atomic pointer swap for crystallization
     pub fn crystallize_proto_dimension(
-        &mut self,
+        &self,
         layer_id: LayerId,
     ) -> Result<()> {
-        // Clone data first to avoid borrow checker issues
+        // Step 1: Read current location (read lock)
         let data = {
-            let location = self.layer_index.get(&layer_id)
+            let layer_index = self.layer_index.read()
+                .map_err(|e| ConsciousnessError::MemoryError(
+                    format!("Failed to acquire layer_index read lock: {}", e)
+                ))?;
+            
+            let location = layer_index.get(&layer_id)
                 .ok_or_else(|| ConsciousnessError::LayerNotFound {
                     dimension: layer_id.dimension.0,
                     layer: layer_id.layer,
@@ -478,9 +548,9 @@ impl MmapManager {
             } else {
                 return Ok(()); // Already crystallized or not heap
             }
-        };
+        }; // Read lock released here
         
-        // Now we can mutably borrow self
+        // Step 2: Allocate MMAP space and copy data (no locks needed)
         let data_len = data.len();
         let mmap_offset = self.allocate(data_len)?;
         
@@ -494,17 +564,26 @@ impl MmapManager {
             );
         }
         
-        // Update location to MMAP
-        let new_location = LayerLocation {
-            region_id: mmap_offset.pool_id as u32,
-            content_location: ContentLocation::Mmap {
-                offset: mmap_offset.offset,
-                size: data_len,
+        // Step 3: Atomic swap - acquire write lock and update location
+        // This is the critical section where we atomically switch from heap to MMAP
+        {
+            let mut layer_index = self.layer_index.write()
+                .map_err(|e| ConsciousnessError::MemoryError(
+                    format!("Failed to acquire layer_index write lock: {}", e)
+                ))?;
+            
+            let new_location = LayerLocation {
                 region_id: mmap_offset.pool_id as u32,
-            },
-        };
-        
-        self.layer_index.insert(layer_id, new_location);
+                content_location: ContentLocation::Mmap {
+                    offset: mmap_offset.offset,
+                    size: data_len,
+                    region_id: mmap_offset.pool_id as u32,
+                },
+            };
+            
+            // Atomic swap: readers see either old (heap) or new (MMAP), never partial
+            layer_index.insert(layer_id, new_location);
+        } // Write lock released, heap data can now be dropped safely
         
         tracing::info!("Crystallized proto-dimension {:?} to MMAP", layer_id);
         
