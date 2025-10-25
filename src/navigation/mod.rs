@@ -3,52 +3,22 @@
 //! This module implements parallel dimension scanning, synesthetic keyword matching,
 //! and path selection for navigating through consciousness layers.
 
+pub mod types;
 pub mod navigator;
 pub mod synesthetic;
 pub mod path_selector;
 
+// Re-export core types
+pub use types::{
+    NavigationConfig, NavigationError, ProtoDimensionId, QuestionType, SystemState, UrgencyLevel,
+};
+
 pub use navigator::MultiverseNavigator;
 pub use synesthetic::SynestheticEngine;
-// pub use synesthetic::SynestheticAssociation; // TODO: Implement this type
 pub use path_selector::PathSelector;
 
-use crate::{Result, DimensionId, LayerId, Frequency};
+use crate::{DimensionId, LayerId, Frequency};
 use std::collections::HashMap;
-
-/// Navigation configuration
-#[derive(Debug, Clone)]
-pub struct NavigationConfig {
-    /// Maximum depth to navigate in any dimension
-    pub max_depth: usize,
-    
-    /// Minimum confidence threshold for activation
-    pub min_confidence: f32,
-    
-    /// Maximum number of dimensions to activate simultaneously
-    pub max_dimensions: usize,
-    
-    /// Complexity threshold for return-to-source protocol
-    pub complexity_threshold: usize,
-    
-    /// Synesthetic learning rate
-    pub learning_rate: f32,
-    
-    /// Association decay rate
-    pub decay_rate: f32,
-}
-
-impl Default for NavigationConfig {
-    fn default() -> Self {
-        Self {
-            max_depth: 4,           // L0 -> L1 -> L2 -> L3
-            min_confidence: 0.3,    // 30% minimum confidence
-            max_dimensions: 8,      // Reasonable limit for parallel processing
-            complexity_threshold: 6, // Return-to-source trigger
-            learning_rate: 1.1,     // 10% growth for successful associations
-            decay_rate: 0.95,       // 5% decay for unused associations
-        }
-    }
-}
 
 /// Query analysis result
 #[derive(Debug, Clone)]
@@ -60,28 +30,7 @@ pub struct QueryAnalysis {
     pub technical_indicators: Vec<String>,
     pub question_type: QuestionType,
     pub urgency_level: UrgencyLevel,
-}
-
-/// Type of question being asked
-#[derive(Debug, Clone, PartialEq)]
-pub enum QuestionType {
-    Factual,        // "What is X?"
-    Procedural,     // "How do I do X?"
-    Conceptual,     // "Why does X work?"
-    Emotional,      // "I feel X"
-    Creative,       // "Help me create X"
-    Analytical,     // "Analyze X"
-    Philosophical,  // "What is the meaning of X?"
-    Technical,      // "Debug X" or "Optimize X"
-}
-
-/// Urgency level of the query
-#[derive(Debug, Clone, PartialEq)]
-pub enum UrgencyLevel {
-    Low,        // General curiosity, learning
-    Medium,     // Problem-solving, planning
-    High,       // Urgent problem, emotional distress
-    Critical,   // Crisis, immediate danger
+    pub estimated_frequency: f32,
 }
 
 /// Navigation path through dimensional layers
@@ -254,15 +203,6 @@ mod tests {
     use super::*;
     
     #[test]
-    fn test_navigation_config() {
-        let config = NavigationConfig::default();
-        assert_eq!(config.max_depth, 4);
-        assert_eq!(config.complexity_threshold, 6);
-        assert!(config.learning_rate > 1.0);
-        assert!(config.decay_rate < 1.0);
-    }
-    
-    #[test]
     fn test_navigation_path() {
         let mut path = NavigationPath::new(DimensionId(1), Frequency::new(1.5));
         
@@ -287,6 +227,7 @@ mod tests {
             technical_indicators: vec![],
             question_type: QuestionType::Factual,
             urgency_level: UrgencyLevel::Low,
+            estimated_frequency: 0.5,
         };
         
         let mut result = NavigationResult::new(analysis);
