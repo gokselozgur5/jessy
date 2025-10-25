@@ -137,6 +137,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
+      - ./data:/app/data
       - ./Cargo.toml:/app/Cargo.toml
       - ./Cargo.lock:/app/Cargo.lock
       - test-results:/app/test-results
