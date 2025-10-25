@@ -226,22 +226,36 @@ impl PathSelector {
     /// # Arguments
     ///
     /// * `paths` - Mutable vector of navigation paths to rank
+    ///
+    /// # Implementation Notes
+    ///
+    /// Uses a custom comparator with three-level sorting:
+    /// - Primary: Confidence descending (higher confidence first)
+    /// - Tiebreaker 1: Keyword count descending (more keywords first)
+    /// - Tiebreaker 2: Dimension ID ascending (lower ID first)
+    ///
+    /// The comparator uses `partial_cmp` for confidence to handle potential
+    /// NaN values gracefully (treating them as Equal).
     pub fn rank_paths(&self, paths: &mut Vec<NavigationPath>) {
-        // TODO: Implement in task 5.9
         paths.sort_by(|a, b| {
-            // Primary: confidence descending
+            // Primary criterion: confidence descending
+            // Use partial_cmp to handle potential NaN values
             match b.confidence.partial_cmp(&a.confidence) {
                 Some(std::cmp::Ordering::Equal) => {
-                    // Tiebreaker 1: keyword count descending
+                    // First tiebreaker: keyword count descending
+                    // More matched keywords indicates stronger relevance
                     match b.keywords_matched.len().cmp(&a.keywords_matched.len()) {
                         std::cmp::Ordering::Equal => {
-                            // Tiebreaker 2: dimension ID ascending
+                            // Second tiebreaker: dimension ID ascending
+                            // Lower dimension IDs are prioritized for stability
                             a.dimension_id.0.cmp(&b.dimension_id.0)
                         }
                         other => other,
                     }
                 }
                 Some(other) => other,
+                // If partial_cmp returns None (e.g., NaN), treat as Equal
+                // and fall through to tiebreakers
                 None => std::cmp::Ordering::Equal,
             }
         });
@@ -1052,32 +1066,464 @@ mod tests {
         assert_eq!(confidence, 0.1, "Only frequency 0.5 should give 0.2 * 0.5 = 0.1");
     }
     
+    // ============================================================================
+    // Task 5.8: Tests for path ranking (RED phase)
+    // Requirements: 4.1, 4.9-4.10
+    // ============================================================================
+    
     #[test]
-    fn test_path_ranking() {
+    fn test_path_ranking_by_confidence_descending() {
         let selector = PathSelector::new();
         
+        // Requirement 4.1: Paths should be ranked by confidence score in descending order
+        
+        // Create paths with different confidence scores
+        let mut path1 = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
+        path1.confidence = 0.3;
+        
+        let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
+        path2.confidence = 0.9;
+        
+        let mut path3 = NavigationPath::new(DimensionId(3), Frequency::new(2.0));
+        path3.confidence = 0.6;
+        
+        let mut path4 = NavigationPath::new(DimensionId(4), Frequency::new(2.5));
+        path4.confidence = 0.45;
+        
+        let mut path5 = NavigationPath::new(DimensionId(5), Frequency::new(3.0));
+        path5.confidence = 0.75;
+        
+        // Start with unsorted order
+        let mut paths = vec![path1, path2, path3, path4, path5];
+        
+        // Rank paths
+        selector.rank_paths(&mut paths);
+        
+        // Verify descending order by confidence
+        assert_eq!(
+            paths[0].dimension_id,
+            DimensionId(2),
+            "Highest confidence (0.9) should be first"
+        );
+        assert_eq!(
+            paths[1].dimension_id,
+            DimensionId(5),
+            "Second highest confidence (0.75) should be second"
+        );
+        assert_eq!(
+            paths[2].dimension_id,
+            DimensionId(3),
+            "Third highest confidence (0.6) should be third"
+        );
+        assert_eq!(
+            paths[3].dimension_id,
+            DimensionId(4),
+            "Fourth highest confidence (0.45) should be fourth"
+        );
+        assert_eq!(
+            paths[4].dimension_id,
+            DimensionId(1),
+            "Lowest confidence (0.3) should be last"
+        );
+        
+        // Verify confidence values are in descending order
+        for i in 0..paths.len() - 1 {
+            assert!(
+                paths[i].confidence >= paths[i + 1].confidence,
+                "Confidence at index {} ({}) should be >= confidence at index {} ({})",
+                i,
+                paths[i].confidence,
+                i + 1,
+                paths[i + 1].confidence
+            );
+        }
+    }
+    
+    #[test]
+    fn test_path_ranking_tiebreaker_keyword_count() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.9: When confidence is equal, prioritize higher keyword match count
+        
+        // Create paths with same confidence but different keyword counts
         let mut path1 = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
         path1.confidence = 0.5;
         path1.add_keyword("test".to_string(), 0.0);
         
         let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
-        path2.confidence = 0.9;
+        path2.confidence = 0.5;
         path2.add_keyword("test".to_string(), 0.0);
+        path2.add_keyword("another".to_string(), 0.0);
+        path2.add_keyword("keyword".to_string(), 0.0);
         
         let mut path3 = NavigationPath::new(DimensionId(3), Frequency::new(2.0));
         path3.confidence = 0.5;
         path3.add_keyword("test".to_string(), 0.0);
         path3.add_keyword("another".to_string(), 0.0);
         
+        let mut path4 = NavigationPath::new(DimensionId(4), Frequency::new(2.5));
+        path4.confidence = 0.5;
+        // No keywords
+        
+        // Start with unsorted order
+        let mut paths = vec![path1, path4, path2, path3];
+        
+        // Rank paths
+        selector.rank_paths(&mut paths);
+        
+        // All have same confidence (0.5), so should be sorted by keyword count descending
+        assert_eq!(
+            paths[0].dimension_id,
+            DimensionId(2),
+            "Path with 3 keywords should be first"
+        );
+        assert_eq!(paths[0].keywords_matched.len(), 3);
+        
+        assert_eq!(
+            paths[1].dimension_id,
+            DimensionId(3),
+            "Path with 2 keywords should be second"
+        );
+        assert_eq!(paths[1].keywords_matched.len(), 2);
+        
+        assert_eq!(
+            paths[2].dimension_id,
+            DimensionId(1),
+            "Path with 1 keyword should be third"
+        );
+        assert_eq!(paths[2].keywords_matched.len(), 1);
+        
+        assert_eq!(
+            paths[3].dimension_id,
+            DimensionId(4),
+            "Path with 0 keywords should be last"
+        );
+        assert_eq!(paths[3].keywords_matched.len(), 0);
+        
+        // Verify all have same confidence
+        for path in &paths {
+            assert_eq!(path.confidence, 0.5);
+        }
+    }
+    
+    #[test]
+    fn test_path_ranking_second_tiebreaker_dimension_id() {
+        let selector = PathSelector::new();
+        
+        // Requirement 4.10: When confidence and keyword count are equal, prioritize lower dimension ID
+        
+        // Create paths with same confidence and same keyword count
+        let mut path1 = NavigationPath::new(DimensionId(5), Frequency::new(1.0));
+        path1.confidence = 0.5;
+        path1.add_keyword("test".to_string(), 0.0);
+        path1.add_keyword("another".to_string(), 0.0);
+        
+        let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
+        path2.confidence = 0.5;
+        path2.add_keyword("test".to_string(), 0.0);
+        path2.add_keyword("another".to_string(), 0.0);
+        
+        let mut path3 = NavigationPath::new(DimensionId(8), Frequency::new(2.0));
+        path3.confidence = 0.5;
+        path3.add_keyword("test".to_string(), 0.0);
+        path3.add_keyword("another".to_string(), 0.0);
+        
+        let mut path4 = NavigationPath::new(DimensionId(1), Frequency::new(2.5));
+        path4.confidence = 0.5;
+        path4.add_keyword("test".to_string(), 0.0);
+        path4.add_keyword("another".to_string(), 0.0);
+        
+        // Start with unsorted order
+        let mut paths = vec![path1, path3, path2, path4];
+        
+        // Rank paths
+        selector.rank_paths(&mut paths);
+        
+        // All have same confidence and keyword count, so should be sorted by dimension ID ascending
+        assert_eq!(
+            paths[0].dimension_id,
+            DimensionId(1),
+            "Dimension ID 1 should be first"
+        );
+        assert_eq!(
+            paths[1].dimension_id,
+            DimensionId(2),
+            "Dimension ID 2 should be second"
+        );
+        assert_eq!(
+            paths[2].dimension_id,
+            DimensionId(5),
+            "Dimension ID 5 should be third"
+        );
+        assert_eq!(
+            paths[3].dimension_id,
+            DimensionId(8),
+            "Dimension ID 8 should be last"
+        );
+        
+        // Verify all have same confidence and keyword count
+        for path in &paths {
+            assert_eq!(path.confidence, 0.5);
+            assert_eq!(path.keywords_matched.len(), 2);
+        }
+    }
+    
+    #[test]
+    fn test_path_ranking_multiple_paths_same_confidence() {
+        let selector = PathSelector::new();
+        
+        // Test complex scenario with multiple paths having same confidence
+        // This tests all three ranking criteria together
+        
+        // Group 1: High confidence (0.9)
+        let mut path1 = NavigationPath::new(DimensionId(3), Frequency::new(1.0));
+        path1.confidence = 0.9;
+        path1.add_keyword("test".to_string(), 0.0);
+        
+        let mut path2 = NavigationPath::new(DimensionId(1), Frequency::new(1.5));
+        path2.confidence = 0.9;
+        path2.add_keyword("test".to_string(), 0.0);
+        path2.add_keyword("another".to_string(), 0.0);
+        
+        // Group 2: Medium confidence (0.6)
+        let mut path3 = NavigationPath::new(DimensionId(5), Frequency::new(2.0));
+        path3.confidence = 0.6;
+        path3.add_keyword("test".to_string(), 0.0);
+        
+        let mut path4 = NavigationPath::new(DimensionId(2), Frequency::new(2.5));
+        path4.confidence = 0.6;
+        path4.add_keyword("test".to_string(), 0.0);
+        
+        // Group 3: Low confidence (0.4)
+        let mut path5 = NavigationPath::new(DimensionId(7), Frequency::new(3.0));
+        path5.confidence = 0.4;
+        path5.add_keyword("test".to_string(), 0.0);
+        path5.add_keyword("another".to_string(), 0.0);
+        
+        let mut path6 = NavigationPath::new(DimensionId(4), Frequency::new(3.5));
+        path6.confidence = 0.4;
+        path6.add_keyword("test".to_string(), 0.0);
+        path6.add_keyword("another".to_string(), 0.0);
+        
+        // Start with random order
+        let mut paths = vec![path3, path5, path1, path6, path4, path2];
+        
+        // Rank paths
+        selector.rank_paths(&mut paths);
+        
+        // Expected order:
+        // 1. DimensionId(1): confidence=0.9, keywords=2 (highest confidence, more keywords)
+        // 2. DimensionId(3): confidence=0.9, keywords=1 (highest confidence, fewer keywords)
+        // 3. DimensionId(2): confidence=0.6, keywords=1 (medium confidence, lower ID)
+        // 4. DimensionId(5): confidence=0.6, keywords=1 (medium confidence, higher ID)
+        // 5. DimensionId(4): confidence=0.4, keywords=2 (low confidence, lower ID)
+        // 6. DimensionId(7): confidence=0.4, keywords=2 (low confidence, higher ID)
+        
+        assert_eq!(paths[0].dimension_id, DimensionId(1));
+        assert_eq!(paths[0].confidence, 0.9);
+        assert_eq!(paths[0].keywords_matched.len(), 2);
+        
+        assert_eq!(paths[1].dimension_id, DimensionId(3));
+        assert_eq!(paths[1].confidence, 0.9);
+        assert_eq!(paths[1].keywords_matched.len(), 1);
+        
+        assert_eq!(paths[2].dimension_id, DimensionId(2));
+        assert_eq!(paths[2].confidence, 0.6);
+        assert_eq!(paths[2].keywords_matched.len(), 1);
+        
+        assert_eq!(paths[3].dimension_id, DimensionId(5));
+        assert_eq!(paths[3].confidence, 0.6);
+        assert_eq!(paths[3].keywords_matched.len(), 1);
+        
+        assert_eq!(paths[4].dimension_id, DimensionId(4));
+        assert_eq!(paths[4].confidence, 0.4);
+        assert_eq!(paths[4].keywords_matched.len(), 2);
+        
+        assert_eq!(paths[5].dimension_id, DimensionId(7));
+        assert_eq!(paths[5].confidence, 0.4);
+        assert_eq!(paths[5].keywords_matched.len(), 2);
+    }
+    
+    #[test]
+    fn test_path_ranking_all_criteria_combined() {
+        let selector = PathSelector::new();
+        
+        // Comprehensive test with diverse paths testing all ranking criteria
+        
+        let mut path1 = NavigationPath::new(DimensionId(10), Frequency::new(1.0));
+        path1.confidence = 0.5;
+        path1.add_keyword("a".to_string(), 0.0);
+        
+        let mut path2 = NavigationPath::new(DimensionId(3), Frequency::new(1.5));
+        path2.confidence = 0.8;
+        path2.add_keyword("a".to_string(), 0.0);
+        path2.add_keyword("b".to_string(), 0.0);
+        path2.add_keyword("c".to_string(), 0.0);
+        
+        let mut path3 = NavigationPath::new(DimensionId(1), Frequency::new(2.0));
+        path3.confidence = 0.5;
+        path3.add_keyword("a".to_string(), 0.0);
+        path3.add_keyword("b".to_string(), 0.0);
+        
+        let mut path4 = NavigationPath::new(DimensionId(7), Frequency::new(2.5));
+        path4.confidence = 0.8;
+        path4.add_keyword("a".to_string(), 0.0);
+        
+        let mut path5 = NavigationPath::new(DimensionId(5), Frequency::new(3.0));
+        path5.confidence = 0.5;
+        path5.add_keyword("a".to_string(), 0.0);
+        path5.add_keyword("b".to_string(), 0.0);
+        
+        let mut path6 = NavigationPath::new(DimensionId(2), Frequency::new(3.5));
+        path6.confidence = 0.95;
+        // No keywords
+        
+        // Start with random order
+        let mut paths = vec![path4, path1, path5, path2, path6, path3];
+        
+        // Rank paths
+        selector.rank_paths(&mut paths);
+        
+        // Expected order (applying all three criteria):
+        // 1. DimensionId(2): confidence=0.95, keywords=0 (highest confidence wins)
+        // 2. DimensionId(3): confidence=0.8, keywords=3 (second highest confidence, most keywords)
+        // 3. DimensionId(7): confidence=0.8, keywords=1 (second highest confidence, fewer keywords)
+        // 4. DimensionId(1): confidence=0.5, keywords=2 (lowest confidence, most keywords in group, lowest ID)
+        // 5. DimensionId(5): confidence=0.5, keywords=2 (lowest confidence, most keywords in group, higher ID)
+        // 6. DimensionId(10): confidence=0.5, keywords=1 (lowest confidence, fewest keywords)
+        
+        assert_eq!(paths[0].dimension_id, DimensionId(2), "Highest confidence should be first");
+        assert_eq!(paths[1].dimension_id, DimensionId(3), "Second highest confidence with most keywords");
+        assert_eq!(paths[2].dimension_id, DimensionId(7), "Second highest confidence with fewer keywords");
+        assert_eq!(paths[3].dimension_id, DimensionId(1), "Tied confidence, tied keywords, lower ID");
+        assert_eq!(paths[4].dimension_id, DimensionId(5), "Tied confidence, tied keywords, higher ID");
+        assert_eq!(paths[5].dimension_id, DimensionId(10), "Tied confidence, fewest keywords");
+    }
+    
+    #[test]
+    fn test_path_ranking_empty_list() {
+        let selector = PathSelector::new();
+        
+        // Edge case: empty list should remain empty
+        let mut paths: Vec<NavigationPath> = vec![];
+        selector.rank_paths(&mut paths);
+        
+        assert_eq!(paths.len(), 0, "Empty list should remain empty");
+    }
+    
+    #[test]
+    fn test_path_ranking_single_path() {
+        let selector = PathSelector::new();
+        
+        // Edge case: single path should remain unchanged
+        let mut path = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
+        path.confidence = 0.5;
+        path.add_keyword("test".to_string(), 0.0);
+        
+        let mut paths = vec![path];
+        selector.rank_paths(&mut paths);
+        
+        assert_eq!(paths.len(), 1, "Single path list should remain single");
+        assert_eq!(paths[0].dimension_id, DimensionId(1));
+    }
+    
+    #[test]
+    fn test_path_ranking_already_sorted() {
+        let selector = PathSelector::new();
+        
+        // Test that already sorted list remains sorted
+        let mut path1 = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
+        path1.confidence = 0.9;
+        
+        let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
+        path2.confidence = 0.6;
+        
+        let mut path3 = NavigationPath::new(DimensionId(3), Frequency::new(2.0));
+        path3.confidence = 0.3;
+        
         let mut paths = vec![path1, path2, path3];
         selector.rank_paths(&mut paths);
         
-        // Should be sorted by confidence descending
-        assert_eq!(paths[0].dimension_id, DimensionId(2)); // confidence 0.9
-        // Tiebreaker: path3 has more keywords than path1
-        assert_eq!(paths[1].dimension_id, DimensionId(3)); // confidence 0.5, 2 keywords
-        assert_eq!(paths[2].dimension_id, DimensionId(1)); // confidence 0.5, 1 keyword
+        assert_eq!(paths[0].dimension_id, DimensionId(1));
+        assert_eq!(paths[1].dimension_id, DimensionId(2));
+        assert_eq!(paths[2].dimension_id, DimensionId(3));
     }
+    
+    #[test]
+    fn test_path_ranking_reverse_sorted() {
+        let selector = PathSelector::new();
+        
+        // Test that reverse sorted list gets properly sorted
+        let mut path1 = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
+        path1.confidence = 0.3;
+        
+        let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
+        path2.confidence = 0.6;
+        
+        let mut path3 = NavigationPath::new(DimensionId(3), Frequency::new(2.0));
+        path3.confidence = 0.9;
+        
+        let mut paths = vec![path1, path2, path3];
+        selector.rank_paths(&mut paths);
+        
+        assert_eq!(paths[0].dimension_id, DimensionId(3), "Highest confidence should be first");
+        assert_eq!(paths[1].dimension_id, DimensionId(2), "Medium confidence should be second");
+        assert_eq!(paths[2].dimension_id, DimensionId(1), "Lowest confidence should be last");
+    }
+    
+    #[test]
+    fn test_path_ranking_with_equal_confidence_values() {
+        let selector = PathSelector::new();
+        
+        // Test with floating point confidence values that are exactly equal
+        let mut path1 = NavigationPath::new(DimensionId(5), Frequency::new(1.0));
+        path1.confidence = 0.5;
+        path1.add_keyword("test".to_string(), 0.0);
+        
+        let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
+        path2.confidence = 0.5;
+        path2.add_keyword("test".to_string(), 0.0);
+        
+        let mut path3 = NavigationPath::new(DimensionId(8), Frequency::new(2.0));
+        path3.confidence = 0.5;
+        path3.add_keyword("test".to_string(), 0.0);
+        
+        let mut paths = vec![path1, path3, path2];
+        selector.rank_paths(&mut paths);
+        
+        // With equal confidence and keyword count, should sort by dimension ID
+        assert_eq!(paths[0].dimension_id, DimensionId(2));
+        assert_eq!(paths[1].dimension_id, DimensionId(5));
+        assert_eq!(paths[2].dimension_id, DimensionId(8));
+    }
+    
+    #[test]
+    fn test_path_ranking_stability() {
+        let selector = PathSelector::new();
+        
+        // Test that ranking is stable (paths with identical criteria maintain relative order)
+        // Create multiple paths with identical confidence, keyword count, and dimension ID
+        // (In practice, dimension IDs should be unique, but this tests stability)
+        
+        let mut path1 = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
+        path1.confidence = 0.5;
+        path1.add_keyword("test".to_string(), 0.0);
+        
+        let mut path2 = NavigationPath::new(DimensionId(1), Frequency::new(1.5));
+        path2.confidence = 0.5;
+        path2.add_keyword("test".to_string(), 0.0);
+        
+        let mut paths = vec![path1.clone(), path2.clone()];
+        selector.rank_paths(&mut paths);
+        
+        // Both paths are identical in ranking criteria, so order should be stable
+        // (Rust's sort is stable, so original order should be preserved)
+        assert_eq!(paths[0].frequency.0, 1.0);
+        assert_eq!(paths[1].frequency.0, 1.5);
+    }
+    
+    // Note: NaN confidence handling test will be added in task 5.9 (implementation phase)
+    // when the rank_paths method is properly implemented to handle edge cases
     
     #[test]
     fn test_path_selection() {
