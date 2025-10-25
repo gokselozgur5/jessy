@@ -18,10 +18,10 @@
 //! Provides HTTP endpoints for health checks and basic service status.
 
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, warn};
+use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Debug, Serialize)]
@@ -105,40 +105,71 @@ async fn status(data: web::Data<Arc<RwLock<AppState>>>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Initialize structured logging with tracing
-    // Use JSON format in production, pretty format in development
+    // Initialize structured logging with tracing (Task 10.2)
+    // Supports:
+    // - JSON format (production) or pretty format (development)
+    // - Log levels: ERROR, WARN, INFO, DEBUG, TRACE
+    // - Environment variable: RUST_LOG (e.g., RUST_LOG=debug)
+    // - Output: stdout + file (navigation.log)
+    
     let env = std::env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
+    
+    // Create file appender for navigation.log
+    let file_appender = tracing_appender::rolling::never(".", "navigation.log");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     
     if env == "production" {
         // JSON structured logging for production
+        // Output to both stdout and file
+        let stdout_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_target(true)
+            .with_current_span(true)
+            .with_thread_ids(true)
+            .with_file(true)
+            .with_line_number(true);
+        
+        let file_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_target(true)
+            .with_current_span(true)
+            .with_thread_ids(true)
+            .with_file(true)
+            .with_line_number(true)
+            .with_writer(non_blocking);
+        
         tracing_subscriber::registry()
             .with(
                 tracing_subscriber::EnvFilter::try_from_default_env()
                     .unwrap_or_else(|_| "jessy=info,actix_web=info".into()),
             )
-            .with(
-                tracing_subscriber::fmt::layer()
-                    .json()
-                    .with_target(true)
-                    .with_current_span(true)
-                    .with_thread_ids(true)
-                    .with_file(true)
-                    .with_line_number(true),
-            )
+            .with(stdout_layer)
+            .with(file_layer)
             .init();
     } else {
         // Pretty console logging for development
+        // Output to both stdout (pretty) and file (JSON)
+        let stdout_layer = tracing_subscriber::fmt::layer()
+            .with_target(true)
+            .with_thread_ids(false)
+            .pretty();
+        
+        let file_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_target(true)
+            .with_current_span(true)
+            .with_thread_ids(true)
+            .with_file(true)
+            .with_line_number(true)
+            .with_writer(non_blocking);
+        
         tracing_subscriber::registry()
             .with(
                 tracing_subscriber::EnvFilter::try_from_default_env()
                     .unwrap_or_else(|_| "jessy=debug,actix_web=info".into()),
             )
-            .with(
-                tracing_subscriber::fmt::layer()
-                    .with_target(true)
-                    .with_thread_ids(false)
-                    .pretty(),
-            )
+            .with(stdout_layer)
+            .with(file_layer)
             .init();
     }
 
