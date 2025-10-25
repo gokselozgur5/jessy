@@ -52,7 +52,7 @@ pub struct LayerDump {
 pub struct LayerIndexEntry {
     pub layer_id: String,
     pub dimension: u8,
-    pub layer: u8,
+    pub layer: u16,  // Changed from u8 to match LayerId.layer type
     pub location_type: String, // "MMAP", "Heap", "Hybrid"
     pub region_id: u32,
     pub offset: usize,

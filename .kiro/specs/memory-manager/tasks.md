@@ -193,20 +193,20 @@ This task list implements the memory manager design for zero-copy access to dime
   - Include dimension metadata
   - _Requirements: R3.1_
 
-- [ ]* 9.3 Write integration tests
+- [x] 9.3 Write integration tests
   - Test full system load (all 14 dimensions)
   - Test proto-dimension workflow (create→access→crystallize)
   - Test error recovery scenarios
   - Verify memory usage within 280MB
   - _Requirements: R1.1, R1.2, R2.1, R6.1_
 
-### [ ]* 10. Create BDD scenarios for memory manager
-- [ ]* 10.1 Write dimension loading scenarios
+### [x] 10. Create BDD scenarios for memory manager
+- [x] 10.1 Write dimension loading scenarios
   - Given dimension files exist, when loading, then accessible
   - Given missing dimension, when loading, then graceful skip
   - _Requirements: R2.1, R7.1_
 
-- [ ]* 10.2 Write layer access scenarios
+- [x] 10.2 Write layer access scenarios
   - Given loaded dimension, when accessing layer, then <1ms
   - Given unloaded layer, when accessing, then error with context
   - _Requirements: R3.1, R3.2, R3.4_

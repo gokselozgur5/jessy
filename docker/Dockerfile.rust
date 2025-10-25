@@ -29,7 +29,7 @@ RUN cargo build --release --bin jessy
 # ============================================
 # Stage 2: Development
 # ============================================
-FROM rust:1.83-slim as development
+FROM rustlang/rust:nightly-slim as development
 
 WORKDIR /app
 
@@ -38,19 +38,22 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install cargo-watch using nightly to handle edition2024 dependencies
-# Keep nightly installed as it's needed for cargo-watch to run
-RUN rustup toolchain install nightly && \
-    cargo +nightly install cargo-watch
+# Install cargo tools for development
+RUN cargo install cargo-watch cargo-nextest
 
 # Create MMAP data directory with proper permissions
 RUN mkdir -p /app/data/mmap && \
-    chmod 755 /app/data/mmap
+    mkdir -p /app/data/consciousness && \
+    chmod -R 755 /app/data
 
 # Copy source
 COPY . .
+
+# Pre-build dependencies to cache them
+RUN cargo fetch
 
 # Use cargo-watch for hot reload in development
 CMD ["cargo", "watch", "-x", "run --bin jessy"]

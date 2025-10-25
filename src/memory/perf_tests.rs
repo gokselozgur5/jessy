@@ -13,7 +13,7 @@ mod performance_tests {
     async fn test_initialization_performance() {
         let start = Instant::now();
         
-        let mut manager = MmapManager::new(280).unwrap();
+        let manager = MmapManager::new(280).unwrap();
         
         // Pre-allocate space for 14 core dimensions
         // This should complete quickly without loading actual files
@@ -29,7 +29,7 @@ mod performance_tests {
     /// Test that layer access is <1ms
     #[tokio::test]
     async fn test_layer_access_latency() {
-        let mut manager = MmapManager::new(280).unwrap();
+        let manager = MmapManager::new(280).unwrap();
         
         // Create a test layer
         let dimension_id = DimensionId(99);
@@ -52,7 +52,7 @@ mod performance_tests {
     /// Test zero allocations in hot path
     #[tokio::test]
     async fn test_zero_copy_access() {
-        let mut manager = MmapManager::new(280).unwrap();
+        let manager = MmapManager::new(280).unwrap();
         
         let dimension_id = DimensionId(99);
         let content = b"zero copy test content".to_vec();
@@ -75,7 +75,7 @@ mod performance_tests {
         use std::sync::Arc;
         use tokio::sync::RwLock;
         
-        let mut manager = MmapManager::new(280).unwrap();
+        let manager = MmapManager::new(280).unwrap();
         
         // Create test layer
         let dimension_id = DimensionId(99);
@@ -113,7 +113,7 @@ mod performance_tests {
     /// Test allocation performance
     #[tokio::test]
     async fn test_allocation_performance() {
-        let mut manager = MmapManager::new(280).unwrap();
+        let manager = MmapManager::new(280).unwrap();
         
         let start = Instant::now();
         

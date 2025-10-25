@@ -31,11 +31,16 @@ mod perf_tests;
 #[cfg(test)]
 mod concurrency_tests;
 
+#[cfg(test)]
+mod integration_tests;
+
 // Re-export main types for convenience
 // Users can write `use memory::MmapManager` instead of `use memory::manager::MmapManager`
 pub use manager::MmapManager;
 pub use pool::{MmapPool, PoolAllocator};
 pub use region::{MmapRegion, ContentLocation};
+// Re-export NavigationPath from navigation module for convenience
+pub use crate::navigation::NavigationPath;
 
 use crate::{Result, ConsciousnessError, LayerId};
 use std::collections::HashMap;
