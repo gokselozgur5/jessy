@@ -13,6 +13,7 @@ pub mod parallel_scanner;
 pub mod depth_navigator;
 pub mod orchestrator;
 pub mod validation;
+pub mod metrics;
 
 // Re-export core types
 pub use types::{
