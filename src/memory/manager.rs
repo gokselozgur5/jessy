@@ -526,8 +526,11 @@ impl MmapManager {
     /// - Atomic swap ensures no reader sees partial/inconsistent state
     /// - Old heap version stays valid until swap completes
     /// - This implements Task 7.2: Atomic pointer swap for crystallization
+    ///
+    /// Note: Takes &mut self because allocate() needs mutable access to pool_allocator
+    /// In a fully lock-free design, pool_allocator would use interior mutability
     pub fn crystallize_proto_dimension(
-        &self,
+        &mut self,
         layer_id: LayerId,
     ) -> Result<()> {
         // Step 1: Read current location (read lock)
