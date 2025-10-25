@@ -219,11 +219,13 @@ impl MmapManager {
             layer_index.values().filter(|loc| loc.region_id == region_id).count()
         };
         
-        tracing::debug!(
-            "Loaded dimension {:?} as region {} with {} layers",
-            dimension_id,
-            region_id,
-            layer_count
+        // Task 8.3: Structured logging with context
+        tracing::info!(
+            dimension_id = dimension_id.0,
+            region_id = region_id,
+            layer_count = layer_count,
+            operation = "load_dimension",
+            "Loaded dimension successfully"
         );
         
         Ok(region_id)
@@ -414,12 +416,14 @@ impl MmapManager {
         // Much faster than Mutex::lock() -> value += size -> Mutex::unlock()
         self.current_allocated_bytes.fetch_add(size, Ordering::Relaxed);
         
+        // Task 8.3: Structured logging for allocations
         tracing::debug!(
-            "Allocated {} bytes at pool {} offset {}, total usage: {:.1}%",
-            size,
-            offset.pool_id,
-            offset.offset,
-            utilization
+            size_bytes = size,
+            pool_id = offset.pool_id,
+            offset = offset.offset,
+            utilization_percent = %format!("{:.1}", utilization),
+            operation = "allocate",
+            "Memory allocated successfully"
         );
         
         Ok(offset)
@@ -434,6 +438,15 @@ impl MmapManager {
         
         // Update allocated bytes counter
         self.current_allocated_bytes.fetch_sub(size, Ordering::Relaxed);
+        
+        // Task 8.3: Structured logging for deallocations
+        tracing::debug!(
+            size_bytes = size,
+            pool_id = offset.pool_id,
+            offset = offset.offset,
+            operation = "deallocate",
+            "Memory deallocated successfully"
+        );
         
         Ok(())
     }
@@ -738,7 +751,15 @@ impl MmapManager {
             layer_index.insert(layer_id, new_location);
         } // Write lock released, heap data can now be dropped safely
         
-        tracing::info!("Crystallized proto-dimension {:?} to MMAP", layer_id);
+        // Task 8.3: Structured logging for crystallization
+        tracing::info!(
+            layer_id = ?layer_id,
+            dimension = layer_id.dimension.0,
+            layer = layer_id.layer,
+            size_bytes = data_len,
+            operation = "crystallize",
+            "Proto-dimension crystallized to MMAP successfully"
+        );
         
         Ok(())
     }
