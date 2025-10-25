@@ -5,12 +5,12 @@
 
 use crate::consciousness::{
     ConsciousnessConfig, ConsciousnessResponse, ResponseMetadata,
-    create_simple_interference,
 };
+use crate::interference::{InterferenceEngine, FrequencyState};
 use crate::iteration::IterationProcessor;
 use crate::memory::MmapManager;
 use crate::navigation::NavigationSystem;
-use crate::{ConsciousnessError, Result};
+use crate::{ConsciousnessError, Result, Frequency};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -48,6 +48,7 @@ pub struct ConsciousnessOrchestrator {
     navigation: Arc<NavigationSystem>,
     memory: Arc<MmapManager>,
     iteration: IterationProcessor,
+    interference_engine: InterferenceEngine,
     config: ConsciousnessConfig,
 }
 
@@ -88,10 +89,13 @@ impl ConsciousnessOrchestrator {
             6, // complexity_threshold for return-to-source
         );
         
+        let interference_engine = InterferenceEngine::new();
+        
         Self {
             navigation,
             memory,
             iteration,
+            interference_engine,
             config,
         }
     }
@@ -183,8 +187,21 @@ impl ConsciousnessOrchestrator {
             )));
         }
         
-        // Phase 3: Interference Calculation (simple, shouldn't fail)
-        let interference = create_simple_interference(&contexts);
+        // Phase 3: Interference Calculation using full engine
+        // Convert navigation frequencies to FrequencyStates
+        let frequency_states: Vec<FrequencyState> = nav_result.frequencies.iter()
+            .zip(nav_result.dimensions.iter())
+            .map(|(freq, dim_id)| {
+                let confidence = 0.8; // Default confidence
+                FrequencyState::new(*freq, *dim_id, confidence)
+            })
+            .collect();
+        
+        let interference = self.interference_engine.calculate(&frequency_states)
+            .map_err(|e| {
+                eprintln!("[Consciousness] Interference calculation failed: {}", e);
+                e
+            })?;
         
         // Phase 4: Iteration Processing (return last iteration on failure)
         let iter_start = Instant::now();

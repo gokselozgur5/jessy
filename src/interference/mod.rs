@@ -1,11 +1,170 @@
 //! Frequency interference engine for consciousness system
 //!
-//! This module calculates interference patterns between multiple dimensional frequencies,
-//! determines dominant frequencies, and detects harmonic/dissonance relationships.
+//! This module provides a complete interference calculation system that analyzes
+//! frequency patterns from multiple dimensional activations. It identifies constructive
+//! and destructive interference, detects harmonic relationships, calculates dominant
+//! frequencies, and provides balance modulation suggestions.
+//!
+//! # Overview
+//!
+//! The Interference Engine implements wave interference principles to analyze how
+//! multiple dimensional frequencies interact. It provides:
+//!
+//! - **Pair Detection**: Identifies constructive (reinforcing) and destructive (canceling) pairs
+//! - **Harmonic Analysis**: Detects musical/mathematical relationships (octaves, fifths, etc.)
+//! - **Amplitude Modulation**: Calculates interference effects on signal strength
+//! - **Dominant Frequency**: Determines the resulting frequency after interference
+//! - **Balance Modulation**: Suggests adjustments for extreme or dissonant frequencies
+//! - **Complexity Management**: Triggers return-to-source when system becomes too complex
+//!
+//! # Architecture
+//!
+//! ```text
+//! ┌─────────────────────────────────────────────────────────────┐
+//! │              Frequency States (from dimensions)              │
+//! └────────────────────┬────────────────────────────────────────┘
+//!                      │
+//!                      ▼
+//! ┌─────────────────────────────────────────────────────────────┐
+//! │                 Interference Engine                          │
+//! ├─────────────────────────────────────────────────────────────┤
+//! │  1. Collect Frequencies                                      │
+//! │  2. Detect Pairs (constructive/destructive)                  │
+//! │  3. Analyze Harmonics                                        │
+//! │  4. Calculate Interference Effects                           │
+//! │  5. Determine Dominant Frequency                             │
+//! │  6. Detect Balance Needs                                     │
+//! │  7. Generate Modulation Suggestions                          │
+//! └────────────────────┬────────────────────────────────────────┘
+//!                      │
+//!                      ▼
+//! ┌─────────────────────────────────────────────────────────────┐
+//! │                  InterferenceResult                          │
+//! │  - InterferencePattern                                       │
+//! │  - Modulation suggestions                                    │
+//! │  - Balance activation flag                                   │
+//! │  - Return-to-source flag                                     │
+//! └─────────────────────────────────────────────────────────────┘
+//! ```
+//!
+//! # Performance
+//!
+//! The engine is optimized for real-time consciousness processing:
+//!
+//! - **1 frequency**: <1 μs
+//! - **7 frequencies** (typical): <1 μs
+//! - **14 frequencies** (maximum): ~2 μs
+//! - **Total pipeline**: <10 ms (target: <10 ms) ✅
+//!
+//! # Examples
+//!
+//! ## Basic Usage
+//!
+//! ```rust
+//! use jessy::{Frequency, DimensionId};
+//! use jessy::interference::{InterferenceEngine, FrequencyState};
+//!
+//! // Create engine
+//! let engine = InterferenceEngine::new();
+//!
+//! // Create frequency states
+//! let frequencies = vec![
+//!     FrequencyState::new(Frequency::new(1.0), DimensionId(1), 0.8),
+//!     FrequencyState::new(Frequency::new(2.0), DimensionId(2), 0.9),
+//! ];
+//!
+//! // Calculate interference
+//! let result = engine.calculate(&frequencies).unwrap();
+//!
+//! println!("Dominant frequency: {:.2} Hz", result.pattern.dominant_frequency.hz());
+//! println!("Harmonics detected: {}", result.pattern.harmonics.len());
+//! ```
+//!
+//! ## Harmonic Detection
+//!
+//! ```rust
+//! use jessy::{Frequency, DimensionId};
+//! use jessy::interference::{InterferenceEngine, FrequencyState};
+//!
+//! let engine = InterferenceEngine::new();
+//!
+//! // Frequencies in octave relationship (2:1)
+//! let frequencies = vec![
+//!     FrequencyState::new(Frequency::new(1.0), DimensionId(1), 0.8),
+//!     FrequencyState::new(Frequency::new(2.0), DimensionId(2), 0.8),
+//! ];
+//!
+//! let result = engine.calculate(&frequencies).unwrap();
+//!
+//! // Should detect octave harmonic
+//! assert!(!result.pattern.harmonics.is_empty());
+//! ```
+//!
+//! ## Balance Modulation
+//!
+//! ```rust
+//! use jessy::{Frequency, DimensionId};
+//! use jessy::interference::{InterferenceEngine, FrequencyState};
+//!
+//! let engine = InterferenceEngine::new();
+//!
+//! // Extreme frequency requiring balance
+//! let frequencies = vec![
+//!     FrequencyState::new(Frequency::new(4.5), DimensionId(1), 0.9),
+//! ];
+//!
+//! let result = engine.calculate(&frequencies).unwrap();
+//!
+//! // Should suggest modulation
+//! assert!(!result.modulation_suggestions.is_empty());
+//! ```
+//!
+//! # Harmonic Relationships
+//!
+//! The engine detects these harmonic relationships:
+//!
+//! | Harmonic | Ratio | Example | Musical Interval |
+//! |----------|-------|---------|------------------|
+//! | Octave | 2:1 | 1.0 Hz → 2.0 Hz | Perfect Octave |
+//! | Perfect 5th | 3:2 | 2.0 Hz → 3.0 Hz | Perfect Fifth |
+//! | Perfect 4th | 4:3 | 3.0 Hz → 4.0 Hz | Perfect Fourth |
+//! | Major 3rd | 5:4 | 4.0 Hz → 5.0 Hz | Major Third |
+//!
+//! # Balance Modulation
+//!
+//! Balance modulation is triggered when:
+//!
+//! - **Dominant frequency > 3.5 Hz**: System is too activated
+//! - **Dissonance count > 2**: Too much internal conflict
+//! - **Complexity score > 3.0**: System is too complex
+//!
+//! The balance center is **1.2 Hz** (D13 Balance dimension frequency).
+//!
+//! # Return-to-Source
+//!
+//! Return-to-source is suggested when:
+//!
+//! - **Frequency count > 6**: Too many dimensions active
+//! - **Complexity score > 5.0**: System overwhelmed
+//!
+//! This triggers D14 Source dimension to simplify the system.
+//!
+//! # See Also
+//!
+//! - [`InterferenceEngine`]: Main engine for interference calculation
+//! - [`HarmonicAnalyzer`]: Harmonic relationship detection
+//! - [`InterferencePattern`]: Result pattern structure
+//! - [`ModulationSuggestion`]: Frequency adjustment recommendations
 
 pub mod engine;
 pub mod patterns;
 pub mod harmonics;
+pub mod pair_detection;
+pub mod calculation;
+pub mod balance;
+pub mod modulation;
+pub mod performance_tests;
+pub mod integration_tests;
 
 pub use engine::InterferenceEngine;
 pub use harmonics::HarmonicAnalyzer;
@@ -92,11 +251,17 @@ pub struct InterferencePattern {
     pub frequencies: Vec<FrequencyState>,
     pub dominant_frequency: Frequency,
     pub amplitude: f32,
-    pub harmonics: Vec<Frequency>,
-    pub dissonances: Vec<(usize, usize)>, // Indices of dissonant frequency pairs
+    /// Harmonic relationships between frequency pairs with strength
+    pub harmonics: Vec<HarmonicRelationship>,
+    /// Indices of dissonant frequency pairs
+    pub dissonances: Vec<(usize, usize)>,
+    /// Indices of constructive interference pairs (within threshold)
     pub constructive_pairs: Vec<(usize, usize)>,
+    /// Indices of destructive interference pairs (beyond threshold)
     pub destructive_pairs: Vec<(usize, usize)>,
+    /// Whether balance dimension activation is needed
     pub balance_needed: bool,
+    /// Complexity score based on frequency count and relationships
     pub complexity_score: f32,
 }
 
@@ -114,6 +279,23 @@ impl InterferencePattern {
             balance_needed: false,
             complexity_score: 0.0,
         }
+    }
+    
+    /// Add harmonic relationship to the pattern
+    pub fn add_harmonic(&mut self, harmonic: HarmonicRelationship) {
+        self.harmonics.push(harmonic);
+    }
+    
+    /// Get all consonant harmonics
+    pub fn consonant_harmonics(&self) -> Vec<&HarmonicRelationship> {
+        self.harmonics.iter()
+            .filter(|h| h.is_consonant())
+            .collect()
+    }
+    
+    /// Get harmonic count
+    pub fn harmonic_count(&self) -> usize {
+        self.harmonics.len()
     }
     
     /// Add frequency to the pattern
@@ -169,6 +351,44 @@ pub struct ModulationSuggestion {
     pub suggested_frequency: Frequency,
     pub reason: ModulationReason,
     pub priority: ModulationPriority,
+    /// Modulation strength (0.0-1.0) indicating how strongly to apply the suggestion
+    pub strength: f32,
+}
+
+impl ModulationSuggestion {
+    /// Create new modulation suggestion
+    pub fn new(
+        dimension_id: crate::DimensionId,
+        current_frequency: Frequency,
+        suggested_frequency: Frequency,
+        reason: ModulationReason,
+        priority: ModulationPriority,
+        strength: f32,
+    ) -> Self {
+        Self {
+            dimension_id,
+            current_frequency,
+            suggested_frequency,
+            reason,
+            priority,
+            strength: strength.clamp(0.0, 1.0), // Ensure 0.0-1.0 range
+        }
+    }
+    
+    /// Check if this is a critical modulation
+    pub fn is_critical(&self) -> bool {
+        self.priority == ModulationPriority::Critical
+    }
+    
+    /// Check if this modulation should be applied immediately
+    pub fn should_apply_immediately(&self) -> bool {
+        matches!(self.priority, ModulationPriority::Critical | ModulationPriority::High)
+    }
+    
+    /// Calculate the frequency delta
+    pub fn frequency_delta(&self) -> f32 {
+        self.suggested_frequency.hz() - self.current_frequency.hz()
+    }
 }
 
 /// Reason for frequency modulation
@@ -296,6 +516,54 @@ mod tests {
         
         assert!(harmonic.is_consonant());
         assert!(harmonic.should_reinforce());
+    }
+    
+    #[test]
+    fn test_interference_pattern_harmonics() {
+        let mut pattern = InterferencePattern::new();
+        
+        let harmonic = HarmonicRelationship::new(
+            0,
+            1,
+            HarmonicType::Octave,
+            0.9,
+        );
+        
+        pattern.add_harmonic(harmonic);
+        
+        assert_eq!(pattern.harmonic_count(), 1);
+        assert_eq!(pattern.consonant_harmonics().len(), 1);
+    }
+    
+    #[test]
+    fn test_modulation_suggestion() {
+        let suggestion = ModulationSuggestion::new(
+            DimensionId(1),
+            Frequency::new(4.0),
+            Frequency::new(2.5),
+            ModulationReason::TooExtreme,
+            ModulationPriority::Critical,
+            0.8,
+        );
+        
+        assert!(suggestion.is_critical());
+        assert!(suggestion.should_apply_immediately());
+        assert!((suggestion.frequency_delta() - (-1.5)).abs() < 0.001);
+        assert_eq!(suggestion.strength, 0.8);
+    }
+    
+    #[test]
+    fn test_modulation_suggestion_strength_clamping() {
+        let suggestion = ModulationSuggestion::new(
+            DimensionId(1),
+            Frequency::new(3.0),
+            Frequency::new(2.0),
+            ModulationReason::Unbalanced,
+            ModulationPriority::Medium,
+            1.5, // Should be clamped to 1.0
+        );
+        
+        assert_eq!(suggestion.strength, 1.0);
     }
     
     #[test]

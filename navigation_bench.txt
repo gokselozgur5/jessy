@@ -1,0 +1,487 @@
+[1m[33mwarning[0m: output filename collision at /app/target/release/deps/libjessy.so
+  [1m[94m|[0m
+  [1m[94m= [0m[1mnote[0m: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  [1m[94m= [0m[1mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[94m= [0m[1mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[33mwarning[0m: output filename collision at /app/target/release/deps/libjessy.so.dwp
+  [1m[94m|[0m
+  [1m[94m= [0m[1mnote[0m: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  [1m[94m= [0m[1mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[94m= [0m[1mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[33mwarning[0m: output filename collision at /app/target/release/deps/libjessy.rlib
+  [1m[94m|[0m
+  [1m[94m= [0m[1mnote[0m: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  [1m[94m= [0m[1mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[94m= [0m[1mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[92m   Compiling[0m jessy v0.1.0 (/app)
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/memory/region.rs:15:5
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused import: `MmapHandle`[0m
+  [1m[94m--> [0msrc/memory/manager.rs:10:17
+   [1m[94m|[0m
+[1m[94m10[0m [1m[94m|[0m     MmapOffset, MmapHandle, LoadedContext, ContextCollection,
+   [1m[94m|[0m                 [1m[33m^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Path`[0m
+  [1m[94m--> [0msrc/memory/manager.rs:14:17
+   [1m[94m|[0m
+[1m[94m14[0m [1m[94m|[0m use std::path::{Path, PathBuf};
+   [1m[94m|[0m                 [1m[33m^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Arc`[0m
+  [1m[94m--> [0msrc/memory/manager.rs:16:17
+   [1m[94m|[0m
+[1m[94m16[0m [1m[94m|[0m use std::sync::{Arc, RwLock};
+   [1m[94m|[0m                 [1m[33m^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `Layout`, `alloc`, and `dealloc`[0m
+ [1m[94m--> [0msrc/memory/optimization.rs:5:18
+  [1m[94m|[0m
+[1m[94m5[0m [1m[94m|[0m use std::alloc::{alloc, dealloc, Layout};
+  [1m[94m|[0m                  [1m[33m^^^^^[0m  [1m[33m^^^^^^^[0m  [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+ [1m[94m--> [0msrc/memory/diagnostics.rs:6:5
+  [1m[94m|[0m
+[1m[94m6[0m [1m[94m|[0m use std::collections::HashMap;
+  [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId` and `LayerId`[0m
+ [1m[94m--> [0msrc/memory/diagnostics.rs:7:13
+  [1m[94m|[0m
+[1m[94m7[0m [1m[94m|[0m use crate::{LayerId, DimensionId};
+  [1m[94m|[0m             [1m[33m^^^^^^^[0m  [1m[33m^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/memory/mod.rs:46:5
+   [1m[94m|[0m
+[1m[94m46[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Result`[0m
+  [1m[94m--> [0msrc/dimensions/mod.rs:14:46
+   [1m[94m|[0m
+[1m[94m14[0m [1m[94m|[0m use crate::{DimensionId, LayerId, Frequency, Result};
+   [1m[94m|[0m                                              [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/dimensions/mod.rs:15:5
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId` and `LayerId`[0m
+ [1m[94m--> [0msrc/navigation/types.rs:6:13
+  [1m[94m|[0m
+[1m[94m6[0m [1m[94m|[0m use crate::{DimensionId, LayerId};
+  [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m  [1m[33m^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Frequency`[0m
+  [1m[94m--> [0msrc/navigation/registry.rs:10:35
+   [1m[94m|[0m
+[1m[94m10[0m [1m[94m|[0m use crate::{DimensionId, LayerId, Frequency};
+   [1m[94m|[0m                                   [1m[33m^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `NavigationConfig`[0m
+  [1m[94m--> [0msrc/navigation/registry.rs:11:42
+   [1m[94m|[0m
+[1m[94m11[0m [1m[94m|[0m use crate::navigation::{NavigationError, NavigationConfig};
+   [1m[94m|[0m                                          [1m[33m^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::sync::Arc`[0m
+  [1m[94m--> [0msrc/navigation/registry.rs:13:5
+   [1m[94m|[0m
+[1m[94m13[0m [1m[94m|[0m use std::sync::Arc;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unnecessary parentheses around block return value[0m
+   [1m[94m--> [0msrc/navigation/registry.rs:104:9
+    [1m[94m|[0m
+[1m[94m104[0m [1m[94m|[0m         (freq >= self.frequency_range.0 - 0.5 && freq <= self.frequency_range.1 + 0.5)
+    [1m[94m|[0m         [1m[33m^[0m                                                                            [1m[33m^[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+[1m[96mhelp[0m: remove these parentheses
+    [1m[94m|[0m
+[1m[94m104[0m [91m- [0m        [91m([0mfreq >= self.frequency_range.0 - 0.5 && freq <= self.frequency_range.1 + 0.5[91m)[0m
+[1m[94m104[0m [92m+ [0m        freq >= self.frequency_range.0 - 0.5 && freq <= self.frequency_range.1 + 0.5
+    [1m[94m|[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId`, `LayerId`, and `Result`[0m
+  [1m[94m--> [0msrc/navigation/path_selector.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{DimensionId, LayerId, Result};
+   [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m  [1m[33m^^^^^^^[0m  [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `NavigationError`[0m
+  [1m[94m--> [0msrc/navigation/path_selector.rs:16:47
+   [1m[94m|[0m
+[1m[94m16[0m [1m[94m|[0m use super::{NavigationPath, NavigationConfig, NavigationError};
+   [1m[94m|[0m                                               [1m[33m^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `LayerId`[0m
+  [1m[94m--> [0msrc/navigation/parallel_scanner.rs:15:26
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{DimensionId, LayerId};
+   [1m[94m|[0m                          [1m[33m^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `QueryAnalysis`[0m
+  [1m[94m--> [0msrc/navigation/parallel_scanner.rs:16:60
+   [1m[94m|[0m
+[1m[94m16[0m [1m[94m|[0m use crate::navigation::{NavigationError, NavigationConfig, QueryAnalysis};
+   [1m[94m|[0m                                                            [1m[33m^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId` and `LayerId`[0m
+  [1m[94m--> [0msrc/navigation/orchestrator.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{DimensionId, LayerId};
+   [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m  [1m[33m^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `QueryAnalysis` and `UrgencyLevel`[0m
+  [1m[94m--> [0msrc/navigation/orchestrator.rs:19:24
+   [1m[94m|[0m
+[1m[94m19[0m [1m[94m|[0m     DimensionRegistry, QueryAnalysis, UrgencyLevel,
+   [1m[94m|[0m                        [1m[33m^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/navigation/mod.rs:37:5
+   [1m[94m|[0m
+[1m[94m37[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Frequency`[0m
+ [1m[94m--> [0msrc/interference/engine.rs:4:21
+  [1m[94m|[0m
+[1m[94m4[0m [1m[94m|[0m use crate::{Result, Frequency};
+  [1m[94m|[0m                     [1m[33m^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `ModulationSuggestion`[0m
+ [1m[94m--> [0msrc/interference/engine.rs:5:54
+  [1m[94m|[0m
+[1m[94m5[0m [1m[94m|[0m use super::{InterferenceResult, InterferencePattern, ModulationSuggestion};
+  [1m[94m|[0m                                                      [1m[33m^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Result`[0m
+  [1m[94m--> [0msrc/interference/mod.rs:13:24
+   [1m[94m|[0m
+[1m[94m13[0m [1m[94m|[0m use crate::{Frequency, Result};
+   [1m[94m|[0m                        [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/interference/mod.rs:14:5
+   [1m[94m|[0m
+[1m[94m14[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `ConsciousnessError` and `Frequency`[0m
+ [1m[94m--> [0msrc/iteration/processor.rs:4:21
+  [1m[94m|[0m
+[1m[94m4[0m [1m[94m|[0m use crate::{Result, ConsciousnessError, Frequency};
+  [1m[94m|[0m                     [1m[33m^^^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `ConsciousnessError` and `Result`[0m
+  [1m[94m--> [0msrc/iteration/mod.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{Result, ConsciousnessError, Frequency};
+   [1m[94m|[0m             [1m[33m^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `ConsciousnessError` and `Result`[0m
+  [1m[94m--> [0msrc/security/mod.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{Result, ConsciousnessError};
+   [1m[94m|[0m             [1m[33m^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/lib.rs:29:5
+   [1m[94m|[0m
+[1m[94m29[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+   [1m[94m--> [0msrc/navigation/orchestrator.rs:241:13
+    [1m[94m|[0m
+[1m[94m241[0m [1m[94m|[0m         let mut paths: Vec<NavigationPath> = activations
+    [1m[94m|[0m             [1m[94m----[0m[1m[33m^^^^^[0m
+    [1m[94m|[0m             [1m[94m|[0m
+    [1m[94m|[0m             [1m[94mhelp: remove this `mut`[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused variable: `dimension`[0m
+   [1m[94m--> [0msrc/navigation/parallel_scanner.rs:189:13
+    [1m[94m|[0m
+[1m[94m189[0m [1m[94m|[0m         let dimension = self.registry
+    [1m[94m|[0m             [1m[33m^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_dimension`[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: value assigned to `return_to_source_triggered` is never read[0m
+  [1m[94m--> [0msrc/iteration/processor.rs:39:46
+   [1m[94m|[0m
+[1m[94m39[0m [1m[94m|[0m         let mut return_to_source_triggered = false;
+   [1m[94m|[0m                                              [1m[33m^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mhelp[0m: maybe it is overwritten before being read?
+   [1m[94m= [0m[1mnote[0m: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused variable: `contexts`[0m
+   [1m[94m--> [0msrc/iteration/processor.rs:120:9
+    [1m[94m|[0m
+[1m[94m120[0m [1m[94m|[0m         contexts: &ContextCollection,
+    [1m[94m|[0m         [1m[33m^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_contexts`[0m
+
+[1m[33mwarning[0m[1m: unused variable: `previous_steps`[0m
+   [1m[94m--> [0msrc/iteration/processor.rs:121:9
+    [1m[94m|[0m
+[1m[94m121[0m [1m[94m|[0m         previous_steps: &[IterationStep],
+    [1m[94m|[0m         [1m[33m^^^^^^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_previous_steps`[0m
+
+[1m[33mwarning[0m[1m: field `config` is never read[0m
+   [1m[94m--> [0msrc/lib.rs:161:5
+    [1m[94m|[0m
+[1m[94m160[0m [1m[94m|[0m pub struct ConsciousnessSystem {
+    [1m[94m|[0m            [1m[94m-------------------[0m [1m[94mfield in this struct[0m
+[1m[94m161[0m [1m[94m|[0m     config: ConsciousnessConfig,
+    [1m[94m|[0m     [1m[33m^^^^^^[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `ConsciousnessSystem` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+    [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: field `dimensions` is never read[0m
+ [1m[94m--> [0msrc/dimensions/registry.rs:7:5
+  [1m[94m|[0m
+[1m[94m6[0m [1m[94m|[0m pub struct DimensionRegistry {
+  [1m[94m|[0m            [1m[94m-----------------[0m [1m[94mfield in this struct[0m
+[1m[94m7[0m [1m[94m|[0m     dimensions: Vec<Dimension>,
+  [1m[94m|[0m     [1m[33m^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: method `determine_violated_law` is never used[0m
+  [1m[94m--> [0msrc/security/validator.rs:95:8
+   [1m[94m|[0m
+[1m[94m17[0m [1m[94m|[0m impl SecurityLayer {
+   [1m[94m|[0m [1m[94m------------------[0m [1m[94mmethod in this implementation[0m
+[1m[94m...[0m
+[1m[94m95[0m [1m[94m|[0m     fn determine_violated_law(&self, category: HarmCategory) -> AsimovLaw {
+   [1m[94m|[0m        [1m[33m^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m: `jessy` (lib) generated 38 warnings (38 duplicates)
+[1m[33mwarning[0m: `jessy` (lib) generated 38 warnings (run `cargo fix --lib -p jessy` to apply 34 suggestions)
+[1m[92m    Finished[0m `bench` profile [optimized] target(s) in 1m 16s
+[1m[92m     Running[0m benches/navigation_benchmarks.rs (target/release/deps/navigation_benchmarks-5334262bf09e2a22)
+Gnuplot not found, using plotters backend
+Benchmarking registry_lookup/get_dimension
+Benchmarking registry_lookup/get_dimension: Warming up for 3.0000 s
+Benchmarking registry_lookup/get_dimension: Collecting 100 samples in estimated 5.0000 s (252M iterations)
+Benchmarking registry_lookup/get_dimension: Analyzing
+registry_lookup/get_dimension
+                        time:   [11.409 ns 12.155 ns 12.909 ns]
+                        change: [+3.8514% +14.789% +27.594%] (p = 0.01 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+Benchmarking registry_lookup/get_layer
+Benchmarking registry_lookup/get_layer: Warming up for 3.0000 s
+Benchmarking registry_lookup/get_layer: Collecting 100 samples in estimated 5.0000 s (377M iterations)
+Benchmarking registry_lookup/get_layer: Analyzing
+registry_lookup/get_layer
+                        time:   [18.671 ns 20.123 ns 21.732 ns]
+                        change: [-26.508% -19.671% -11.972%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+Benchmarking registry_lookup/get_child_layers
+Benchmarking registry_lookup/get_child_layers: Warming up for 3.0000 s
+Benchmarking registry_lookup/get_child_layers: Collecting 100 samples in estimated 5.0000 s (302M iterations)
+Benchmarking registry_lookup/get_child_layers: Analyzing
+registry_lookup/get_child_layers
+                        time:   [12.619 ns 13.510 ns 14.820 ns]
+                        change: [-6.9251% +0.9021% +9.2594%] (p = 0.83 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+
+Benchmarking full_navigation/navigate/0
+Benchmarking full_navigation/navigate/0: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/0: Collecting 50 samples in estimated 20.048 s (391k iterations)
+Benchmarking full_navigation/navigate/0: Analyzing
+full_navigation/navigate/0
+                        time:   [41.967 µs 46.692 µs 51.662 µs]
+                        change: [+20.397% +34.986% +50.007%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking full_navigation/navigate/1
+Benchmarking full_navigation/navigate/1: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/1: Collecting 50 samples in estimated 20.020 s (592k iterations)
+Benchmarking full_navigation/navigate/1: Analyzing
+full_navigation/navigate/1
+                        time:   [32.422 µs 33.221 µs 34.218 µs]
+                        change: [-14.977% -3.4436% +9.8828%] (p = 0.62 > 0.05)
+                        No change in performance detected.
+Found 4 outliers among 50 measurements (8.00%)
+  3 (6.00%) high mild
+  1 (2.00%) high severe
+Benchmarking full_navigation/navigate/2
+Benchmarking full_navigation/navigate/2: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/2: Collecting 50 samples in estimated 20.012 s (449k iterations)
+Benchmarking full_navigation/navigate/2: Analyzing
+full_navigation/navigate/2
+                        time:   [28.366 µs 30.550 µs 33.472 µs]
+                        change: [-38.765% -31.768% -23.737%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 5 outliers among 50 measurements (10.00%)
+  1 (2.00%) low mild
+  4 (8.00%) high severe
+Benchmarking full_navigation/navigate/3
+Benchmarking full_navigation/navigate/3: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/3: Collecting 50 samples in estimated 20.013 s (643k iterations)
+Benchmarking full_navigation/navigate/3: Analyzing
+full_navigation/navigate/3
+                        time:   [31.373 µs 32.962 µs 35.091 µs]
+                        change: [-55.715% -49.008% -41.225%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 8 outliers among 50 measurements (16.00%)
+  1 (2.00%) low severe
+  2 (4.00%) low mild
+  3 (6.00%) high mild
+  2 (4.00%) high severe
+Benchmarking full_navigation/navigate/4
+Benchmarking full_navigation/navigate/4: Warming up for 3.0000 s
+Benchmarking full_navigation/navigate/4: Collecting 50 samples in estimated 20.006 s (643k iterations)
+Benchmarking full_navigation/navigate/4: Analyzing
+full_navigation/navigate/4
+                        time:   [28.279 µs 29.069 µs 29.987 µs]
+                        change: [-41.513% -34.104% -25.582%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 7 outliers among 50 measurements (14.00%)
+  1 (2.00%) low mild
+  2 (4.00%) high mild
+  4 (8.00%) high severe
+
+Benchmarking concurrent_navigation/1
+Benchmarking concurrent_navigation/1: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/1: Collecting 30 samples in estimated 20.006 s (1.3M iterations)
+Benchmarking concurrent_navigation/1: Analyzing
+concurrent_navigation/1 time:   [14.044 µs 16.445 µs 19.109 µs]
+                        change: [-54.627% -46.295% -34.915%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 30 measurements (13.33%)
+  3 (10.00%) high mild
+  1 (3.33%) high severe
+Benchmarking concurrent_navigation/2
+Benchmarking concurrent_navigation/2: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/2: Collecting 30 samples in estimated 20.009 s (427k iterations)
+Benchmarking concurrent_navigation/2: Analyzing
+concurrent_navigation/2 time:   [46.655 µs 50.374 µs 53.866 µs]
+                        change: [+17.689% +30.806% +43.814%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 30 measurements (13.33%)
+  1 (3.33%) low mild
+  3 (10.00%) high mild
+Benchmarking concurrent_navigation/4
+Benchmarking concurrent_navigation/4: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/4: Collecting 30 samples in estimated 20.032 s (255k iterations)
+Benchmarking concurrent_navigation/4: Analyzing
+concurrent_navigation/4 time:   [78.214 µs 78.918 µs 80.020 µs]
+                        change: [-26.096% -20.454% -14.107%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 30 measurements (10.00%)
+  3 (10.00%) high severe
+Benchmarking concurrent_navigation/8
+Benchmarking concurrent_navigation/8: Warming up for 3.0000 s
+Benchmarking concurrent_navigation/8: Collecting 30 samples in estimated 20.021 s (173k iterations)
+Benchmarking concurrent_navigation/8: Analyzing
+concurrent_navigation/8 time:   [112.35 µs 115.02 µs 118.76 µs]
+                        change: [-20.898% -14.412% -7.7166%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 6 outliers among 30 measurements (20.00%)
+  3 (10.00%) low mild
+  1 (3.33%) high mild
+  2 (6.67%) high severe
+
+Benchmarking query_types/emotional
+Benchmarking query_types/emotional: Warming up for 3.0000 s
+Benchmarking query_types/emotional: Collecting 40 samples in estimated 15.034 s (334k iterations)
+Benchmarking query_types/emotional: Analyzing
+query_types/emotional   time:   [43.662 µs 44.169 µs 44.639 µs]
+                        change: [+0.4442% +19.749% +39.469%] (p = 0.02 < 0.05)
+                        Change within noise threshold.
+Found 5 outliers among 40 measurements (12.50%)
+  2 (5.00%) low severe
+  1 (2.50%) low mild
+  1 (2.50%) high mild
+  1 (2.50%) high severe
+Benchmarking query_types/technical
+Benchmarking query_types/technical: Warming up for 3.0000 s
+Benchmarking query_types/technical: Collecting 40 samples in estimated 15.006 s (359k iterations)
+Benchmarking query_types/technical: Analyzing
+query_types/technical   time:   [42.372 µs 42.645 µs 42.946 µs]
+                        change: [+20.455% +27.131% +33.493%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 40 measurements (5.00%)
+  2 (5.00%) high mild
+Benchmarking query_types/philosophical
+Benchmarking query_types/philosophical: Warming up for 3.0000 s
+Benchmarking query_types/philosophical: Collecting 40 samples in estimated 15.014 s (390k iterations)
+Benchmarking query_types/philosophical: Analyzing
+query_types/philosophical
+                        time:   [37.290 µs 37.606 µs 37.962 µs]
+                        change: [+20.141% +31.295% +44.578%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 40 measurements (10.00%)
+  2 (5.00%) high mild
+  2 (5.00%) high severe
+Benchmarking query_types/factual
+Benchmarking query_types/factual: Warming up for 3.0000 s
+Benchmarking query_types/factual: Collecting 40 samples in estimated 15.029 s (412k iterations)
+Benchmarking query_types/factual: Analyzing
+query_types/factual     time:   [33.421 µs 33.828 µs 34.389 µs]
+                        change: [+31.084% +36.485% +41.858%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Benchmarking query_types/mixed
+Benchmarking query_types/mixed: Warming up for 3.0000 s
+Benchmarking query_types/mixed: Collecting 40 samples in estimated 15.024 s (402k iterations)
+Benchmarking query_types/mixed: Analyzing
+query_types/mixed       time:   [55.615 µs 65.120 µs 77.127 µs]
+                        change: [+76.969% +105.69% +137.69%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 40 measurements (2.50%)
+  1 (2.50%) high mild
+
+Benchmarking memory_integration/navigation_only
+Benchmarking memory_integration/navigation_only: Warming up for 3.0000 s
+Benchmarking memory_integration/navigation_only: Collecting 40 samples in estimated 15.027 s (351k iterations)
+Benchmarking memory_integration/navigation_only: Analyzing
+memory_integration/navigation_only
+                        time:   [41.534 µs 47.200 µs 53.667 µs]
+                        change: [+20.422% +28.585% +38.251%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 7 outliers among 40 measurements (17.50%)
+  2 (5.00%) low severe
+  2 (5.00%) high mild
+  3 (7.50%) high severe
+Benchmarking memory_integration/navigation_plus_loading
+Benchmarking memory_integration/navigation_plus_loading: Warming up for 3.0000 s
+
+thread 'main' (56) panicked at benches/navigation_benchmarks.rs:228:71:
+called `Result::unwrap()` on an `Err` value: InsufficientMatches { threshold: 0.3, query: "I feel anxious about implementing algorithms" }
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::result::unwrap_failed
+   3: navigation_benchmarks::bench_memory_integration::{{closure}}::{{closure}}::{{closure}}
+   4: criterion::bencher::Bencher<M>::iter
+   5: criterion::benchmark_group::BenchmarkGroup<M>::bench_function::{{closure}}
+   6: <criterion::routine::Function<M,F,T> as criterion::routine::Routine<M,T>>::warm_up
+   7: criterion::routine::Routine::sample
+   8: criterion::analysis::common
+   9: navigation_benchmarks::benches
+  10: navigation_benchmarks::main
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+[1m[91merror[0m: bench failed, to rerun pass `--bench navigation_benchmarks`

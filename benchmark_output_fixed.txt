@@ -1,0 +1,322 @@
+[1m[33mwarning[0m: output filename collision at /app/target/release/deps/libjessy.so
+  [1m[94m|[0m
+  [1m[94m= [0m[1mnote[0m: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  [1m[94m= [0m[1mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[94m= [0m[1mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[33mwarning[0m: output filename collision at /app/target/release/deps/libjessy.so.dwp
+  [1m[94m|[0m
+  [1m[94m= [0m[1mnote[0m: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  [1m[94m= [0m[1mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[94m= [0m[1mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[33mwarning[0m: output filename collision at /app/target/release/deps/libjessy.rlib
+  [1m[94m|[0m
+  [1m[94m= [0m[1mnote[0m: the lib target `jessy` in package `jessy v0.1.0 (/app)` has the same output filename as the lib target `jessy` in package `jessy v0.1.0 (/app)`
+  [1m[94m= [0m[1mnote[0m: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  [1m[94m= [0m[1mhelp[0m: consider changing their names to be unique or compiling them separately
+[1m[92m   Compiling[0m jessy v0.1.0 (/app)
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/memory/region.rs:15:5
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused import: `MmapHandle`[0m
+  [1m[94m--> [0msrc/memory/manager.rs:10:17
+   [1m[94m|[0m
+[1m[94m10[0m [1m[94m|[0m     MmapOffset, MmapHandle, LoadedContext, ContextCollection,
+   [1m[94m|[0m                 [1m[33m^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Path`[0m
+  [1m[94m--> [0msrc/memory/manager.rs:14:17
+   [1m[94m|[0m
+[1m[94m14[0m [1m[94m|[0m use std::path::{Path, PathBuf};
+   [1m[94m|[0m                 [1m[33m^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Arc`[0m
+  [1m[94m--> [0msrc/memory/manager.rs:16:17
+   [1m[94m|[0m
+[1m[94m16[0m [1m[94m|[0m use std::sync::{Arc, RwLock};
+   [1m[94m|[0m                 [1m[33m^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `Layout`, `alloc`, and `dealloc`[0m
+ [1m[94m--> [0msrc/memory/optimization.rs:5:18
+  [1m[94m|[0m
+[1m[94m5[0m [1m[94m|[0m use std::alloc::{alloc, dealloc, Layout};
+  [1m[94m|[0m                  [1m[33m^^^^^[0m  [1m[33m^^^^^^^[0m  [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+ [1m[94m--> [0msrc/memory/diagnostics.rs:6:5
+  [1m[94m|[0m
+[1m[94m6[0m [1m[94m|[0m use std::collections::HashMap;
+  [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId` and `LayerId`[0m
+ [1m[94m--> [0msrc/memory/diagnostics.rs:7:13
+  [1m[94m|[0m
+[1m[94m7[0m [1m[94m|[0m use crate::{LayerId, DimensionId};
+  [1m[94m|[0m             [1m[33m^^^^^^^[0m  [1m[33m^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/memory/mod.rs:46:5
+   [1m[94m|[0m
+[1m[94m46[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Result`[0m
+  [1m[94m--> [0msrc/dimensions/mod.rs:14:46
+   [1m[94m|[0m
+[1m[94m14[0m [1m[94m|[0m use crate::{DimensionId, LayerId, Frequency, Result};
+   [1m[94m|[0m                                              [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/dimensions/mod.rs:15:5
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId` and `LayerId`[0m
+ [1m[94m--> [0msrc/navigation/types.rs:6:13
+  [1m[94m|[0m
+[1m[94m6[0m [1m[94m|[0m use crate::{DimensionId, LayerId};
+  [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m  [1m[33m^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Frequency`[0m
+  [1m[94m--> [0msrc/navigation/registry.rs:10:35
+   [1m[94m|[0m
+[1m[94m10[0m [1m[94m|[0m use crate::{DimensionId, LayerId, Frequency};
+   [1m[94m|[0m                                   [1m[33m^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `NavigationConfig`[0m
+  [1m[94m--> [0msrc/navigation/registry.rs:11:42
+   [1m[94m|[0m
+[1m[94m11[0m [1m[94m|[0m use crate::navigation::{NavigationError, NavigationConfig};
+   [1m[94m|[0m                                          [1m[33m^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::sync::Arc`[0m
+  [1m[94m--> [0msrc/navigation/registry.rs:13:5
+   [1m[94m|[0m
+[1m[94m13[0m [1m[94m|[0m use std::sync::Arc;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unnecessary parentheses around block return value[0m
+   [1m[94m--> [0msrc/navigation/registry.rs:104:9
+    [1m[94m|[0m
+[1m[94m104[0m [1m[94m|[0m         (freq >= self.frequency_range.0 - 0.5 && freq <= self.frequency_range.1 + 0.5)
+    [1m[94m|[0m         [1m[33m^[0m                                                                            [1m[33m^[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+[1m[96mhelp[0m: remove these parentheses
+    [1m[94m|[0m
+[1m[94m104[0m [91m- [0m        [91m([0mfreq >= self.frequency_range.0 - 0.5 && freq <= self.frequency_range.1 + 0.5[91m)[0m
+[1m[94m104[0m [92m+ [0m        freq >= self.frequency_range.0 - 0.5 && freq <= self.frequency_range.1 + 0.5
+    [1m[94m|[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId`, `LayerId`, and `Result`[0m
+  [1m[94m--> [0msrc/navigation/path_selector.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{DimensionId, LayerId, Result};
+   [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m  [1m[33m^^^^^^^[0m  [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `NavigationError`[0m
+  [1m[94m--> [0msrc/navigation/path_selector.rs:16:47
+   [1m[94m|[0m
+[1m[94m16[0m [1m[94m|[0m use super::{NavigationPath, NavigationConfig, NavigationError};
+   [1m[94m|[0m                                               [1m[33m^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `LayerId`[0m
+  [1m[94m--> [0msrc/navigation/parallel_scanner.rs:15:26
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{DimensionId, LayerId};
+   [1m[94m|[0m                          [1m[33m^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `QueryAnalysis`[0m
+  [1m[94m--> [0msrc/navigation/parallel_scanner.rs:16:60
+   [1m[94m|[0m
+[1m[94m16[0m [1m[94m|[0m use crate::navigation::{NavigationError, NavigationConfig, QueryAnalysis};
+   [1m[94m|[0m                                                            [1m[33m^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `DimensionId` and `LayerId`[0m
+  [1m[94m--> [0msrc/navigation/orchestrator.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{DimensionId, LayerId};
+   [1m[94m|[0m             [1m[33m^^^^^^^^^^^[0m  [1m[33m^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `QueryAnalysis` and `UrgencyLevel`[0m
+  [1m[94m--> [0msrc/navigation/orchestrator.rs:19:24
+   [1m[94m|[0m
+[1m[94m19[0m [1m[94m|[0m     DimensionRegistry, QueryAnalysis, UrgencyLevel,
+   [1m[94m|[0m                        [1m[33m^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/navigation/mod.rs:37:5
+   [1m[94m|[0m
+[1m[94m37[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Frequency`[0m
+ [1m[94m--> [0msrc/interference/engine.rs:4:21
+  [1m[94m|[0m
+[1m[94m4[0m [1m[94m|[0m use crate::{Result, Frequency};
+  [1m[94m|[0m                     [1m[33m^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `ModulationSuggestion`[0m
+ [1m[94m--> [0msrc/interference/engine.rs:5:54
+  [1m[94m|[0m
+[1m[94m5[0m [1m[94m|[0m use super::{InterferenceResult, InterferencePattern, ModulationSuggestion};
+  [1m[94m|[0m                                                      [1m[33m^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Result`[0m
+  [1m[94m--> [0msrc/interference/mod.rs:13:24
+   [1m[94m|[0m
+[1m[94m13[0m [1m[94m|[0m use crate::{Frequency, Result};
+   [1m[94m|[0m                        [1m[33m^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/interference/mod.rs:14:5
+   [1m[94m|[0m
+[1m[94m14[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `ConsciousnessError` and `Frequency`[0m
+ [1m[94m--> [0msrc/iteration/processor.rs:4:21
+  [1m[94m|[0m
+[1m[94m4[0m [1m[94m|[0m use crate::{Result, ConsciousnessError, Frequency};
+  [1m[94m|[0m                     [1m[33m^^^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `ConsciousnessError` and `Result`[0m
+  [1m[94m--> [0msrc/iteration/mod.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{Result, ConsciousnessError, Frequency};
+   [1m[94m|[0m             [1m[33m^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `ConsciousnessError` and `Result`[0m
+  [1m[94m--> [0msrc/security/mod.rs:15:13
+   [1m[94m|[0m
+[1m[94m15[0m [1m[94m|[0m use crate::{Result, ConsciousnessError};
+   [1m[94m|[0m             [1m[33m^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `std::collections::HashMap`[0m
+  [1m[94m--> [0msrc/lib.rs:29:5
+   [1m[94m|[0m
+[1m[94m29[0m [1m[94m|[0m use std::collections::HashMap;
+   [1m[94m|[0m     [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: variable does not need to be mutable[0m
+   [1m[94m--> [0msrc/navigation/orchestrator.rs:241:13
+    [1m[94m|[0m
+[1m[94m241[0m [1m[94m|[0m         let mut paths: Vec<NavigationPath> = activations
+    [1m[94m|[0m             [1m[94m----[0m[1m[33m^^^^^[0m
+    [1m[94m|[0m             [1m[94m|[0m
+    [1m[94m|[0m             [1m[94mhelp: remove this `mut`[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused variable: `dimension`[0m
+   [1m[94m--> [0msrc/navigation/parallel_scanner.rs:189:13
+    [1m[94m|[0m
+[1m[94m189[0m [1m[94m|[0m         let dimension = self.registry
+    [1m[94m|[0m             [1m[33m^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_dimension`[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: value assigned to `return_to_source_triggered` is never read[0m
+  [1m[94m--> [0msrc/iteration/processor.rs:39:46
+   [1m[94m|[0m
+[1m[94m39[0m [1m[94m|[0m         let mut return_to_source_triggered = false;
+   [1m[94m|[0m                                              [1m[33m^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mhelp[0m: maybe it is overwritten before being read?
+   [1m[94m= [0m[1mnote[0m: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused variable: `contexts`[0m
+   [1m[94m--> [0msrc/iteration/processor.rs:120:9
+    [1m[94m|[0m
+[1m[94m120[0m [1m[94m|[0m         contexts: &ContextCollection,
+    [1m[94m|[0m         [1m[33m^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_contexts`[0m
+
+[1m[33mwarning[0m[1m: unused variable: `previous_steps`[0m
+   [1m[94m--> [0msrc/iteration/processor.rs:121:9
+    [1m[94m|[0m
+[1m[94m121[0m [1m[94m|[0m         previous_steps: &[IterationStep],
+    [1m[94m|[0m         [1m[33m^^^^^^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_previous_steps`[0m
+
+[1m[33mwarning[0m[1m: field `config` is never read[0m
+   [1m[94m--> [0msrc/lib.rs:161:5
+    [1m[94m|[0m
+[1m[94m160[0m [1m[94m|[0m pub struct ConsciousnessSystem {
+    [1m[94m|[0m            [1m[94m-------------------[0m [1m[94mfield in this struct[0m
+[1m[94m161[0m [1m[94m|[0m     config: ConsciousnessConfig,
+    [1m[94m|[0m     [1m[33m^^^^^^[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `ConsciousnessSystem` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+    [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: field `dimensions` is never read[0m
+ [1m[94m--> [0msrc/dimensions/registry.rs:7:5
+  [1m[94m|[0m
+[1m[94m6[0m [1m[94m|[0m pub struct DimensionRegistry {
+  [1m[94m|[0m            [1m[94m-----------------[0m [1m[94mfield in this struct[0m
+[1m[94m7[0m [1m[94m|[0m     dimensions: Vec<Dimension>,
+  [1m[94m|[0m     [1m[33m^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: method `determine_violated_law` is never used[0m
+  [1m[94m--> [0msrc/security/validator.rs:95:8
+   [1m[94m|[0m
+[1m[94m17[0m [1m[94m|[0m impl SecurityLayer {
+   [1m[94m|[0m [1m[94m------------------[0m [1m[94mmethod in this implementation[0m
+[1m[94m...[0m
+[1m[94m95[0m [1m[94m|[0m     fn determine_violated_law(&self, category: HarmCategory) -> AsimovLaw {
+   [1m[94m|[0m        [1m[33m^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m: `jessy` (lib) generated 38 warnings (run `cargo fix --lib -p jessy` to apply 34 suggestions)
+[1m[33mwarning[0m[1m: unused import: `QueryAnalyzer`[0m
+  [1m[94m--> [0mbenches/navigation_benchmarks.rs:13:62
+   [1m[94m|[0m
+[1m[94m13[0m [1m[94m|[0m use jessy::navigation::{NavigationSystem, DimensionRegistry, QueryAnalyzer};
+   [1m[94m|[0m                                                              [1m[33m^^^^^^^^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+[1m[91merror[E0599][0m[1m: no method named `to_async` found for mutable reference `&mut Bencher<'_>` in the current scope[0m
+   [1m[94m--> [0mbenches/navigation_benchmarks.rs:135:19
+    [1m[94m|[0m
+[1m[94m135[0m [1m[94m|[0m                 b.to_async(&runtime).iter(|| async {
+    [1m[94m|[0m                   [1m[91m^^^^^^^^[0m [1m[91mmethod not found in `&mut Bencher<'_>`[0m
+
+[1m[91merror[E0599][0m[1m: no method named `to_async` found for mutable reference `&mut Bencher<'_>` in the current scope[0m
+   [1m[94m--> [0mbenches/navigation_benchmarks.rs:162:19
+    [1m[94m|[0m
+[1m[94m162[0m [1m[94m|[0m                 b.to_async(&runtime).iter(|| {
+    [1m[94m|[0m                   [1m[91m^^^^^^^^[0m [1m[91mmethod not found in `&mut Bencher<'_>`[0m
+
+[1m[91merror[E0599][0m[1m: no method named `to_async` found for mutable reference `&mut Bencher<'_>` in the current scope[0m
+   [1m[94m--> [0mbenches/navigation_benchmarks.rs:207:19
+    [1m[94m|[0m
+[1m[94m207[0m [1m[94m|[0m                 b.to_async(&runtime).iter(|| async {
+    [1m[94m|[0m                   [1m[91m^^^^^^^^[0m [1m[91mmethod not found in `&mut Bencher<'_>`[0m
+
+[1m[91merror[E0599][0m[1m: no method named `to_async` found for mutable reference `&mut Bencher<'_>` in the current scope[0m
+   [1m[94m--> [0mbenches/navigation_benchmarks.rs:234:11
+    [1m[94m|[0m
+[1m[94m234[0m [1m[94m|[0m         b.to_async(&runtime).iter(|| async {
+    [1m[94m|[0m           [1m[91m^^^^^^^^[0m [1m[91mmethod not found in `&mut Bencher<'_>`[0m
+
+[1m[91merror[E0599][0m[1m: no method named `to_async` found for mutable reference `&mut Bencher<'_>` in the current scope[0m
+   [1m[94m--> [0mbenches/navigation_benchmarks.rs:244:11
+    [1m[94m|[0m
+[1m[94m244[0m [1m[94m|[0m         b.to_async(&runtime).iter(|| async {
+    [1m[94m|[0m           [1m[91m^^^^^^^^[0m [1m[91mmethod not found in `&mut Bencher<'_>`[0m
+
+[1m[33mwarning[0m[1m: unused variable: `nav_system`[0m
+  [1m[94m--> [0mbenches/navigation_benchmarks.rs:37:9
+   [1m[94m|[0m
+[1m[94m37[0m [1m[94m|[0m     let nav_system = setup_navigation_system();
+   [1m[94m|[0m         [1m[33m^^^^^^^^^^[0m [1m[33mhelp: if this is intentional, prefix it with an underscore: `_nav_system`[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+[1mFor more information about this error, try `rustc --explain E0599`.[0m
+[1m[33mwarning[0m: `jessy` (bench "navigation_benchmarks") generated 2 warnings
+[1m[91merror[0m: could not compile `jessy` (bench "navigation_benchmarks") due to 5 previous errors; 2 warnings emitted

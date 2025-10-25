@@ -245,8 +245,17 @@ impl ConsciousnessSystem {
         // Load memory-mapped content for selected paths
         let contexts = self.memory_manager.load_contexts(&navigation_result.paths)?;
         
+        // Convert frequencies to FrequencyStates for interference calculation
+        let frequency_states: Vec<interference::FrequencyState> = navigation_result.frequencies.iter()
+            .zip(navigation_result.dimensions.iter())
+            .map(|(freq_hz, dim_id)| {
+                let confidence = 0.8; // Default confidence for now
+                interference::FrequencyState::new(Frequency::new(*freq_hz as f32), *dim_id, confidence)
+            })
+            .collect();
+        
         // Calculate frequency interference patterns
-        let interference = self.interference_engine.calculate(&navigation_result.frequencies)?;
+        let interference = self.interference_engine.calculate(&frequency_states)?;
         
         // Process through 9-iteration deep thinking
         let iteration_result = self.iteration_processor.process(
