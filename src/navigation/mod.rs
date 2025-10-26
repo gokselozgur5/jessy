@@ -15,6 +15,8 @@ pub mod orchestrator;
 pub mod validation;
 pub mod metrics;
 pub mod diagnostics;
+pub mod owl_pattern;
+pub mod llm_dimension_selector;
 
 #[cfg(test)]
 mod concurrency_tests;
@@ -32,6 +34,8 @@ pub use query_analyzer::QueryAnalyzer;
 pub use parallel_scanner::{ParallelScanner, DimensionActivation};
 pub use depth_navigator::DepthNavigator;
 pub use orchestrator::NavigationSystem;
+pub use owl_pattern::OwlPattern;
+pub use llm_dimension_selector::{LLMDimensionSelector, DimensionSelection};
 
 use crate::{DimensionId, LayerId, Frequency};
 use std::collections::HashMap;
