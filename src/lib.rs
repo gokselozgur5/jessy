@@ -64,6 +64,7 @@ pub mod security;
 pub mod consciousness;
 pub mod ffi;
 pub mod llm;
+pub mod config;
 
 use std::collections::HashMap;
 use thiserror::Error;
