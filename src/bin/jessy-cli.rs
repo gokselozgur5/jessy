@@ -58,14 +58,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   - Initializing learning system");
     
     // Create LLM config from system config
+    let provider_str = match config.llm.provider {
+        jessy::config::LLMProvider::OpenAI => "openai",
+        jessy::config::LLMProvider::Anthropic => "anthropic",
+        jessy::config::LLMProvider::Auto => "auto",
+    };
+    
     let llm_config = LLMConfig {
         openai_api_key: config.llm.openai_api_key.clone(),
         anthropic_api_key: config.llm.anthropic_api_key.clone(),
-        provider: match config.llm.provider {
-            jessy::config::LLMProvider::OpenAI => jessy::llm::LLMProvider::OpenAI,
-            jessy::config::LLMProvider::Anthropic => jessy::llm::LLMProvider::Anthropic,
-            jessy::config::LLMProvider::Auto => jessy::llm::LLMProvider::Auto,
-        },
+        provider: provider_str.to_string(),
         model: config.llm.model.clone(),
         timeout_secs: config.llm.timeout_secs,
         max_retries: config.llm.max_retries,
@@ -145,7 +147,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if !response.metadata.dimensions_activated.is_empty() {
                     println!("\n   🎯 Active Dimensions:");
                     for dim in &response.metadata.dimensions_activated {
-                        println!("      - {}", dim);
+                        println!("      - {:?}", dim);
                     }
                 }
             }
