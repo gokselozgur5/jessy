@@ -79,6 +79,7 @@ pub use self::pattern::*;
 pub use self::proto_dimension::*;
 pub use self::config::*;
 pub use self::circular_buffer::CircularBuffer;
+pub use self::memory_tracker::MemoryTracker;
 
 // Module declarations
 mod observation;
@@ -86,6 +87,7 @@ mod pattern;
 mod proto_dimension;
 mod config;
 mod circular_buffer;
+mod memory_tracker;
 mod pattern_detector;
 mod proto_dimension_manager;
 
@@ -184,6 +186,7 @@ pub struct LearningSystem {
     observation_buffer: CircularBuffer<Observation>,
     pattern_detector: pattern_detector::PatternDetector,
     proto_dimension_manager: proto_dimension_manager::ProtoDimensionManager,
+    memory_tracker: memory_tracker::MemoryTracker,
     // Other components will be added in subsequent tasks
 }
 
@@ -207,12 +210,14 @@ impl LearningSystem {
         let observation_buffer = CircularBuffer::new(config.max_observations);
         let pattern_detector = pattern_detector::PatternDetector::new(config.clone());
         let proto_dimension_manager = proto_dimension_manager::ProtoDimensionManager::new(config.clone());
+        let memory_tracker = memory_tracker::MemoryTracker::with_limit(config.memory_limit);
         
         Self {
             config,
             observation_buffer,
             pattern_detector,
             proto_dimension_manager,
+            memory_tracker,
         }
     }
     
@@ -245,24 +250,19 @@ impl LearningSystem {
         _iteration_result: &crate::iteration::IterationResult,
     ) -> Result<()> {
         // Extract activated dimensions
-        let activated_dimensions: Vec<DimensionId> = navigation_result
-            .paths
-            .iter()
-            .map(|path| path.dimension_id)
+        let activated_dimensions = navigation_result.dimensions.clone();
+        
+        // Extract keywords from query (simple tokenization)
+        let keywords: Vec<String> = query
+            .split_whitespace()
+            .map(|s| s.to_lowercase())
             .collect();
         
-        // Extract keywords from navigation result
-        let keywords: Vec<String> = navigation_result
-            .paths
-            .iter()
-            .flat_map(|path| path.keywords_matched.clone())
-            .collect();
-        
-        // Use first path's frequency or default to 1.0 Hz
+        // Use first frequency or default to 1.0 Hz
         let frequency = navigation_result
-            .paths
+            .frequencies
             .first()
-            .map(|path| path.frequency)
+            .copied()
             .unwrap_or_else(|| Frequency::new(1.0));
         
         // Create observation
@@ -342,6 +342,26 @@ impl LearningSystem {
     pub fn proto_dimension_count(&self) -> usize {
         self.proto_dimension_manager.count()
     }
+    
+    /// Get memory tracker
+    pub fn memory_tracker(&self) -> &memory_tracker::MemoryTracker {
+        &self.memory_tracker
+    }
+    
+    /// Get total memory usage
+    pub fn total_memory_usage(&self) -> usize {
+        self.memory_tracker.total_usage()
+    }
+    
+    /// Check if memory usage is above warning threshold (90%)
+    pub fn is_memory_warning(&self) -> bool {
+        self.memory_tracker.is_above_warning_threshold()
+    }
+    
+    /// Get memory usage percentage
+    pub fn memory_usage_percentage(&self) -> f64 {
+        self.memory_tracker.usage_percentage()
+    }
 }
 
 impl Default for LearningSystem {
@@ -353,36 +373,23 @@ impl Default for LearningSystem {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::navigation::navigator::{NavigationPath, NavigationResult};
+    use crate::navigation::NavigationPath;
+    use crate::navigation::navigator::NavigationResult;
     use crate::iteration::IterationResult;
     
     fn create_test_navigation_result() -> NavigationResult {
         NavigationResult {
-            paths: vec![
-                NavigationPath {
-                    dimension_id: DimensionId(1),
-                    confidence: 0.8,
-                    layer_sequence: vec![],
-                    frequency: Frequency::new(1.0),
-                    keywords_matched: vec!["test".to_string(), "query".to_string()],
-                    synesthetic_score: 0.0,
-                },
-            ],
-            return_to_source: false,
-            simplification_message: None,
-            total_duration_ms: 10,
-            scanned_dimensions: 14,
+            frequencies: vec![Frequency::new(1.0)],
+            dimensions: vec![DimensionId(1)],
         }
     }
     
     fn create_test_iteration_result() -> IterationResult {
         IterationResult {
-            final_thought: "test response".to_string(),
-            iterations_completed: 3,
-            converged: true,
-            convergence_iteration: Some(3),
-            total_duration_ms: 100,
-            iteration_history: vec![],
+            final_answer: "test response".to_string(),
+            steps: vec![],
+            return_to_source_triggered: false,
+            convergence_achieved: true,
         }
     }
     
