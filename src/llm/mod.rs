@@ -1,10 +1,11 @@
 //! LLM Provider Integration
 //!
-//! This module provides integration with external LLM providers (OpenAI, Anthropic).
+//! This module provides integration with external LLM providers (OpenAI, Anthropic, Ollama).
 //! It handles API calls, retries, timeouts, and error handling.
 
 pub mod openai;
 pub mod anthropic;
+pub mod ollama;
 pub mod config;
 
 use crate::iteration::IterationContext;
@@ -14,6 +15,7 @@ use async_trait::async_trait;
 pub use config::LLMConfig;
 pub use openai::OpenAIProvider;
 pub use anthropic::AnthropicProvider;
+pub use ollama::OllamaProvider;
 
 /// Trait for LLM providers
 ///
@@ -21,16 +23,15 @@ pub use anthropic::AnthropicProvider;
 #[async_trait]
 pub trait LLMProvider: Send + Sync {
     /// Generate response from prompt
-    ///
-    /// # Arguments
-    ///
-    /// * `prompt` - The prompt to send to the LLM
-    /// * `context` - Iteration context with query, dimensions, etc.
-    ///
-    /// # Returns
-    ///
-    /// Generated text response from the LLM
     async fn generate(&self, prompt: &str, context: &IterationContext) -> Result<String>;
+    
+    /// Generate response with custom system prompt
+    async fn generate_with_system_prompt(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+        context: &IterationContext,
+    ) -> Result<String>;
     
     /// Get provider name
     fn name(&self) -> &str;
@@ -40,33 +41,30 @@ pub trait LLMProvider: Send + Sync {
 }
 
 /// LLM Manager
-///
-/// Manages LLM provider selection and API calls.
 pub struct LLMManager {
     provider: Box<dyn LLMProvider>,
     config: LLMConfig,
 }
 
 impl LLMManager {
+    /// Generate response with custom system prompt
+    pub async fn generate_with_system_prompt(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+        context: &IterationContext,
+    ) -> Result<String> {
+        self.provider.generate_with_system_prompt(system_prompt, user_prompt, context).await
+    }
+
     /// Create new LLM manager
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - LLM configuration
-    ///
-    /// # Returns
-    ///
-    /// LLM manager with selected provider
-    ///
-    /// # Errors
-    ///
-    /// Returns error if provider is invalid or initialization fails
     pub fn new(config: LLMConfig) -> Result<Self> {
         let provider: Box<dyn LLMProvider> = match config.provider.as_str() {
             "openai" => Box::new(OpenAIProvider::new(&config)?),
             "anthropic" => Box::new(AnthropicProvider::new(&config)?),
+            "ollama" => Box::new(OllamaProvider::new(&config)?),
             _ => return Err(crate::ConsciousnessError::LearningError(
-                format!("Invalid LLM provider: {}", config.provider)
+                format!("Invalid LLM provider: {}. Valid: openai, anthropic, ollama", config.provider)
             )),
         };
         
@@ -77,15 +75,6 @@ impl LLMManager {
     }
     
     /// Generate response
-    ///
-    /// # Arguments
-    ///
-    /// * `prompt` - The prompt to send
-    /// * `context` - Iteration context
-    ///
-    /// # Returns
-    ///
-    /// Generated response text
     pub async fn generate(&self, prompt: &str, context: &IterationContext) -> Result<String> {
         self.provider.generate(prompt, context).await
     }

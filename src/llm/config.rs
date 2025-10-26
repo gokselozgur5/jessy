@@ -25,10 +25,10 @@ impl LLMConfig {
     /// Load configuration from environment variables
     ///
     /// Environment variables:
-    /// - `LLM_PROVIDER`: Provider name (default: "openai")
+    /// - `LLM_PROVIDER`: Provider name (default: "openai", options: "openai", "anthropic", "ollama")
     /// - `LLM_MODEL`: Model name (default: "gpt-4-turbo")
-    /// - `OPENAI_API_KEY`: OpenAI API key
-    /// - `ANTHROPIC_API_KEY`: Anthropic API key
+    /// - `OPENAI_API_KEY`: OpenAI API key (not needed for ollama)
+    /// - `ANTHROPIC_API_KEY`: Anthropic API key (not needed for ollama)
     /// - `LLM_TIMEOUT_SECS`: Timeout in seconds (default: 30)
     /// - `LLM_MAX_RETRIES`: Max retries (default: 3)
     pub fn from_env() -> crate::Result<Self> {
@@ -37,11 +37,14 @@ impl LLMConfig {
             match provider.as_str() {
                 "openai" => "gpt-4-turbo".to_string(),
                 "anthropic" => "claude-3-5-sonnet-20241022".to_string(),
+                "ollama" => "phi3:mini".to_string(),  // Fastest small model
                 _ => "gpt-4-turbo".to_string(),
             }
         });
         
+        // Ollama doesn't need API key (local)
         let api_key = match provider.as_str() {
+            "ollama" => String::new(),  // No API key needed for local Ollama
             "openai" => env::var("OPENAI_API_KEY")
                 .map_err(|_| crate::ConsciousnessError::LearningError(
                     "OPENAI_API_KEY environment variable not set".to_string()
@@ -51,7 +54,7 @@ impl LLMConfig {
                     "ANTHROPIC_API_KEY environment variable not set".to_string()
                 ))?,
             _ => return Err(crate::ConsciousnessError::LearningError(
-                format!("Invalid provider: {}", provider)
+                format!("Invalid provider: {}. Valid options: openai, anthropic, ollama", provider)
             )),
         };
         
@@ -76,7 +79,8 @@ impl LLMConfig {
     
     /// Validate configuration
     pub fn validate(&self) -> crate::Result<()> {
-        if self.api_key.is_empty() {
+        // Ollama doesn't need API key (local)
+        if self.provider != "ollama" && self.api_key.is_empty() {
             return Err(crate::ConsciousnessError::LearningError(
                 "API key is empty".to_string()
             ));

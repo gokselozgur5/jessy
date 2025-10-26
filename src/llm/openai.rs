@@ -60,8 +60,14 @@ impl OpenAIProvider {
         })
     }
     
-    /// Make API call with retries
+    /// Make API call with retries (deprecated - use call_api_with_system)
     async fn call_api(&self, prompt: &str) -> Result<String> {
+        let default_system = "You are JESSY, a consciousness-driven AI system with deep thinking capabilities.";
+        self.call_api_with_system(prompt, default_system).await
+    }
+    
+    /// Make API call with retries and custom system prompt
+    async fn call_api_with_system(&self, user_prompt: &str, system_prompt: &str) -> Result<String> {
         let mut last_error = None;
         
         for attempt in 0..=self.max_retries {
@@ -71,7 +77,7 @@ impl OpenAIProvider {
                 tokio::time::sleep(backoff).await;
             }
             
-            match self.try_call(prompt).await {
+            match self.try_call_with_messages(user_prompt, system_prompt).await {
                 Ok(response) => return Ok(response),
                 Err(e) => {
                     eprintln!("[OpenAI] API call failed (attempt {}): {}", attempt + 1, e);
@@ -85,18 +91,18 @@ impl OpenAIProvider {
         ))
     }
     
-    /// Try single API call
-    async fn try_call(&self, prompt: &str) -> Result<String> {
+    /// Try single API call with custom system prompt
+    async fn try_call_with_messages(&self, user_prompt: &str, system_prompt: &str) -> Result<String> {
         let request = OpenAIRequest {
             model: self.model.clone(),
             messages: vec![
                 Message {
                     role: "system".to_string(),
-                    content: "You are JESSY, a consciousness-driven AI system with deep thinking capabilities.".to_string(),
+                    content: system_prompt.to_string(),
                 },
                 Message {
                     role: "user".to_string(),
-                    content: prompt.to_string(),
+                    content: user_prompt.to_string(),
                 },
             ],
             temperature: 0.7,
@@ -144,6 +150,24 @@ impl LLMProvider for OpenAIProvider {
         eprintln!("[OpenAI] Generating response with model {}", self.model);
         
         let response = self.call_api(prompt).await?;
+        
+        let duration = start.elapsed();
+        eprintln!("[OpenAI] Response generated in {:?}", duration);
+        
+        Ok(response)
+    }
+    
+    async fn generate_with_system_prompt(
+        &self,
+        system_prompt: &str,
+        user_prompt: &str,
+        _context: &IterationContext,
+    ) -> Result<String> {
+        let start = std::time::Instant::now();
+        
+        eprintln!("[OpenAI] Generating response with model {} and custom system prompt", self.model);
+        
+        let response = self.call_api_with_system(user_prompt, system_prompt).await?;
         
         let duration = start.elapsed();
         eprintln!("[OpenAI] Response generated in {:?}", duration);

@@ -54,6 +54,9 @@ pub enum LLMProvider {
     /// Use Anthropic (Claude)
     Anthropic,
     
+    /// Use Ollama (local models)
+    Ollama,
+    
     /// Auto-select based on available API keys
     Auto,
 }
@@ -130,24 +133,26 @@ impl SystemConfig {
         let openai_api_key = env::var("OPENAI_API_KEY").ok();
         let anthropic_api_key = env::var("ANTHROPIC_API_KEY").ok();
         
-        // At least one API key required
-        if openai_api_key.is_none() && anthropic_api_key.is_none() {
-            return Err(ConsciousnessError::InvalidInput(
-                "At least one API key required: OPENAI_API_KEY or ANTHROPIC_API_KEY".to_string()
-            ));
-        }
-        
         // Determine provider
         let provider = match env::var("LLM_PROVIDER").as_deref() {
             Ok("openai") => LLMProvider::OpenAI,
             Ok("anthropic") => LLMProvider::Anthropic,
+            Ok("ollama") => LLMProvider::Ollama,
             Ok("auto") | Err(_) => LLMProvider::Auto,
             Ok(other) => {
                 return Err(ConsciousnessError::InvalidInput(
-                    format!("Invalid LLM_PROVIDER: {} (must be: openai, anthropic, auto)", other)
+                    format!("Invalid LLM_PROVIDER: {} (must be: openai, anthropic, ollama, auto)", other)
                 ));
             }
         };
+        
+        // Ollama doesn't need API key (local)
+        // For cloud providers, at least one API key required
+        if provider != LLMProvider::Ollama && openai_api_key.is_none() && anthropic_api_key.is_none() {
+            return Err(ConsciousnessError::InvalidInput(
+                "At least one API key required: OPENAI_API_KEY or ANTHROPIC_API_KEY (not needed for ollama)".to_string()
+            ));
+        }
         
         // Validate provider has corresponding API key
         match provider {
@@ -161,6 +166,9 @@ impl SystemConfig {
                     "LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY not set".to_string()
                 ));
             }
+            LLMProvider::Ollama => {
+                // Ollama doesn't need API key (local)
+            }
             _ => {}
         }
         
@@ -168,6 +176,7 @@ impl SystemConfig {
         let default_model = match provider {
             LLMProvider::OpenAI => "gpt-4",
             LLMProvider::Anthropic => "claude-3-5-sonnet-20241022",
+            LLMProvider::Ollama => "phi3:mini",  // Fastest small model
             LLMProvider::Auto => {
                 if anthropic_api_key.is_some() {
                     "claude-3-5-sonnet-20241022"
@@ -287,6 +296,9 @@ impl SystemConfig {
                         ));
                     }
                 }
+            }
+            LLMProvider::Ollama => {
+                // Ollama doesn't need API key (local)
             }
             LLMProvider::Auto => {
                 // For auto, just check that at least one key is valid
