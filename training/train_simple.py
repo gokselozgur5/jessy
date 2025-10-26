@@ -97,15 +97,17 @@ lora_config = LoraConfig(
 model = get_peft_model(model, lora_config)
 model.print_trainable_parameters()
 
-# Training args
+# Training args - FULL TRAINING
 training_args = TrainingArguments(
     output_dir=OUTPUT_DIR,
-    num_train_epochs=2,  # Fewer epochs for quick test
+    num_train_epochs=10,  # More epochs for better learning
     per_device_train_batch_size=2,
-    gradient_accumulation_steps=2,
-    learning_rate=1e-4,
-    logging_steps=10,
+    gradient_accumulation_steps=4,  # Effective batch = 8
+    learning_rate=2e-4,  # Slightly higher for faster convergence
+    logging_steps=5,
     save_steps=50,
+    save_total_limit=3,
+    warmup_steps=20,
     fp16=False,  # MPS doesn't support fp16
     report_to="none",
 )
@@ -125,8 +127,10 @@ trainer = Trainer(
 )
 
 # Train!
-print(f"\n🚀 Starting training...")
-print(f"   This will take ~15-20 minutes")
+print(f"\n🚀 Starting FULL training...")
+print(f"   10 epochs on 196 examples")
+print(f"   This will take ~20-30 minutes")
+print(f"   Watch loss decrease: target <0.5")
 print()
 
 start_time = time.time()
