@@ -51,7 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🧠 Initializing consciousness system...");
     println!("   - Loading 15 dimensional layers (280MB)");
     
-    let navigation = Arc::new(NavigationSystem::new()?);
+    // Create dimension registry
+    let registry = Arc::new(jessy::navigation::DimensionRegistry::new());
+    
+    let navigation = Arc::new(NavigationSystem::new(registry)?);
     let memory = Arc::new(MmapManager::new(config.limits.memory_limit_mb)?);
     
     println!("   - Setting up interference engine");
