@@ -105,7 +105,20 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["emotion", "feeling", "mood", "affect", "sentiment"],
+      "keywords": [
+        "emotion",
+        "feeling",
+        "mood",
+        "affect",
+        "sentiment",
+        "happy",
+        "sad",
+        "feel",
+        "love",
+        "hate",
+        "like",
+        "enjoy"
+      ],
       "frequency": 1.5,
       "mmap_offset": 0
     },
@@ -114,7 +127,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["positive", "negative", "neutral", "mixed"],
+      "keywords": [
+        "positive",
+        "negative",
+        "neutral",
+        "mixed"
+      ],
       "frequency": 1.6,
       "mmap_offset": 1048576
     },
@@ -123,7 +141,14 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["happy", "sad", "angry", "fearful", "surprised", "disgusted"],
+      "keywords": [
+        "happy",
+        "sad",
+        "angry",
+        "fearful",
+        "surprised",
+        "disgusted"
+      ],
       "frequency": 1.8,
       "mmap_offset": 2097152
     },
@@ -132,7 +157,20 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["joy", "elation", "contentment", "grief", "melancholy", "rage", "fury", "terror", "anxiety", "awe", "shock", "revulsion"],
+      "keywords": [
+        "joy",
+        "elation",
+        "contentment",
+        "grief",
+        "melancholy",
+        "rage",
+        "fury",
+        "terror",
+        "anxiety",
+        "awe",
+        "shock",
+        "revulsion"
+      ],
       "frequency": 2.0,
       "mmap_offset": 3145728
     },
@@ -141,7 +179,20 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["cognition", "thinking", "reasoning", "understanding", "knowledge"],
+      "keywords": [
+        "cognition",
+        "thinking",
+        "reasoning",
+        "understanding",
+        "knowledge",
+        "think",
+        "know",
+        "understand",
+        "learn",
+        "remember",
+        "wonder",
+        "believe"
+      ],
       "frequency": 2.0,
       "mmap_offset": 20971520
     },
@@ -150,7 +201,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["analytical", "intuitive", "creative", "critical"],
+      "keywords": [
+        "analytical",
+        "intuitive",
+        "creative",
+        "critical"
+      ],
       "frequency": 2.2,
       "mmap_offset": 22020096
     },
@@ -159,7 +215,15 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["logic", "deduction", "induction", "insight", "imagination", "evaluation", "judgment"],
+      "keywords": [
+        "logic",
+        "deduction",
+        "induction",
+        "insight",
+        "imagination",
+        "evaluation",
+        "judgment"
+      ],
       "frequency": 2.5,
       "mmap_offset": 23068672
     },
@@ -168,7 +232,17 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["syllogism", "proof", "inference", "pattern", "hypothesis", "synthesis", "innovation", "critique", "assessment"],
+      "keywords": [
+        "syllogism",
+        "proof",
+        "inference",
+        "pattern",
+        "hypothesis",
+        "synthesis",
+        "innovation",
+        "critique",
+        "assessment"
+      ],
       "frequency": 2.8,
       "mmap_offset": 24117248
     },
@@ -177,7 +251,20 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["intention", "goal", "purpose", "aim", "objective"],
+      "keywords": [
+        "intention",
+        "goal",
+        "purpose",
+        "aim",
+        "objective",
+        "want",
+        "need",
+        "try",
+        "help",
+        "do",
+        "make",
+        "get"
+      ],
       "frequency": 2.5,
       "mmap_offset": 41943040
     },
@@ -186,7 +273,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["achieve", "avoid", "maintain", "explore"],
+      "keywords": [
+        "achieve",
+        "avoid",
+        "maintain",
+        "explore"
+      ],
       "frequency": 2.7,
       "mmap_offset": 42991616
     },
@@ -195,7 +287,16 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["success", "completion", "prevention", "escape", "stability", "preservation", "discovery", "learning"],
+      "keywords": [
+        "success",
+        "completion",
+        "prevention",
+        "escape",
+        "stability",
+        "preservation",
+        "discovery",
+        "learning"
+      ],
       "frequency": 3.0,
       "mmap_offset": 44040192
     },
@@ -204,7 +305,18 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["mastery", "excellence", "victory", "safety", "security", "equilibrium", "homeostasis", "insight", "understanding", "growth"],
+      "keywords": [
+        "mastery",
+        "excellence",
+        "victory",
+        "safety",
+        "security",
+        "equilibrium",
+        "homeostasis",
+        "insight",
+        "understanding",
+        "growth"
+      ],
       "frequency": 3.2,
       "mmap_offset": 45088768
     },
@@ -213,7 +325,26 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["social", "relationship", "interaction", "connection", "community"],
+      "keywords": [
+        "social",
+        "relationship",
+        "interaction",
+        "connection",
+        "community",
+        "hi",
+        "hello",
+        "hey",
+        "how",
+        "you",
+        "me",
+        "we",
+        "us",
+        "greet",
+        "greeting",
+        "talk",
+        "chat",
+        "conversation"
+      ],
       "frequency": 1.8,
       "mmap_offset": 62914560
     },
@@ -222,7 +353,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["individual", "group", "cultural", "institutional"],
+      "keywords": [
+        "individual",
+        "group",
+        "cultural",
+        "institutional"
+      ],
       "frequency": 1.9,
       "mmap_offset": 63963136
     },
@@ -231,7 +367,18 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["personal", "friendship", "family", "team", "organization", "society", "tradition", "norms", "authority", "structure"],
+      "keywords": [
+        "personal",
+        "friendship",
+        "family",
+        "team",
+        "organization",
+        "society",
+        "tradition",
+        "norms",
+        "authority",
+        "structure"
+      ],
       "frequency": 2.1,
       "mmap_offset": 65011712
     },
@@ -240,7 +387,18 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["identity", "intimacy", "trust", "collaboration", "hierarchy", "belonging", "customs", "values", "power", "governance"],
+      "keywords": [
+        "identity",
+        "intimacy",
+        "trust",
+        "collaboration",
+        "hierarchy",
+        "belonging",
+        "customs",
+        "values",
+        "power",
+        "governance"
+      ],
       "frequency": 2.3,
       "mmap_offset": 66060288
     },
@@ -249,7 +407,19 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["temporal", "time", "duration", "sequence", "timing"],
+      "keywords": [
+        "temporal",
+        "time",
+        "duration",
+        "sequence",
+        "timing",
+        "today",
+        "now",
+        "when",
+        "day",
+        "yesterday",
+        "tomorrow"
+      ],
       "frequency": 1.3,
       "mmap_offset": 83886080
     },
@@ -258,7 +428,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["past", "present", "future", "timeless"],
+      "keywords": [
+        "past",
+        "present",
+        "future",
+        "timeless"
+      ],
       "frequency": 1.4,
       "mmap_offset": 84934656
     },
@@ -267,7 +442,20 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["memory", "history", "experience", "now", "immediate", "current", "anticipation", "planning", "prediction", "eternal", "infinite", "transcendent"],
+      "keywords": [
+        "memory",
+        "history",
+        "experience",
+        "now",
+        "immediate",
+        "current",
+        "anticipation",
+        "planning",
+        "prediction",
+        "eternal",
+        "infinite",
+        "transcendent"
+      ],
       "frequency": 1.6,
       "mmap_offset": 85983232
     },
@@ -276,7 +464,20 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["nostalgia", "regret", "lesson", "awareness", "presence", "mindfulness", "hope", "anxiety", "vision", "permanence", "unchanging", "absolute"],
+      "keywords": [
+        "nostalgia",
+        "regret",
+        "lesson",
+        "awareness",
+        "presence",
+        "mindfulness",
+        "hope",
+        "anxiety",
+        "vision",
+        "permanence",
+        "unchanging",
+        "absolute"
+      ],
       "frequency": 1.8,
       "mmap_offset": 87031808
     },
@@ -285,7 +486,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["philosophical", "existential", "metaphysical", "ontological", "epistemological"],
+      "keywords": [
+        "philosophical",
+        "existential",
+        "metaphysical",
+        "ontological",
+        "epistemological"
+      ],
       "frequency": 0.8,
       "mmap_offset": 104857600
     },
@@ -294,7 +501,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["being", "knowing", "meaning", "value"],
+      "keywords": [
+        "being",
+        "knowing",
+        "meaning",
+        "value"
+      ],
       "frequency": 0.9,
       "mmap_offset": 105906176
     },
@@ -303,7 +515,19 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["existence", "essence", "reality", "truth", "belief", "certainty", "purpose", "significance", "good", "right", "beauty"],
+      "keywords": [
+        "existence",
+        "essence",
+        "reality",
+        "truth",
+        "belief",
+        "certainty",
+        "purpose",
+        "significance",
+        "good",
+        "right",
+        "beauty"
+      ],
       "frequency": 1.0,
       "mmap_offset": 106954752
     },
@@ -312,7 +536,20 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["consciousness", "identity", "substance", "causation", "knowledge", "justification", "skepticism", "teleology", "nihilism", "virtue", "duty", "aesthetics"],
+      "keywords": [
+        "consciousness",
+        "identity",
+        "substance",
+        "causation",
+        "knowledge",
+        "justification",
+        "skepticism",
+        "teleology",
+        "nihilism",
+        "virtue",
+        "duty",
+        "aesthetics"
+      ],
       "frequency": 1.2,
       "mmap_offset": 108003328
     },
@@ -321,7 +558,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["technical", "engineering", "implementation", "system", "architecture"],
+      "keywords": [
+        "technical",
+        "engineering",
+        "implementation",
+        "system",
+        "architecture"
+      ],
       "frequency": 3.0,
       "mmap_offset": 125829120
     },
@@ -330,7 +573,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["software", "hardware", "algorithm", "protocol"],
+      "keywords": [
+        "software",
+        "hardware",
+        "algorithm",
+        "protocol"
+      ],
       "frequency": 3.2,
       "mmap_offset": 126877696
     },
@@ -339,7 +587,20 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["code", "program", "application", "circuit", "processor", "memory", "sorting", "searching", "optimization", "network", "communication", "security"],
+      "keywords": [
+        "code",
+        "program",
+        "application",
+        "circuit",
+        "processor",
+        "memory",
+        "sorting",
+        "searching",
+        "optimization",
+        "network",
+        "communication",
+        "security"
+      ],
       "frequency": 3.5,
       "mmap_offset": 127926272
     },
@@ -348,7 +609,22 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["function", "class", "module", "api", "logic", "gate", "cache", "quicksort", "binary", "graph", "tcp", "http", "encryption", "authentication"],
+      "keywords": [
+        "function",
+        "class",
+        "module",
+        "api",
+        "logic",
+        "gate",
+        "cache",
+        "quicksort",
+        "binary",
+        "graph",
+        "tcp",
+        "http",
+        "encryption",
+        "authentication"
+      ],
       "frequency": 3.8,
       "mmap_offset": 128974848
     },
@@ -357,7 +633,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["creative", "imagination", "innovation", "originality", "expression"],
+      "keywords": [
+        "creative",
+        "imagination",
+        "innovation",
+        "originality",
+        "expression"
+      ],
       "frequency": 2.2,
       "mmap_offset": 146800640
     },
@@ -366,7 +648,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["artistic", "inventive", "exploratory", "playful"],
+      "keywords": [
+        "artistic",
+        "inventive",
+        "exploratory",
+        "playful"
+      ],
       "frequency": 2.3,
       "mmap_offset": 147849216
     },
@@ -375,7 +662,17 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["visual", "musical", "literary", "design", "discovery", "experiment", "curiosity", "fun", "spontaneity"],
+      "keywords": [
+        "visual",
+        "musical",
+        "literary",
+        "design",
+        "discovery",
+        "experiment",
+        "curiosity",
+        "fun",
+        "spontaneity"
+      ],
       "frequency": 2.5,
       "mmap_offset": 148897792
     },
@@ -384,7 +681,21 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["painting", "sculpture", "melody", "harmony", "poetry", "narrative", "aesthetics", "form", "breakthrough", "hypothesis", "wonder", "joy", "improvisation"],
+      "keywords": [
+        "painting",
+        "sculpture",
+        "melody",
+        "harmony",
+        "poetry",
+        "narrative",
+        "aesthetics",
+        "form",
+        "breakthrough",
+        "hypothesis",
+        "wonder",
+        "joy",
+        "improvisation"
+      ],
       "frequency": 2.7,
       "mmap_offset": 149946368
     },
@@ -393,7 +704,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["ethical", "moral", "values", "principles", "responsibility"],
+      "keywords": [
+        "ethical",
+        "moral",
+        "values",
+        "principles",
+        "responsibility"
+      ],
       "frequency": 1.25,
       "mmap_offset": 167772160
     },
@@ -402,7 +719,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["consequentialist", "deontological", "virtue", "care"],
+      "keywords": [
+        "consequentialist",
+        "deontological",
+        "virtue",
+        "care"
+      ],
       "frequency": 1.3,
       "mmap_offset": 168820736
     },
@@ -411,7 +733,16 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["utility", "happiness", "duty", "rights", "character", "excellence", "compassion", "relationship"],
+      "keywords": [
+        "utility",
+        "happiness",
+        "duty",
+        "rights",
+        "character",
+        "excellence",
+        "compassion",
+        "relationship"
+      ],
       "frequency": 1.5,
       "mmap_offset": 169869312
     },
@@ -420,7 +751,18 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["maximize", "minimize", "obligation", "autonomy", "justice", "courage", "wisdom", "empathy", "kindness", "connection"],
+      "keywords": [
+        "maximize",
+        "minimize",
+        "obligation",
+        "autonomy",
+        "justice",
+        "courage",
+        "wisdom",
+        "empathy",
+        "kindness",
+        "connection"
+      ],
       "frequency": 1.7,
       "mmap_offset": 170917888
     },
@@ -429,7 +771,19 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["meta", "awareness", "reflection", "consciousness", "self-reference"],
+      "keywords": [
+        "meta",
+        "awareness",
+        "reflection",
+        "consciousness",
+        "self-reference",
+        "i",
+        "am",
+        "are",
+        "is",
+        "be",
+        "being"
+      ],
       "frequency": 1.0,
       "mmap_offset": 188743680
     },
@@ -438,7 +792,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["observation", "monitoring", "evaluation", "recursion"],
+      "keywords": [
+        "observation",
+        "monitoring",
+        "evaluation",
+        "recursion"
+      ],
       "frequency": 1.1,
       "mmap_offset": 189792256
     },
@@ -447,7 +806,17 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["watching", "noticing", "tracking", "measuring", "judging", "assessing", "loop", "iteration", "self-similarity"],
+      "keywords": [
+        "watching",
+        "noticing",
+        "tracking",
+        "measuring",
+        "judging",
+        "assessing",
+        "loop",
+        "iteration",
+        "self-similarity"
+      ],
       "frequency": 1.3,
       "mmap_offset": 190840832
     },
@@ -456,7 +825,18 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["mindfulness", "attention", "vigilance", "metrics", "feedback", "critique", "analysis", "fractal", "nested", "infinite"],
+      "keywords": [
+        "mindfulness",
+        "attention",
+        "vigilance",
+        "metrics",
+        "feedback",
+        "critique",
+        "analysis",
+        "fractal",
+        "nested",
+        "infinite"
+      ],
       "frequency": 1.5,
       "mmap_offset": 191889408
     },
@@ -465,7 +845,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["sensory", "perception", "input", "stimulus", "sensation"],
+      "keywords": [
+        "sensory",
+        "perception",
+        "input",
+        "stimulus",
+        "sensation"
+      ],
       "frequency": 3.5,
       "mmap_offset": 209715200
     },
@@ -474,7 +860,13 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["visual", "auditory", "tactile", "olfactory", "gustatory"],
+      "keywords": [
+        "visual",
+        "auditory",
+        "tactile",
+        "olfactory",
+        "gustatory"
+      ],
       "frequency": 3.7,
       "mmap_offset": 210763776
     },
@@ -483,7 +875,21 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["sight", "color", "shape", "sound", "pitch", "volume", "touch", "texture", "temperature", "smell", "scent", "taste", "flavor"],
+      "keywords": [
+        "sight",
+        "color",
+        "shape",
+        "sound",
+        "pitch",
+        "volume",
+        "touch",
+        "texture",
+        "temperature",
+        "smell",
+        "scent",
+        "taste",
+        "flavor"
+      ],
       "frequency": 4.0,
       "mmap_offset": 211812352
     },
@@ -492,7 +898,23 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["brightness", "hue", "form", "pattern", "tone", "rhythm", "loudness", "pressure", "pain", "warmth", "aroma", "fragrance", "sweet", "sour", "bitter"],
+      "keywords": [
+        "brightness",
+        "hue",
+        "form",
+        "pattern",
+        "tone",
+        "rhythm",
+        "loudness",
+        "pressure",
+        "pain",
+        "warmth",
+        "aroma",
+        "fragrance",
+        "sweet",
+        "sour",
+        "bitter"
+      ],
       "frequency": 4.3,
       "mmap_offset": 212860928
     },
@@ -501,7 +923,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["memory", "recall", "recognition", "integration", "consolidation"],
+      "keywords": [
+        "memory",
+        "recall",
+        "recognition",
+        "integration",
+        "consolidation"
+      ],
       "frequency": 1.65,
       "mmap_offset": 230686720
     },
@@ -510,7 +938,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["episodic", "semantic", "procedural", "working"],
+      "keywords": [
+        "episodic",
+        "semantic",
+        "procedural",
+        "working"
+      ],
       "frequency": 1.75,
       "mmap_offset": 231735296
     },
@@ -519,7 +952,20 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["event", "experience", "autobiography", "fact", "concept", "knowledge", "skill", "habit", "routine", "temporary", "active", "manipulation"],
+      "keywords": [
+        "event",
+        "experience",
+        "autobiography",
+        "fact",
+        "concept",
+        "knowledge",
+        "skill",
+        "habit",
+        "routine",
+        "temporary",
+        "active",
+        "manipulation"
+      ],
       "frequency": 1.9,
       "mmap_offset": 232783872
     },
@@ -528,7 +974,20 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["specific", "contextual", "personal", "general", "abstract", "semantic", "motor", "cognitive", "automatic", "attention", "rehearsal", "encoding"],
+      "keywords": [
+        "specific",
+        "contextual",
+        "personal",
+        "general",
+        "abstract",
+        "semantic",
+        "motor",
+        "cognitive",
+        "automatic",
+        "attention",
+        "rehearsal",
+        "encoding"
+      ],
       "frequency": 2.1,
       "mmap_offset": 233832448
     },
@@ -537,7 +996,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["pattern", "recognition", "detection", "matching", "classification"],
+      "keywords": [
+        "pattern",
+        "recognition",
+        "detection",
+        "matching",
+        "classification"
+      ],
       "frequency": 2.65,
       "mmap_offset": 251658240
     },
@@ -546,7 +1011,12 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["visual", "auditory", "temporal", "spatial"],
+      "keywords": [
+        "visual",
+        "auditory",
+        "temporal",
+        "spatial"
+      ],
       "frequency": 2.8,
       "mmap_offset": 252706816
     },
@@ -555,7 +1025,20 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["shape", "face", "object", "rhythm", "melody", "speech", "sequence", "trend", "cycle", "location", "arrangement", "structure"],
+      "keywords": [
+        "shape",
+        "face",
+        "object",
+        "rhythm",
+        "melody",
+        "speech",
+        "sequence",
+        "trend",
+        "cycle",
+        "location",
+        "arrangement",
+        "structure"
+      ],
       "frequency": 3.0,
       "mmap_offset": 253755392
     },
@@ -564,7 +1047,22 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["edge", "contour", "feature", "identity", "category", "beat", "harmony", "phoneme", "word", "order", "repetition", "position", "proximity", "symmetry"],
+      "keywords": [
+        "edge",
+        "contour",
+        "feature",
+        "identity",
+        "category",
+        "beat",
+        "harmony",
+        "phoneme",
+        "word",
+        "order",
+        "repetition",
+        "position",
+        "proximity",
+        "symmetry"
+      ],
       "frequency": 3.3,
       "mmap_offset": 254803968
     },
@@ -573,7 +1071,13 @@
       "layer_num": 0,
       "depth": 0,
       "parent_layer": null,
-      "keywords": ["linguistic", "language", "grammar", "syntax", "semantics"],
+      "keywords": [
+        "linguistic",
+        "language",
+        "grammar",
+        "syntax",
+        "semantics"
+      ],
       "frequency": 2.65,
       "mmap_offset": 272629760
     },
@@ -582,7 +1086,13 @@
       "layer_num": 1,
       "depth": 1,
       "parent_layer": 0,
-      "keywords": ["phonology", "morphology", "syntax", "semantics", "pragmatics"],
+      "keywords": [
+        "phonology",
+        "morphology",
+        "syntax",
+        "semantics",
+        "pragmatics"
+      ],
       "frequency": 2.8,
       "mmap_offset": 273678336
     },
@@ -591,7 +1101,19 @@
       "layer_num": 2,
       "depth": 2,
       "parent_layer": 1,
-      "keywords": ["sound", "phoneme", "word", "morpheme", "sentence", "structure", "meaning", "reference", "context", "usage", "intention"],
+      "keywords": [
+        "sound",
+        "phoneme",
+        "word",
+        "morpheme",
+        "sentence",
+        "structure",
+        "meaning",
+        "reference",
+        "context",
+        "usage",
+        "intention"
+      ],
       "frequency": 3.0,
       "mmap_offset": 274726912
     },
@@ -600,7 +1122,21 @@
       "layer_num": 3,
       "depth": 3,
       "parent_layer": 2,
-      "keywords": ["vowel", "consonant", "syllable", "prefix", "suffix", "root", "phrase", "clause", "parse", "denotation", "connotation", "implicature", "speech-act"],
+      "keywords": [
+        "vowel",
+        "consonant",
+        "syllable",
+        "prefix",
+        "suffix",
+        "root",
+        "phrase",
+        "clause",
+        "parse",
+        "denotation",
+        "connotation",
+        "implicature",
+        "speech-act"
+      ],
       "frequency": 3.2,
       "mmap_offset": 275775488
     }
