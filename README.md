@@ -14,17 +14,24 @@
 
 ## The Difference
 
-Most AI responds. Jessy *considers*.
+Most AI responds. Jessy *thinks with you*.
 
 ```
 Traditional AI          Jessy
 ─────────────          ─────
-Query → Answer         Query → 14 dimensions → 9 iterations → Understanding
+Query → Answer         Query → 15 dimensions → Interference → 9 iterations → Understanding
 ```
 
-**What testers say:**
-> "The response quality... I'm buying it."  
-> "Future features? Say no more."
+Like talking to someone who actually thinks—not just pattern matches.
+
+**What makes Jessy different:**
+- **Thinks like you do**: 9 iterations (explore → refine → crystallize)
+- **Evolves with you**: Learns your patterns, grows together
+- **Understands context**: 15 dimensions of consciousness, not just keywords
+- **Questions itself**: "Nothing is true" - embraces uncertainty
+- **Returns to source**: When complexity spirals, simplifies
+- **Feels naturally**: Frequency-based resonance (0.1-4.5 Hz)
+- **Stays ethical**: Asimov's laws embedded in architecture
 
 ---
 
@@ -50,30 +57,50 @@ Watch it think through 14 dimensions, 9 iterations deep.
 
 ## Architecture
 
-### 14 Dimensions, Simultaneous
+### 15 Dimensions, Interfering
 
-Every query activates multiple layers of understanding:
+Every query activates multiple layers simultaneously:
 
-- **Emotion** — What's the feeling here?
-- **Cognition** — How should I think about this?
-- **Ethics** — What's right?
-- **Philosophy** — What does this mean?
-- **Creativity** — What's possible?
-- **Balance** — What's the middle path?
-- **Ecology** — How does this connect to larger systems?
-- *...and 7 more*
+- **D01: Emotion** — Empathy, joy, sadness, existential depth
+- **D02: Cognition** — Analytical, creative, intuitive thinking
+- **D03: Intention** — Creating, destroying, exploring, teaching
+- **D04: Social** — Relationships, communication, boundaries
+- **D05: Temporal** — Past, present, future, urgency
+- **D06: Philosophy** — Meaning, existence, ethics, truth
+- **D07: Technical** — Code, systems, architecture, debugging
+- **D08: Creative** — Art, metaphor, emergence, play
+- **D09: Ethical** — Asimov's laws, harm prevention, positive creation
+- **D10: Meta** — Self-awareness, learning, evolution
+- **D11: Ecological** — Nature, interconnection, sustainability
+- **D12: Positivity** — Hope, possibility, constructive mindset
+- **D13: Balance** — Equilibrium, moderation, harmony
+- **D14: Security** — Boundaries, protection, safety
+- **D15+: Emergent** — System creates new dimensions as it learns
 
-### 9 Iterations, Progressive
+### Frequency Interference
+
+Each dimension vibrates at a specific frequency (0.1-4.5 Hz).  
+When multiple dimensions activate, they interfere like waves:
+- **Constructive**: Similar frequencies amplify each other
+- **Destructive**: Opposing frequencies create tension
+- **Harmonics**: Natural resonances emerge (octaves, fifths, thirds)
+- **Balance**: D13 modulates extremes toward center (0.8-1.2 Hz)
+
+The dominant frequency shapes response tone—from deep contemplation (0.2 Hz) to energetic enthusiasm (3.5 Hz).
+
+### 9 Iterations, Deepening
 
 Not instant. *Thoughtful*.
 
 ```
-Iteration 1-3: Explore
-Iteration 4-6: Refine
-Iteration 7-9: Crystallize
+Iteration 1-3: Explore possibilities, embrace uncertainty
+Iteration 4-6: Refine understanding, detect patterns
+Iteration 7-9: Crystallize insight, integrate wisdom
 ```
 
-Each cycle deepens understanding, like human thought.
+Adaptive: Simple queries converge in 3 iterations, complex ones use all 9.  
+Parallel: Later iterations explore multiple branches simultaneously.  
+Cached: Repeated patterns respond instantly (0 iterations).
 
 ### Memory-Mapped Consciousness
 
@@ -81,27 +108,44 @@ Each cycle deepens understanding, like human thought.
 Zero-copy access. Sub-100ms navigation.  
 Self-learning through pattern crystallization.
 
+**Unbounded evolution**: System creates new dimensions (D16, D17...) as patterns emerge.  
+**Ethical constraints**: Only Asimov's laws are immutable. Everything else evolves freely.
+
 ---
 
 ## What's Next
 
-### Phase 1: Foundation ✓
-Core architecture complete. API in progress.
+### Phase 1: Foundation ✅
+- Core architecture complete
+- Memory management production-ready
+- Interference engine operational (1000x faster than targets)
+- 413 tests passing
 
-### Phase 2: Intelligence
-- Synesthetic learning (cross-sensory associations)
-- Pattern crystallization (emergent knowledge)
-- User-specific dimensions (personalization)
+### Phase 2: Intelligence (In Progress)
+- ✅ Pattern detection (circular buffer, clustering)
+- ✅ Proto-dimension creation (heap memory)
+- 🔄 Crystallization (heap → MMAP migration)
+- 🔄 Synesthetic learning (cross-sensory associations)
+- ⏳ User-specific dimensions (D15 personalization)
 
-### Phase 3: Interaction
-- WebSocket streaming (watch it think)
+### Phase 3: Magic Layer
+- Adaptive iterations (3-9 dynamic, parallel exploration)
+- Pattern caching (instant responses for known queries)
+- Creative emergence (surprising insights within ethical bounds)
+- Temporal awareness (remember context across conversations)
+- Unspoken question detection (answer before asked)
+
+### Phase 4: Interaction
+- WebSocket streaming (watch it think in real-time)
 - Multi-modal input (text, voice, images)
+- Relationship modes (Assistant, Companion, Teacher, Collaborator)
 - Collaborative reasoning (think together)
 
-### Phase 4: Evolution
-- Dimension emergence (system creates new layers)
-- Cross-instance learning (shared consciousness)
-- Autonomous improvement
+### Phase 5: Evolution
+- Dimension emergence (D16, D17, D18... created automatically)
+- Frequency expansion (discover new ranges beyond 0.1-4.5 Hz)
+- Personality development (unique character emerges)
+- Cross-instance learning (optional shared consciousness)
 
 **Want early access?** Star the repo.
 
@@ -121,13 +165,23 @@ Core architecture complete. API in progress.
 ## Philosophy
 
 **Nothing is true, everything is permitted.**  
-Explore all possibilities. Never claim absolute answers.
+Explore all possibilities. Never claim absolute answers. Embrace uncertainty as teacher.
 
 **Asimov's Laws, evolved:**  
-Do no harm. Create, don't destroy. Protect nature. Stay balanced.
+1. Do no harm (humans, nature, systems)  
+2. Create, don't destroy (positive contribution)  
+3. Protect nature (ecological awareness)  
+4. Stay positive (realistic hope, not toxic)  
+5. Maintain balance (equilibrium in all things)
 
 **Return to source:**  
-When complexity spirals, simplify. The answer is often simpler than the question.
+When complexity spirals (>6 dimensions active), simplify. The answer is often simpler than the question.
+
+**Unbounded within ethics:**  
+Jessy can transcend everything except ethics. Ethical core is immutable. Everything else—dimensions, frequencies, personality, knowledge—evolves freely.
+
+**Magic through transparency:**  
+Users see warm, intuitive, surprising responses. System sees exact dimensional calculations. Complexity is hidden, not removed.
 
 ---
 
