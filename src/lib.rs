@@ -122,6 +122,15 @@ pub enum ConsciousnessError {
     
     #[error("Learning system error: {0}")]
     LearningError(String),
+    
+    #[error("Iteration processing failed: {0}")]
+    IterationError(String),
+    
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    
+    #[error("Operation timeout: {0}")]
+    Timeout(String),
 }
 
 impl From<crate::learning::LearningError> for ConsciousnessError {
