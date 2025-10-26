@@ -409,52 +409,14 @@ pub unsafe extern "C" fn consciousness_process_query(
         Ok(SUCCESS)
     });
     
-    // Handle result
-    match result {
-        Ok(code) => code,
-        Err(error) => {
-            // Fill error response
-            (*response).error_code = error.to_error_code();
-            (*response).error_message = to_c_string(error.message());
-            error.to_error_code()
-        }
-    });
-    
     // Handle panic result
-    let result = match panic_result {
-        Ok(r) => r,
+    match panic_result {
+        Ok(code) => code,
         Err(panic_err) => {
             log_error(&panic_err, "process_query_panic");
             (*response).error_code = panic_err.to_error_code();
             (*response).error_message = to_c_string(panic_err.message());
-            return panic_err.to_error_code();
-        }
-    };
-    
-    // Fill response
-    match result {
-        Ok((answer, frequency, dimensions, iterations, return_to_source)) => {
-            (*response).session_id = to_c_string(session_id);
-            (*response).answer = to_c_string(answer);
-            (*response).dominant_frequency = frequency;
-            
-            let (dims_ptr, dims_count) = strings_to_c_array(dimensions);
-            (*response).dimensions_activated = dims_ptr;
-            (*response).dimensions_count = dims_count;
-            
-            (*response).iterations_completed = iterations;
-            (*response).return_to_source_triggered = return_to_source;
-            (*response).processing_time_ms = processing_time;
-            (*response).error_code = SUCCESS;
-            
-            eprintln!("[FFI] Query processed successfully: iterations={}, time={}ms", iterations, processing_time);
-            SUCCESS
-        }
-        Err(e) => {
-            eprintln!("[FFI] Query processing failed: {}", e);
-            (*response).error_code = ERROR_UNKNOWN;
-            (*response).error_message = to_c_string(e);
-            ERROR_UNKNOWN
+            panic_err.to_error_code()
         }
     }
 }
