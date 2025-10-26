@@ -253,9 +253,20 @@ impl ParallelScanner {
     /// - Target: <100ms for p95 (Requirement 2.2)
     /// - Actual time ≈ slowest individual scan (due to parallelism)
     pub async fn scan_all(&self, query_keywords: &[String]) -> Result<Vec<DimensionActivation>, NavigationError> {
-        // Handle empty query - no activations
+        // If no keywords (all filtered as stopwords), activate all dimensions with low confidence
+        // This ensures the system always has something to work with
         if query_keywords.is_empty() {
-            return Ok(Vec::new());
+            eprintln!("[Scanner] No keywords extracted - activating all dimensions with base confidence");
+            let mut activations = Vec::new();
+            for dim_id in 1..=14 {
+                activations.push(DimensionActivation::new(
+                    DimensionId(dim_id),
+                    0.01, // Very low confidence - LLM will decide what's relevant
+                    Vec::new(),
+                    0,
+                ));
+            }
+            return Ok(activations);
         }
         
         // Spawn concurrent tasks for all 14 dimensions
