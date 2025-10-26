@@ -253,6 +253,8 @@ impl ParallelScanner {
     /// - Target: <100ms for p95 (Requirement 2.2)
     /// - Actual time ≈ slowest individual scan (due to parallelism)
     pub async fn scan_all(&self, query_keywords: &[String]) -> Result<Vec<DimensionActivation>, NavigationError> {
+        eprintln!("[Scanner] Scanning with {} keywords: {:?}", query_keywords.len(), query_keywords);
+        
         // If no keywords (all filtered as stopwords), activate all dimensions with low confidence
         // This ensures the system always has something to work with
         if query_keywords.is_empty() {
@@ -323,6 +325,9 @@ impl ParallelScanner {
         activations.sort_by(|a, b| {
             b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal)
         });
+        
+        eprintln!("[Scanner] Scan complete: {} activations (threshold: {})", 
+                  activations.len(), self.config.confidence_threshold);
         
         Ok(activations)
     }
