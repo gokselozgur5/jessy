@@ -40,6 +40,7 @@ pyo3 = { version = "0.21", features = ["extension-module"], optional = true }
 
 # HTTP client for LLM APIs
 reqwest = { version = "0.11", features = ["json"] }
+async-trait = "0.1"
 
 # HTTP server
 actix-web = "4.4"
