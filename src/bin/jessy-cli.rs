@@ -56,8 +56,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Failed to load dimensions.json: {}", e))?;
     let registry = Arc::new(jessy::navigation::DimensionRegistry::load_dimensions(&dimensions_json)?);
     
-    let navigation = Arc::new(NavigationSystem::new(registry)?);
+    let navigation = Arc::new(NavigationSystem::new(registry.clone())?);
     let memory = Arc::new(MmapManager::new(config.limits.memory_limit_mb)?);
+    
+    // Initialize stub layers for all dimensions
+    println!("   - Creating placeholder layers for all dimensions");
+    for dim_id in 1..=14 {
+        let dimension_id = jessy::DimensionId(dim_id);
+        
+        // Get dimension metadata from registry
+        if let Some(dim_meta) = registry.get_dimension(dimension_id) {
+            // Get root layer (L0) for this dimension
+            if let Some(root_layer) = registry.get_root_layer(dimension_id) {
+                // Create stub content with dimension info
+                let stub_content = format!(
+                    "Dimension: {}\nFrequency: {:.2} Hz\nKeywords: {}\n",
+                    dim_meta.name,
+                    root_layer.frequency,
+                    root_layer.keywords.join(", ")
+                );
+                
+                // Create proto-dimension in heap memory
+                match memory.create_proto_dimension(dimension_id, stub_content.into_bytes()) {
+                    Ok(_) => {
+                        // Success - layer created
+                    }
+                    Err(e) => {
+                        eprintln!("⚠️  Warning: Failed to create stub for dimension {}: {}", dim_id, e);
+                    }
+                }
+            }
+        }
+    }
     
     println!("   - Setting up interference engine");
     println!("   - Initializing learning system");
