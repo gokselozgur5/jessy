@@ -4,6 +4,8 @@ use super::{IterationConfig, IterationStep, IterationPhase};
 use crate::{Result, ConsciousnessError, Frequency};
 use crate::memory::ContextCollection;
 use crate::interference::InterferenceResult;
+use crate::llm::LLMManager;
+use crate::iteration::IterationContext;
 
 /// Main iteration processor for 9-iteration deep thinking
 #[derive(Debug)]
@@ -29,11 +31,21 @@ impl IterationProcessor {
     }
     
     /// Process query through 9-iteration cycle
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The user's query
+    /// * `contexts` - Loaded dimensional contexts
+    /// * `interference` - Frequency interference result
+    /// * `llm_manager` - Optional LLM manager for real responses
+    ///
+    /// If llm_manager is None, generates placeholder responses (for testing)
     pub async fn process(
         &self,
         query: &str,
         contexts: &ContextCollection,
         interference: &InterferenceResult,
+        llm_manager: Option<&LLMManager>,
     ) -> Result<IterationResult> {
         let mut steps = Vec::with_capacity(self.config.max_iterations);
         let mut return_to_source_triggered = false;
@@ -60,6 +72,7 @@ impl IterationProcessor {
                 query,
                 contexts,
                 &steps,
+                llm_manager,
             ).await?;
             
             // Calculate confidence based on phase and iteration
@@ -119,14 +132,38 @@ impl IterationProcessor {
         query: &str,
         contexts: &ContextCollection,
         previous_steps: &[IterationStep],
+        llm_manager: Option<&LLMManager>,
     ) -> Result<String> {
-        // In real implementation, this would call LLM with:
-        // - Query
-        // - Loaded contexts
-        // - Previous iteration thoughts
-        // - Phase-specific prompts
+        // If LLM manager available, use it for real generation
+        if let Some(llm) = llm_manager {
+            // Build iteration context
+            let mut context = IterationContext::new(
+                query.to_string(),
+                Frequency::new(1.5),  // Would come from interference
+            );
+            
+            // Add previous thoughts as insights
+            for step in previous_steps {
+                context.add_insight(step.thought.clone());
+            }
+            
+            // Build prompt based on phase
+            let prompt = self.build_prompt(phase, query, contexts, previous_steps);
+            
+            // Call LLM
+            match llm.generate(&prompt, &context).await {
+                Ok(response) => {
+                    eprintln!("[Iteration] LLM generated thought for iteration {}", iteration);
+                    return Ok(response);
+                }
+                Err(e) => {
+                    eprintln!("[Iteration] LLM call failed: {}, falling back to placeholder", e);
+                    // Fall through to placeholder
+                }
+            }
+        }
         
-        // For now, generate structured thought based on phase
+        // Placeholder for testing or when LLM unavailable
         let phase_prompt = match phase {
             IterationPhase::Exploration => {
                 format!("Iteration {}: Exploring '{}' - What patterns emerge?", iteration, query)
@@ -140,6 +177,46 @@ impl IterationProcessor {
         };
         
         Ok(phase_prompt)
+    }
+    
+    /// Build prompt for LLM based on phase and context
+    fn build_prompt(
+        &self,
+        phase: IterationPhase,
+        query: &str,
+        contexts: &ContextCollection,
+        previous_steps: &[IterationStep],
+    ) -> String {
+        let phase_instruction = match phase {
+            IterationPhase::Exploration => {
+                "Explore the question from multiple angles. What patterns, themes, or perspectives emerge?"
+            }
+            IterationPhase::Refinement => {
+                "Refine your understanding. What connections exist between ideas? What nuances matter?"
+            }
+            IterationPhase::Crystallization => {
+                "Crystallize the essence. What is the core insight? What is the clearest answer?"
+            }
+        };
+        
+        let mut prompt = format!("Query: {}\n\n", query);
+        prompt.push_str(&format!("Phase: {}\n", phase_instruction));
+        
+        // Add context summary
+        if !contexts.is_empty() {
+            prompt.push_str(&format!("\nAvailable contexts: {} dimensional layers loaded\n", contexts.len()));
+        }
+        
+        // Add previous thoughts
+        if !previous_steps.is_empty() {
+            prompt.push_str("\nPrevious iterations:\n");
+            for (i, step) in previous_steps.iter().enumerate() {
+                prompt.push_str(&format!("{}. {}\n", i + 1, step.thought));
+            }
+        }
+        
+        prompt.push_str("\nYour thought for this iteration:");
+        prompt
     }
     
     /// Calculate confidence score for iteration
