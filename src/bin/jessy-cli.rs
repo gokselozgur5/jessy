@@ -58,17 +58,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   - Initializing learning system");
     
     // Create LLM config from system config
-    let provider_str = match config.llm.provider {
-        jessy::config::LLMProvider::OpenAI => "openai",
-        jessy::config::LLMProvider::Anthropic => "anthropic",
-        jessy::config::LLMProvider::Auto => "auto",
+    let (provider_str, api_key) = match config.llm.provider {
+        jessy::config::LLMProvider::OpenAI => {
+            ("openai", config.llm.openai_api_key.clone().unwrap_or_default())
+        }
+        jessy::config::LLMProvider::Anthropic => {
+            ("anthropic", config.llm.anthropic_api_key.clone().unwrap_or_default())
+        }
+        jessy::config::LLMProvider::Auto => {
+            // Prefer Anthropic if available
+            if let Some(key) = config.llm.anthropic_api_key.clone() {
+                ("anthropic", key)
+            } else if let Some(key) = config.llm.openai_api_key.clone() {
+                ("openai", key)
+            } else {
+                ("openai", String::new())
+            }
+        }
     };
     
     let llm_config = LLMConfig {
-        openai_api_key: config.llm.openai_api_key.clone(),
-        anthropic_api_key: config.llm.anthropic_api_key.clone(),
         provider: provider_str.to_string(),
         model: config.llm.model.clone(),
+        api_key,
         timeout_secs: config.llm.timeout_secs,
         max_retries: config.llm.max_retries,
     };
