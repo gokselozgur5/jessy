@@ -56,8 +56,8 @@ impl ProtoDimensionManager {
             }.into());
         }
         
-        // Assign dimension ID
-        let dimension_id = DimensionId(self.next_dimension_id);
+        // Assign dimension ID (cast to u8, wrapping if needed)
+        let dimension_id = DimensionId(self.next_dimension_id as u8);
         self.next_dimension_id += 1;
         
         // Create proto-dimension

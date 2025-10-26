@@ -60,3 +60,10 @@ sonnet4545.txt
 
 # Agent rules (private, session-specific)
 AGENT_RULES.md
+
+# Progress reports and status files (local only)
+PROJECT_PROGRESS.md
+TEST_RESULTS.md
+*_PROGRESS.md
+*_STATUS.md
+*_REPORT.md
