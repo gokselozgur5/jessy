@@ -23,7 +23,8 @@ print("🇹🇷 JESSY Turkish Fine-Tuning (M2 Mac)")
 print("=" * 60)
 
 # Configuration
-MODEL_NAME = "google/gemma-2b"
+# Using TinyLlama - fully open, no authentication needed
+MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 OUTPUT_DIR = "./jessy-turkish-lora"
 TRAINING_DATA = "training/jessy_train.json"
 VAL_DATA = "training/jessy_val.json"
