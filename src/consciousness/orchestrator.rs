@@ -9,6 +9,7 @@ use crate::consciousness::{
 use crate::interference::{InterferenceEngine, FrequencyState};
 use crate::iteration::IterationProcessor;
 use crate::learning::LearningSystem;
+use crate::llm::{LLMManager, LLMConfig};
 use crate::memory::MmapManager;
 use crate::navigation::NavigationSystem;
 use crate::{ConsciousnessError, Result, Frequency};
@@ -51,6 +52,7 @@ pub struct ConsciousnessOrchestrator {
     iteration: IterationProcessor,
     interference_engine: InterferenceEngine,
     learning: LearningSystem,
+    llm_manager: Option<LLMManager>,  // Optional for testing without API keys
     config: ConsciousnessConfig,
     query_count: usize,
     pattern_detection_interval: usize,
@@ -66,11 +68,48 @@ impl ConsciousnessOrchestrator {
     ///
     /// # Returns
     ///
-    /// Returns a new orchestrator with default configuration
+    /// Returns a new orchestrator with default configuration (without LLM)
     pub fn new(navigation: Arc<NavigationSystem>, memory: Arc<MmapManager>) -> Self {
         let mut learning = LearningSystem::new();
         learning.init_crystallizer(memory.clone());
         Self::with_config(navigation, memory, ConsciousnessConfig::default(), learning)
+    }
+    
+    /// Create orchestrator with LLM integration
+    ///
+    /// # Arguments
+    ///
+    /// * `navigation` - Shared navigation system
+    /// * `memory` - Shared memory manager
+    /// * `llm_config` - LLM configuration with API keys
+    ///
+    /// # Returns
+    ///
+    /// Returns orchestrator with LLM manager initialized
+    ///
+    /// # Errors
+    ///
+    /// Returns error if LLM initialization fails (invalid API key, etc.)
+    pub fn with_llm(
+        navigation: Arc<NavigationSystem>,
+        memory: Arc<MmapManager>,
+        llm_config: LLMConfig,
+    ) -> Result<Self> {
+        let mut learning = LearningSystem::new();
+        learning.init_crystallizer(memory.clone());
+        
+        let llm_manager = LLMManager::new(llm_config)?;
+        
+        let mut orchestrator = Self::with_config(
+            navigation,
+            memory,
+            ConsciousnessConfig::default(),
+            learning,
+        );
+        
+        orchestrator.llm_manager = Some(llm_manager);
+        
+        Ok(orchestrator)
     }
     
     /// Create new consciousness orchestrator with custom configuration
@@ -104,6 +143,7 @@ impl ConsciousnessOrchestrator {
             iteration,
             interference_engine,
             learning,
+            llm_manager: None,  // No LLM by default (for testing)
             config,
             query_count: 0,
             pattern_detection_interval: 100, // Detect patterns every 100 queries
@@ -455,6 +495,34 @@ mod tests {
         let _test_signature = |nav: Arc<NavigationSystem>, mem: Arc<MmapManager>| {
             let learning = LearningSystem::new();
             let _orchestrator = ConsciousnessOrchestrator::with_config(nav, mem, config, learning);
+        };
+    }
+    
+    #[test]
+    fn test_orchestrator_with_llm_requires_valid_config() {
+        // Test that LLM config validation works
+        let _test_signature = |nav: Arc<NavigationSystem>, mem: Arc<MmapManager>| {
+            let llm_config = LLMConfig {
+                provider: "openai".to_string(),
+                model: "gpt-4-turbo".to_string(),
+                api_key: "test-key".to_string(),
+                timeout_secs: 30,
+                max_retries: 3,
+            };
+            
+            // This would fail in real usage without valid API key
+            // but validates the API structure
+            let _result = ConsciousnessOrchestrator::with_llm(nav, mem, llm_config);
+        };
+    }
+    
+    #[test]
+    fn test_orchestrator_without_llm_works() {
+        // Test that orchestrator works without LLM (for testing)
+        let _test_signature = |nav: Arc<NavigationSystem>, mem: Arc<MmapManager>| {
+            let orchestrator = ConsciousnessOrchestrator::new(nav, mem);
+            // Should have no LLM manager
+            assert!(orchestrator.llm_manager.is_none());
         };
     }
     

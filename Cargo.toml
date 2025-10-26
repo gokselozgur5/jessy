@@ -68,6 +68,10 @@ path = "src/bin/jessy.rs"
 name = "interference_demo"
 path = "examples/interference_demo.rs"
 
+[[example]]
+name = "learning_demo"
+path = "examples/learning_demo.rs"
+
 [[bench]]
 name = "memory_benchmarks"
 harness = false
