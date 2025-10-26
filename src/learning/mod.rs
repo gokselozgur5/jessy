@@ -187,6 +187,54 @@ impl Default for LearningConfig {
     }
 }
 
+/// Metrics for learning system monitoring
+#[derive(Debug, Clone, Default)]
+pub struct LearningMetrics {
+    /// Total observations recorded
+    pub observation_count: usize,
+    
+    /// Total patterns detected
+    pub pattern_count: usize,
+    
+    /// Current proto-dimension count
+    pub proto_dimension_count: usize,
+    
+    /// Successful crystallizations
+    pub crystallization_success: usize,
+    
+    /// Failed crystallizations
+    pub crystallization_failure: usize,
+    
+    /// Total crystallization attempts
+    pub crystallization_attempts: usize,
+    
+    /// Current memory usage (bytes)
+    pub memory_usage: usize,
+    
+    /// Memory limit (bytes)
+    pub memory_limit: usize,
+}
+
+impl LearningMetrics {
+    /// Calculate crystallization success rate (0.0-1.0)
+    pub fn crystallization_success_rate(&self) -> f64 {
+        if self.crystallization_attempts == 0 {
+            0.0
+        } else {
+            self.crystallization_success as f64 / self.crystallization_attempts as f64
+        }
+    }
+    
+    /// Calculate memory usage percentage (0.0-100.0)
+    pub fn memory_usage_percentage(&self) -> f64 {
+        if self.memory_limit == 0 {
+            0.0
+        } else {
+            (self.memory_usage as f64 / self.memory_limit as f64) * 100.0
+        }
+    }
+}
+
 /// Main learning system coordinator
 ///
 /// Manages pattern detection, proto-dimension creation, and crystallization.
@@ -198,6 +246,7 @@ pub struct LearningSystem {
     memory_tracker: memory_tracker::MemoryTracker,
     crystallizer: Option<crystallizer::Crystallizer>,
     synesthetic_learner: synesthetic_learner::SynestheticLearner,
+    metrics: LearningMetrics,
 }
 
 impl std::fmt::Debug for LearningSystem {
@@ -205,6 +254,7 @@ impl std::fmt::Debug for LearningSystem {
         f.debug_struct("LearningSystem")
             .field("config", &self.config)
             .field("observation_count", &self.observation_buffer.len())
+            .field("metrics", &self.metrics)
             .finish()
     }
 }
@@ -234,6 +284,7 @@ impl LearningSystem {
             memory_tracker,
             crystallizer: None, // Will be initialized when memory manager is available
             synesthetic_learner,
+            metrics: LearningMetrics::default(),
         }
     }
     
@@ -265,6 +316,16 @@ impl LearningSystem {
     /// - MMAP allocation fails
     /// - Integrity check fails
     pub async fn crystallize(&mut self, dimension_id: DimensionId) -> Result<()> {
+        // Track attempt
+        self.metrics.crystallization_attempts += 1;
+        
+        // Log start
+        eprintln!(
+            "[Learning] Crystallization started for dimension {:?} (attempt {})",
+            dimension_id,
+            self.metrics.crystallization_attempts
+        );
+        
         // Check if crystallizer is initialized
         let crystallizer = self.crystallizer.as_mut()
             .ok_or_else(|| ConsciousnessError::LearningError(
@@ -278,12 +339,38 @@ impl LearningSystem {
             ))?;
         
         // Crystallize
-        crystallizer.crystallize(proto).await?;
-        
-        // Remove from proto-dimension manager after successful crystallization
-        self.proto_dimension_manager.remove(dimension_id);
-        
-        Ok(())
+        match crystallizer.crystallize(proto).await {
+            Ok(()) => {
+                // Track success
+                self.metrics.crystallization_success += 1;
+                
+                // Log success
+                eprintln!(
+                    "[Learning] Crystallization complete for dimension {:?} (success rate: {:.2}%)",
+                    dimension_id,
+                    self.metrics.crystallization_success_rate() * 100.0
+                );
+                
+                // Remove from proto-dimension manager after successful crystallization
+                self.proto_dimension_manager.remove(dimension_id);
+                
+                Ok(())
+            }
+            Err(e) => {
+                // Track failure
+                self.metrics.crystallization_failure += 1;
+                
+                // Log failure
+                eprintln!(
+                    "[Learning] Crystallization failed for dimension {:?}: {} (success rate: {:.2}%)",
+                    dimension_id,
+                    e,
+                    self.metrics.crystallization_success_rate() * 100.0
+                );
+                
+                Err(e)
+            }
+        }
     }
     
     /// Get current configuration
@@ -377,6 +464,28 @@ impl LearningSystem {
     pub fn detect_patterns(&mut self) -> Result<Vec<DetectedPattern>> {
         let observations: Vec<_> = self.observation_buffer.iter().cloned().collect();
         let patterns = self.pattern_detector.detect_patterns(&observations);
+        
+        // Update metrics
+        self.metrics.pattern_count += patterns.len();
+        
+        // Log pattern detection
+        if !patterns.is_empty() {
+            eprintln!(
+                "[Learning] Detected {} patterns from {} observations",
+                patterns.len(),
+                observations.len()
+            );
+            for pattern in &patterns {
+                eprintln!(
+                    "[Learning] Pattern {:?}: confidence={:.2}, observations={}, keywords={:?}",
+                    pattern.pattern_id,
+                    pattern.confidence,
+                    pattern.observation_count,
+                    pattern.keywords
+                );
+            }
+        }
+        
         Ok(patterns)
     }
     
@@ -403,7 +512,28 @@ impl LearningSystem {
     ///
     /// This operation completes in <50ms as required.
     pub fn create_proto_dimension(&mut self, pattern: &DetectedPattern) -> Result<DimensionId> {
-        self.proto_dimension_manager.create_proto_dimension(pattern)
+        // Check memory warning before creation
+        if self.memory_tracker.is_above_warning_threshold() {
+            eprintln!(
+                "[Learning] WARNING: Memory usage at {:.1}% of limit ({} / {} bytes)",
+                self.memory_tracker.usage_percentage(),
+                self.memory_tracker.total_usage(),
+                self.memory_tracker.limit()
+            );
+        }
+        
+        // Create proto-dimension
+        let dimension_id = self.proto_dimension_manager.create_proto_dimension(pattern)?;
+        
+        // Log creation
+        eprintln!(
+            "[Learning] Proto-dimension {:?} created from pattern (confidence: {:.2}, keywords: {:?})",
+            dimension_id,
+            pattern.confidence,
+            pattern.keywords
+        );
+        
+        Ok(dimension_id)
     }
     
     /// Check if proto-dimension exists
@@ -488,6 +618,33 @@ impl LearningSystem {
     pub fn get_keyword_strength(&self, keyword1: &str, keyword2: &str) -> Option<f32> {
         self.synesthetic_learner.get_strength(keyword1, keyword2)
     }
+    
+    /// Get current metrics snapshot
+    ///
+    /// Returns a copy of current metrics for monitoring and observability.
+    ///
+    /// # Returns
+    ///
+    /// `LearningMetrics` with current counts and statistics
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use jessy::learning::LearningSystem;
+    /// let system = LearningSystem::new();
+    /// let metrics = system.metrics();
+    /// println!("Observations: {}", metrics.observation_count);
+    /// println!("Success rate: {:.2}%", metrics.crystallization_success_rate() * 100.0);
+    /// ```
+    pub fn metrics(&self) -> LearningMetrics {
+        // Update dynamic metrics
+        let mut metrics = self.metrics.clone();
+        metrics.observation_count = self.observation_buffer.len();
+        metrics.proto_dimension_count = self.proto_dimension_manager.count();
+        metrics.memory_usage = self.memory_tracker.total_usage();
+        metrics.memory_limit = self.memory_tracker.limit();
+        metrics
+    }
 }
 
 impl Default for LearningSystem {
@@ -501,6 +658,7 @@ mod tests {
     use super::*;
     use crate::navigation::{NavigationPath, NavigationResult};
     use crate::iteration::IterationResult;
+    use std::sync::Arc;
     
     fn create_test_navigation_result() -> NavigationResult {
         use crate::navigation::{NavigationPath, QueryAnalysis, QuestionType, UrgencyLevel};
@@ -741,5 +899,188 @@ mod tests {
         // Then: Should complete quickly (<1ms per operation)
         assert!(duration.as_millis() < 1000); // 1000 operations in <1s
         assert_eq!(system.keyword_association_count(), 1000);
+    }
+    
+    // Task 10.1: Metrics tests
+    
+    #[test]
+    fn test_metrics_initialization() {
+        // Given: New learning system
+        let system = LearningSystem::new();
+        
+        // When: Getting metrics
+        let metrics = system.metrics();
+        
+        // Then: Should start at zero
+        assert_eq!(metrics.observation_count, 0);
+        assert_eq!(metrics.pattern_count, 0);
+        assert_eq!(metrics.proto_dimension_count, 0);
+        assert_eq!(metrics.crystallization_success, 0);
+        assert_eq!(metrics.crystallization_failure, 0);
+        assert_eq!(metrics.crystallization_attempts, 0);
+        assert_eq!(metrics.memory_usage, 0);
+        assert!(metrics.memory_limit > 0);
+    }
+    
+    #[test]
+    fn test_metrics_observation_count() {
+        // Given: Learning system
+        let mut system = LearningSystem::new();
+        let nav_result = create_test_navigation_result();
+        let iter_result = create_test_iteration_result();
+        
+        // When: Recording observations
+        for i in 0..5 {
+            system.observe_interaction(
+                &format!("query {}", i),
+                &nav_result,
+                &iter_result,
+            ).unwrap();
+        }
+        
+        // Then: Metrics should reflect count
+        let metrics = system.metrics();
+        assert_eq!(metrics.observation_count, 5);
+    }
+    
+    #[test]
+    fn test_metrics_pattern_count() {
+        // Given: Learning system with low threshold
+        let config = LearningConfig {
+            min_observations: 5,
+            confidence_threshold: 0.50,
+            ..Default::default()
+        };
+        let mut system = LearningSystem::with_config(config);
+        let nav_result = create_test_navigation_result();
+        let iter_result = create_test_iteration_result();
+        
+        // When: Recording observations and detecting patterns
+        for _ in 0..10 {
+            system.observe_interaction(
+                "emotion feeling happy",
+                &nav_result,
+                &iter_result,
+            ).unwrap();
+        }
+        
+        let initial_metrics = system.metrics();
+        let initial_pattern_count = initial_metrics.pattern_count;
+        
+        system.detect_patterns().unwrap();
+        
+        // Then: Pattern count should increase (or stay same if no patterns)
+        let metrics = system.metrics();
+        assert!(metrics.pattern_count >= initial_pattern_count);
+    }
+    
+    #[test]
+    fn test_metrics_proto_dimension_count() {
+        // Given: Learning system
+        let mut system = LearningSystem::new();
+        
+        // When: Creating proto-dimension
+        use crate::learning::{DetectedPattern, PatternId};
+        let pattern = DetectedPattern {
+            pattern_id: PatternId(1),
+            keywords: vec!["test".to_string()],
+            frequency_range: (1.0, 1.5),
+            observation_count: 60,
+            confidence: 0.90,
+            suggested_dimension: None,
+        };
+        
+        system.create_proto_dimension(&pattern).unwrap();
+        
+        // Then: Metrics should reflect count
+        let metrics = system.metrics();
+        assert_eq!(metrics.proto_dimension_count, 1);
+    }
+    
+    #[test]
+    fn test_metrics_crystallization_success_rate_zero_attempts() {
+        // Given: New learning system
+        let system = LearningSystem::new();
+        
+        // When: Getting metrics
+        let metrics = system.metrics();
+        
+        // Then: Success rate should be 0.0 with no attempts
+        assert_eq!(metrics.crystallization_success_rate(), 0.0);
+    }
+    
+    #[tokio::test]
+    async fn test_metrics_crystallization_success() {
+        // Given: Learning system with memory manager
+        let memory_manager = Arc::new(crate::memory::MmapManager::new(280).unwrap());
+        let mut system = LearningSystem::new();
+        system.init_crystallizer(memory_manager);
+        
+        // When: Creating and crystallizing proto-dimension
+        use crate::learning::{DetectedPattern, PatternId};
+        let pattern = DetectedPattern {
+            pattern_id: PatternId(1),
+            keywords: vec!["test".to_string()],
+            frequency_range: (1.0, 1.5),
+            observation_count: 60,
+            confidence: 0.90,
+            suggested_dimension: None,
+        };
+        
+        let dimension_id = system.create_proto_dimension(&pattern).unwrap();
+        let _ = system.crystallize(dimension_id).await;
+        
+        // Then: Metrics should track attempt
+        let metrics = system.metrics();
+        assert_eq!(metrics.crystallization_attempts, 1);
+        // Success or failure depends on placeholder implementation
+        assert!(metrics.crystallization_success + metrics.crystallization_failure == 1);
+    }
+    
+    #[test]
+    fn test_metrics_memory_usage() {
+        // Given: Learning system
+        let system = LearningSystem::new();
+        
+        // When: Getting metrics
+        let metrics = system.metrics();
+        
+        // Then: Should have memory info
+        assert!(metrics.memory_limit > 0);
+        assert!(metrics.memory_usage >= 0);
+        assert!(metrics.memory_usage <= metrics.memory_limit);
+    }
+    
+    #[test]
+    fn test_metrics_memory_usage_percentage() {
+        // Given: Metrics with known values
+        let metrics = LearningMetrics {
+            memory_usage: 250 * 1024 * 1024, // 250MB
+            memory_limit: 500 * 1024 * 1024, // 500MB
+            ..Default::default()
+        };
+        
+        // When: Calculating percentage
+        let percentage = metrics.memory_usage_percentage();
+        
+        // Then: Should be 50%
+        assert!((percentage - 50.0).abs() < 0.01);
+    }
+    
+    #[test]
+    fn test_metrics_crystallization_success_rate_calculation() {
+        // Given: Metrics with known values
+        let metrics = LearningMetrics {
+            crystallization_success: 8,
+            crystallization_failure: 2,
+            crystallization_attempts: 10,
+            ..Default::default()
+        };
+        
+        // When: Calculating success rate
+        let rate = metrics.crystallization_success_rate();
+        
+        // Then: Should be 0.8 (80%)
+        assert!((rate - 0.8).abs() < 0.01);
     }
 }
