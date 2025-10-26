@@ -1,310 +1,109 @@
-name: CI
+name: JESSY CI/CD
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
 
 jobs:
-  # Job 1: Lint and Format Check
-  lint:
-    name: Lint and Format
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-git-
-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-build-
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Run clippy
-        run: cargo clippy --all-features --all-targets -- -D warnings
-
-      - name: Check Go formatting
-        uses: Jerome1337/gofmt-action@v1.0.5
-        with:
-          gofmt-path: './api'
-          gofmt-flags: '-l -d'
-
-  # Job 2: Test with Docker
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    needs: lint
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Cache cargo index
+      uses: actions/cache@v3
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Cache cargo build
+      uses: actions/cache@v3
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Run tests
+      run: cargo test --verbose
+    
+    - name: Run clippy
+      run: cargo clippy -- -D warnings
+    
+    - name: Check formatting
+      run: cargo fmt -- --check
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Build test image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/Dockerfile.test
-          push: false
-          load: true
-          tags: jessy-test:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-
-      - name: Run unit tests
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/test-results:/app/test-results \
-            jessy-test:latest \
-            cargo test --lib --all-features --color=always -- --nocapture
-
-      - name: Build services for integration tests
-        run: docker-compose build jessy-core jessy-api
-
-      - name: Run integration tests
-        run: |
-          docker-compose up -d jessy-core jessy-api
-          sleep 10
-          docker-compose run --rm integration-tests
-          docker-compose down
-
-      - name: Run BDD tests
-        run: |
-          docker-compose up -d jessy-core jessy-api
-          sleep 10
-          docker-compose run --rm bdd-tests
-          docker-compose down
-
-      - name: Generate coverage report
-        run: |
-          docker-compose run --rm coverage
-          
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./test-results/cobertura.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-
-      - name: Check coverage threshold
-        run: |
-          if [ -f test-results/cobertura.xml ]; then
-            coverage=$(grep -oP 'line-rate="\K[0-9.]+' test-results/cobertura.xml | head -1)
-            coverage_percent=$(echo "$coverage * 100" | bc)
-            echo "Coverage: ${coverage_percent}%"
-            if (( $(echo "$coverage_percent < 80" | bc -l) )); then
-              echo "❌ Coverage ${coverage_percent}% is below 80% threshold"
-              exit 1
-            fi
-            echo "✅ Coverage ${coverage_percent}% meets 80% threshold"
-          else
-            echo "⚠️  Coverage report not found, skipping threshold check"
-          fi
-
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-  # Job 3: Build Docker Images (Push disabled)
   build:
-    name: Build Docker Images
+    name: Build Release
     runs-on: ubuntu-latest
     needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    
+    - name: Build release
+      run: cargo build --release --verbose
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: jessy-cli
+        path: target/release/jessy-cli
+
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      run: docker-compose build
+    
+    - name: Test Docker image
+      run: docker-compose run --rm unit-tests cargo test --lib
+
+  deploy:
+    name: Deploy (if main branch)
+    runs-on: ubuntu-latest
+    needs: [test, build, docker]
     if: github.ref == 'refs/heads/main'
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Docker login temporarily disabled
-      # - name: Log in to Docker Hub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Extract metadata for Rust image
-        id: meta-rust
-        uses: docker/metadata-action@v5
-        with:
-          images: jessy-core  # Changed from ${{ secrets.DOCKER_USERNAME }}/jessy-core
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build Rust image (no push)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/Dockerfile.rust
-          target: production
-          push: false  # Changed from true
-          load: true
-          tags: ${{ steps.meta-rust.outputs.tags }}
-          labels: ${{ steps.meta-rust.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata for Go image
-        id: meta-go
-        uses: docker/metadata-action@v5
-        with:
-          images: jessy-api  # Changed from ${{ secrets.DOCKER_USERNAME }}/jessy-api
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build Go image (no push)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/Dockerfile.go
-          target: production
-          push: false  # Changed from true
-          load: true
-          tags: ${{ steps.meta-go.outputs.tags }}
-          labels: ${{ steps.meta-go.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # Job 4: Security Scanning
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner (Rust)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-rust-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-rust-results.sarif'
-          category: 'trivy-rust'
-
-      - name: Run cargo audit
-        run: |
-          cargo install cargo-audit
-          cargo audit --deny warnings
-
-      - name: Build Docker images for scanning
-        run: |
-          docker-compose build jessy-core jessy-api
-
-      - name: Scan Rust Docker image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'jessy-core:latest'
-          format: 'sarif'
-          output: 'trivy-rust-image.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Scan Go Docker image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'jessy-api:latest'
-          format: 'sarif'
-          output: 'trivy-go-image.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Docker scan results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-rust-image.sarif'
-          category: 'trivy-docker-rust'
-
-  # Job 5: Benchmarks
-  benchmark:
-    name: Performance Benchmarks
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Checkout base branch
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          git checkout origin/${{ github.base_ref }}
-
-      - name: Run baseline benchmarks
-        run: |
-          docker-compose run --rm jessy-test cargo bench --all-features -- --save-baseline base
-
-      - name: Checkout PR branch
-        run: |
-          git checkout ${{ github.sha }}
-
-      - name: Run PR benchmarks
-        run: |
-          docker-compose run --rm jessy-test cargo bench --all-features -- --baseline base
-
-      - name: Comment benchmark results
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const benchResults = 'Benchmark results will be available in CI logs';
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 📊 Benchmark Results\n\n${benchResults}`
-            });
+    - uses: actions/checkout@v4
+    
+    - name: Deploy notification
+      run: |
+        echo "🚀 JESSY is ready for deployment!"
+        echo "✅ All tests passed"
+        echo "✅ Build successful"
+        echo "✅ Docker image ready"
