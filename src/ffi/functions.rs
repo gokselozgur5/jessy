@@ -306,7 +306,7 @@ pub unsafe extern "C" fn consciousness_process_query(
     response: *mut CQueryResponse,
 ) -> i32 {
     // Catch panics at FFI boundary
-    let result = catch_panic(|| {
+    let panic_result = catch_panic(|| {
         // Validate inputs
         if request.is_null() || response.is_null() {
             let error = FFIError::InvalidInput("Null pointer in request or response".to_string());
