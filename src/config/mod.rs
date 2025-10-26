@@ -268,20 +268,29 @@ impl SystemConfig {
     ///
     /// Returns `Ok(())` if valid, or `Err` with validation error.
     pub fn validate(&self) -> Result<()> {
-        // Validate API keys format (basic check)
-        if let Some(ref key) = self.llm.openai_api_key {
-            if key.len() < 20 {
-                return Err(ConsciousnessError::InvalidInput(
-                    "OPENAI_API_KEY appears invalid (too short)".to_string()
-                ));
+        // Validate API keys format (only check the one being used)
+        match self.llm.provider {
+            LLMProvider::OpenAI => {
+                if let Some(ref key) = self.llm.openai_api_key {
+                    if !key.is_empty() && key.len() < 20 {
+                        return Err(ConsciousnessError::InvalidInput(
+                            "OPENAI_API_KEY appears invalid (too short)".to_string()
+                        ));
+                    }
+                }
             }
-        }
-        
-        if let Some(ref key) = self.llm.anthropic_api_key {
-            if key.len() < 20 {
-                return Err(ConsciousnessError::InvalidInput(
-                    "ANTHROPIC_API_KEY appears invalid (too short)".to_string()
-                ));
+            LLMProvider::Anthropic => {
+                if let Some(ref key) = self.llm.anthropic_api_key {
+                    if !key.is_empty() && key.len() < 20 {
+                        return Err(ConsciousnessError::InvalidInput(
+                            "ANTHROPIC_API_KEY appears invalid (too short)".to_string()
+                        ));
+                    }
+                }
+            }
+            LLMProvider::Auto => {
+                // For auto, just check that at least one key is valid
+                // Already validated in from_env()
             }
         }
         
