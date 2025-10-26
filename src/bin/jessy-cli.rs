@@ -51,8 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🧠 Initializing consciousness system...");
     println!("   - Loading 15 dimensional layers (280MB)");
     
-    // Create dimension registry
-    let registry = Arc::new(jessy::navigation::DimensionRegistry::new());
+    // Load dimension registry from configuration file
+    let dimensions_json = std::fs::read_to_string("data/dimensions.json")
+        .map_err(|e| format!("Failed to load dimensions.json: {}", e))?;
+    let registry = Arc::new(jessy::navigation::DimensionRegistry::load_dimensions(&dimensions_json)?);
     
     let navigation = Arc::new(NavigationSystem::new(registry)?);
     let memory = Arc::new(MmapManager::new(config.limits.memory_limit_mb)?);
