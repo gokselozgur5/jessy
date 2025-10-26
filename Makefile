@@ -177,7 +177,7 @@ fmt: ## Format code
 
 clippy: ## Run clippy linter
 	@echo "$(BLUE)📎 Running clippy...$(NC)"
-	@docker-compose run --rm $(RUST_SERVICE) cargo clippy --all-features -- -D warnings
+	@docker compose run --rm $(RUST_SERVICE) cargo clippy --all-features -- -D warnings
 	@echo "$(GREEN)✅ Clippy checks passed$(NC)"
 
 ci: fmt clippy test ## Run full CI pipeline locally
@@ -259,13 +259,23 @@ cli: ## Run JESSY CLI interactively (requires .env with API key)
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
-	@set -a && . ./.env && set +a && docker-compose run --rm \
+	@set -a && . ./.env && set +a && docker compose run --rm \
 		-e ANTHROPIC_API_KEY="$$ANTHROPIC_API_KEY" \
 		-e OPENAI_API_KEY="$$OPENAI_API_KEY" \
 		-e LLM_PROVIDER="$$LLM_PROVIDER" \
 		-e LLM_MODEL="$$LLM_MODEL" \
 		-e RUST_ENV=development \
 		unit-tests cargo run --bin jessy-cli
+
+cli-native: ## Run JESSY CLI natively (no Docker, faster!)
+	@echo "$(BLUE)🤖 Starting JESSY CLI (native)...$(NC)"
+	@if [ ! -f .env ]; then \
+		echo "$(RED)❌ .env file not found$(NC)"; \
+		echo "$(YELLOW)💡 Copy .env.example to .env and add your API key$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
+	@set -a && . ./.env && set +a && cargo run --bin jessy-cli
 
 cli-release: ## Run JESSY CLI (release build, faster)
 	@echo "$(BLUE)🤖 Starting JESSY CLI (release mode)...$(NC)"
@@ -275,7 +285,7 @@ cli-release: ## Run JESSY CLI (release build, faster)
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
-	@set -a && . ./.env && set +a && docker-compose run --rm \
+	@set -a && . ./.env && set +a && docker compose run --rm \
 		-e ANTHROPIC_API_KEY="$$ANTHROPIC_API_KEY" \
 		-e OPENAI_API_KEY="$$OPENAI_API_KEY" \
 		-e LLM_PROVIDER="$$LLM_PROVIDER" \

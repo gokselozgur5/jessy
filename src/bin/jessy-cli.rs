@@ -13,6 +13,14 @@ use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Check for command-line arguments
+    let args: Vec<String> = std::env::args().collect();
+    let single_query = if args.len() > 1 {
+        Some(args[1..].join(" "))
+    } else {
+        None
+    };
+    
     // Print epic welcome message
     print_welcome();
     
@@ -25,14 +33,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Err(e) => {
             eprintln!("❌ Configuration error: {}", e);
-            eprintln!("\n💡 Required environment variables:");
+            eprintln!("\n💡 For cloud providers:");
             eprintln!("   - OPENAI_API_KEY or ANTHROPIC_API_KEY");
+            eprintln!("\n💡 For local Ollama (free, private):");
+            eprintln!("   - LLM_PROVIDER=ollama");
+            eprintln!("   - LLM_MODEL=phi3:mini (or gemma:2b, llama3.2:3b)");
             eprintln!("\n📖 Optional variables:");
-            eprintln!("   - LLM_PROVIDER (openai, anthropic, auto)");
-            eprintln!("   - LLM_MODEL (gpt-4, claude-3-sonnet-20240229)");
+            eprintln!("   - LLM_PROVIDER (openai, anthropic, ollama, auto)");
+            eprintln!("   - LLM_MODEL (gpt-4, claude-3-sonnet, phi3:mini)");
             eprintln!("   - MAX_ITERATIONS (1-9, default: 9)");
-            eprintln!("\n💡 Example:");
-            eprintln!("   export ANTHROPIC_API_KEY=sk-ant-...");
+            eprintln!("\n💡 Example (Ollama):");
+            eprintln!("   export LLM_PROVIDER=ollama");
+            eprintln!("   export LLM_MODEL=phi3:mini");
             eprintln!("   cargo run --bin jessy-cli");
             std::process::exit(1);
         }
@@ -100,6 +112,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         jessy::config::LLMProvider::Anthropic => {
             ("anthropic", config.llm.anthropic_api_key.clone().unwrap_or_default())
         }
+        jessy::config::LLMProvider::Ollama => {
+            ("ollama", String::new())  // No API key needed for local Ollama
+        }
         jessy::config::LLMProvider::Auto => {
             // Prefer Anthropic if available
             if let Some(key) = config.llm.anthropic_api_key.clone() {
@@ -116,7 +131,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         provider: provider_str.to_string(),
         model: config.llm.model.clone(),
         api_key,
-        timeout_secs: config.llm.timeout_secs,
+        // Ollama needs more time for local inference (especially first load)
+        timeout_secs: if provider_str == "ollama" { 60 } else { config.llm.timeout_secs },
         max_retries: config.llm.max_retries,
     };
     
@@ -127,6 +143,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     
     println!("✅ JESSY is ready!\n");
+    
+    // If single query provided, process it and exit
+    if let Some(query) = single_query {
+        println!("💭 You: {}\n", query);
+        println!("🤔 JESSY is thinking...\n");
+        
+        let start = std::time::Instant::now();
+        match orchestrator.process(&query).await {
+            Ok(response) => {
+                let duration = start.elapsed();
+                println!("🌟 JESSY:\n\n{}\n", response.final_response);
+                println!("─────────────────────────────────────────────");
+                println!("📊 Processing: {:.2}s", duration.as_secs_f64());
+            }
+            Err(e) => {
+                eprintln!("❌ Error: {}", e);
+                std::process::exit(1);
+            }
+        }
+        return Ok(());
+    }
     
     // Interactive REPL
     let mut query_count = 0;
@@ -237,6 +274,7 @@ fn print_config_summary(config: &SystemConfig) {
     let provider_name = match config.llm.provider {
         jessy::config::LLMProvider::OpenAI => "OpenAI",
         jessy::config::LLMProvider::Anthropic => "Anthropic",
+        jessy::config::LLMProvider::Ollama => "Ollama (Local)",
         jessy::config::LLMProvider::Auto => "Auto",
     };
     println!("   • LLM Provider: {}", provider_name);
