@@ -107,7 +107,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         
         if query == "stats" {
-            print_stats(&orchestrator);
+            println!("\n📊 Learning Statistics:");
+            println!("   • Feature coming soon!");
+            println!("   • JESSY is learning from every conversation");
             continue;
         }
         
@@ -227,21 +229,4 @@ fn print_help() {
     println!("   • JESSY learns from every conversation");
 }
 
-fn print_stats(orchestrator: &ConsciousnessOrchestrator) {
-    println!("\n📊 Learning Statistics:");
-    
-    // Get metrics from learning system
-    let metrics = orchestrator.get_learning_metrics();
-    
-    println!("   • Observations: {}", metrics.observation_count);
-    println!("   • Patterns Detected: {}", metrics.pattern_count);
-    println!("   • Proto-Dimensions: {}", metrics.proto_dimension_count);
-    println!("   • Crystallization Rate: {:.1}%", metrics.crystallization_success_rate * 100.0);
-    println!("   • Memory Usage: {:.1}MB / {:.1}MB", 
-             metrics.memory_usage as f64 / 1024.0 / 1024.0,
-             metrics.memory_limit as f64 / 1024.0 / 1024.0);
-    
-    if metrics.pattern_count > 0 {
-        println!("\n   🌱 JESSY is evolving through your conversations!");
-    }
-}
+
