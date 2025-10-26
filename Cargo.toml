@@ -63,6 +63,10 @@ crate-type = ["cdylib", "rlib"]
 name = "jessy"
 path = "src/bin/jessy.rs"
 
+[[example]]
+name = "interference_demo"
+path = "examples/interference_demo.rs"
+
 [[bench]]
 name = "memory_benchmarks"
 harness = false
