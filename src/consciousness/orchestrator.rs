@@ -8,6 +8,7 @@ use crate::consciousness::{
 };
 use crate::interference::{InterferenceEngine, FrequencyState};
 use crate::iteration::IterationProcessor;
+use crate::learning::LearningSystem;
 use crate::memory::MmapManager;
 use crate::navigation::NavigationSystem;
 use crate::{ConsciousnessError, Result, Frequency};
@@ -49,6 +50,7 @@ pub struct ConsciousnessOrchestrator {
     memory: Arc<MmapManager>,
     iteration: IterationProcessor,
     interference_engine: InterferenceEngine,
+    learning: LearningSystem,
     config: ConsciousnessConfig,
 }
 
@@ -64,7 +66,9 @@ impl ConsciousnessOrchestrator {
     ///
     /// Returns a new orchestrator with default configuration
     pub fn new(navigation: Arc<NavigationSystem>, memory: Arc<MmapManager>) -> Self {
-        Self::with_config(navigation, memory, ConsciousnessConfig::default())
+        let mut learning = LearningSystem::new();
+        learning.init_crystallizer(memory.clone());
+        Self::with_config(navigation, memory, ConsciousnessConfig::default(), learning)
     }
     
     /// Create new consciousness orchestrator with custom configuration
@@ -82,6 +86,7 @@ impl ConsciousnessOrchestrator {
         navigation: Arc<NavigationSystem>,
         memory: Arc<MmapManager>,
         config: ConsciousnessConfig,
+        learning: LearningSystem,
     ) -> Self {
         let iteration = IterationProcessor::new(
             config.max_iterations,
@@ -96,6 +101,7 @@ impl ConsciousnessOrchestrator {
             memory,
             iteration,
             interference_engine,
+            learning,
             config,
         }
     }
@@ -239,6 +245,16 @@ impl ConsciousnessOrchestrator {
             iterations,
         ))
     }
+    
+    /// Get reference to learning system for external access
+    pub fn learning(&self) -> &LearningSystem {
+        &self.learning
+    }
+    
+    /// Get mutable reference to learning system for external access
+    pub fn learning_mut(&mut self) -> &mut LearningSystem {
+        &mut self.learning
+    }
 }
 
 #[cfg(test)]
@@ -270,7 +286,8 @@ mod tests {
         
         // Test that custom config is accepted
         let _test_signature = |nav: Arc<NavigationSystem>, mem: Arc<MmapManager>| {
-            let _orchestrator = ConsciousnessOrchestrator::with_config(nav, mem, config);
+            let learning = LearningSystem::new();
+            let _orchestrator = ConsciousnessOrchestrator::with_config(nav, mem, config, learning);
         };
     }
     

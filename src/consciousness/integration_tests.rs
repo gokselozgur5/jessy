@@ -144,7 +144,8 @@ mod integration_tests {
             include_iteration_history: true,
         };
         
-        let orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config);
+        let learning = crate::learning::LearningSystem::new();
+        let orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
         
         let query = "What is love?";
         let result = orchestrator.process(query).await;
@@ -175,7 +176,8 @@ mod integration_tests {
             include_iteration_history: true,
         };
         
-        let orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config);
+        let learning = crate::learning::LearningSystem::new();
+        let orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
         
         // Simple query that might converge early
         let query = "What is 2+2?";
