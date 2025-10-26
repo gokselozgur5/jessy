@@ -121,6 +121,12 @@ pub enum ConsciousnessError {
     LearningError(String),
 }
 
+impl From<crate::learning::LearningError> for ConsciousnessError {
+    fn from(err: crate::learning::LearningError) -> Self {
+        ConsciousnessError::LearningError(err.to_string())
+    }
+}
+
 /// Result type for consciousness operations
 pub type Result<T> = std::result::Result<T, ConsciousnessError>;
 
