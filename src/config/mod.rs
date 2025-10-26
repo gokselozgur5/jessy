@@ -167,10 +167,10 @@ impl SystemConfig {
         // Determine default model based on provider
         let default_model = match provider {
             LLMProvider::OpenAI => "gpt-4",
-            LLMProvider::Anthropic => "claude-3-sonnet-20240229",
+            LLMProvider::Anthropic => "claude-3-5-sonnet-20241022",
             LLMProvider::Auto => {
                 if anthropic_api_key.is_some() {
-                    "claude-3-sonnet-20240229"
+                    "claude-3-5-sonnet-20241022"
                 } else {
                     "gpt-4"
                 }
