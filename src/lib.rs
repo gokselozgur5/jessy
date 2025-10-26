@@ -62,6 +62,7 @@ pub mod iteration;
 pub mod learning;
 pub mod security;
 pub mod consciousness;
+pub mod ffi;
 
 use std::collections::HashMap;
 use thiserror::Error;
