@@ -64,6 +64,10 @@ crate-type = ["cdylib", "rlib"]
 name = "jessy"
 path = "src/bin/jessy.rs"
 
+[[bin]]
+name = "jessy-cli"
+path = "src/bin/jessy-cli.rs"
+
 [[example]]
 name = "interference_demo"
 path = "examples/interference_demo.rs"
