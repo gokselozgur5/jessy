@@ -1,8 +1,9 @@
 //! FFI Function Implementations
 //!
-//! Core functions exported for C/Go consumption.
+//! Core functions exported for C/Go consumption with comprehensive error handling.
 
 use super::types::*;
+use super::error::{FFIError, validate_query, validate_session_id};
 use crate::consciousness::{ConsciousnessOrchestrator, ConsciousnessConfig};
 use crate::navigation::NavigationSystem;
 use crate::memory::MmapManager;
@@ -10,10 +11,69 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::ptr;
 use std::sync::{Arc, Mutex, Once};
+use std::panic;
+use std::time::{Duration, Instant};
 
 /// Global consciousness orchestrator instance
 static mut ORCHESTRATOR: Option<Arc<Mutex<ConsciousnessOrchestrator>>> = None;
 static INIT: Once = Once::new();
+
+/// Default timeout for query processing (30 seconds)
+const DEFAULT_TIMEOUT_SECS: u64 = 30;
+
+/// Log error with context
+///
+/// Logs error to stderr with timestamp, error code, and context.
+/// Format: [FFI ERROR] <timestamp> <code> <context>: <message>
+fn log_error(error: &FFIError, context: &str) {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    
+    eprintln!(
+        "[FFI ERROR] {} code={} context={}: {}",
+        timestamp,
+        error.to_error_code(),
+        context,
+        error.message()
+    );
+}
+
+/// Catch panics at FFI boundary
+///
+/// Wraps a closure to catch any panics and convert them to FFI errors.
+/// This prevents Rust panics from crossing the FFI boundary and crashing
+/// the calling process.
+///
+/// # Arguments
+///
+/// * `f` - Closure to execute with panic protection
+///
+/// # Returns
+///
+/// Returns Ok(T) on success, or Err(FFIError::Panic) if panic occurred
+fn catch_panic<F, T>(f: F) -> Result<T, FFIError>
+where
+    F: FnOnce() -> Result<T, FFIError> + panic::UnwindSafe,
+{
+    match panic::catch_unwind(f) {
+        Ok(result) => result,
+        Err(panic_info) => {
+            let panic_msg = if let Some(s) = panic_info.downcast_ref::<&str>() {
+                s.to_string()
+            } else if let Some(s) = panic_info.downcast_ref::<String>() {
+                s.clone()
+            } else {
+                "Unknown panic".to_string()
+            };
+            
+            let error = FFIError::from_panic(&panic_msg);
+            log_error(&error, "panic_caught");
+            Err(error)
+        }
+    }
+}
 
 /// Convert Rust String to C string (caller must free)
 pub fn to_c_string(s: String) -> *mut c_char {
@@ -211,7 +271,14 @@ fn get_orchestrator() -> Option<Arc<Mutex<ConsciousnessOrchestrator>>> {
     unsafe { ORCHESTRATOR.clone() }
 }
 
-/// Process query through consciousness system
+/// Process query through consciousness system with comprehensive error handling
+///
+/// This function includes:
+/// - Input validation
+/// - Panic catching
+/// - Timeout enforcement
+/// - Detailed error logging
+/// - Memory safety guarantees
 ///
 /// # Arguments
 ///
@@ -223,8 +290,9 @@ fn get_orchestrator() -> Option<Arc<Mutex<ConsciousnessOrchestrator>>> {
 /// * `SUCCESS` (0) on success
 /// * `ERROR_NOT_INITIALIZED` if consciousness_init() not called
 /// * `ERROR_INVALID_INPUT` if request is invalid
-/// * `ERROR_SECURITY_VIOLATION` if query violates Asimov laws
-/// * `ERROR_TIMEOUT` if processing exceeds timeout
+/// * `ERROR_SECURITY_VIOLATION` if query violates security rules
+/// * `ERROR_TIMEOUT` if processing exceeds 30s timeout
+/// * `ERROR_PANIC` if Rust panic occurred
 /// * Other error codes for specific failures
 ///
 /// # Safety
@@ -237,49 +305,121 @@ pub unsafe extern "C" fn consciousness_process_query(
     request: *const CQueryRequest,
     response: *mut CQueryResponse,
 ) -> i32 {
-    // Validate inputs
-    if request.is_null() || response.is_null() {
-        eprintln!("[FFI] Null pointer in process_query");
-        return ERROR_INVALID_INPUT;
+    // Catch panics at FFI boundary
+    let result = catch_panic(|| {
+        // Validate inputs
+        if request.is_null() || response.is_null() {
+            let error = FFIError::InvalidInput("Null pointer in request or response".to_string());
+            log_error(&error, "process_query");
+            return Err(error);
+        }
+        
+        // Initialize response with defaults
+        *response = CQueryResponse::default();
+        
+        // Get orchestrator
+        let orchestrator = match get_orchestrator() {
+            Some(orch) => orch,
+            None => {
+                let error = FFIError::NotInitialized(
+                    "Consciousness system not initialized - call consciousness_init() first".to_string()
+                );
+                log_error(&error, "process_query");
+                return Err(error);
+            }
+        };
+        
+        // Parse request
+        let req = &*request;
+        let query = match from_c_string(req.query) {
+            Some(q) => q,
+            None => {
+                let error = FFIError::InvalidInput("Invalid query string (null or invalid UTF-8)".to_string());
+                log_error(&error, "process_query");
+                return Err(error);
+            }
+        };
+        
+        // Validate query
+        if let Err(e) = validate_query(&query) {
+            log_error(&e, "process_query_validation");
+            return Err(e);
+        }
+        
+        // Parse session ID
+        let session_id = from_c_string(req.session_id)
+            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+        
+        // Validate session ID
+        if let Err(e) = validate_session_id(&session_id) {
+            log_error(&e, "process_query_validation");
+            return Err(e);
+        }
+        
+        // Validate max_iterations
+        if req.max_iterations == 0 || req.max_iterations > 9 {
+            let error = FFIError::InvalidInput(format!(
+                "Invalid max_iterations: {} (must be 1-9)",
+                req.max_iterations
+            ));
+            log_error(&error, "process_query_validation");
+            return Err(error);
+        }
+        
+        eprintln!(
+            "[FFI] Processing query: session_id={}, query_len={}, max_iter={}",
+            session_id, query.len(), req.max_iterations
+        );
+        
+        // Process query with timeout
+        let start_time = Instant::now();
+        let timeout = Duration::from_secs(DEFAULT_TIMEOUT_SECS);
+        
+        let result = process_query_with_timeout(
+            &orchestrator,
+            &query,
+            &session_id,
+            req.max_iterations,
+            timeout,
+        )?;
+        
+        let processing_time = start_time.elapsed().as_millis() as i64;
+        
+        // Fill response
+        let (answer, frequency, dimensions, iterations, return_to_source) = result;
+        
+        (*response).session_id = to_c_string(session_id);
+        (*response).answer = to_c_string(answer);
+        (*response).dominant_frequency = frequency;
+        
+        let (dims_ptr, dims_count) = strings_to_c_array(dimensions);
+        (*response).dimensions_activated = dims_ptr;
+        (*response).dimensions_count = dims_count;
+        
+        (*response).iterations_completed = iterations;
+        (*response).return_to_source_triggered = return_to_source;
+        (*response).processing_time_ms = processing_time;
+        (*response).error_code = SUCCESS;
+        
+        eprintln!(
+            "[FFI] Query processed successfully: iterations={}, time={}ms",
+            iterations, processing_time
+        );
+        
+        Ok(SUCCESS)
+    });
+    
+    // Handle result
+    match result {
+        Ok(code) => code,
+        Err(error) => {
+            // Fill error response
+            (*response).error_code = error.to_error_code();
+            (*response).error_message = to_c_string(error.message());
+            error.to_error_code()
+        }
     }
-    
-    // Initialize response with defaults
-    *response = CQueryResponse::default();
-    
-    // Get orchestrator
-    let orchestrator = match get_orchestrator() {
-        Some(orch) => orch,
-        None => {
-            eprintln!("[FFI] Consciousness system not initialized");
-            (*response).error_code = ERROR_NOT_INITIALIZED;
-            (*response).error_message = to_c_string("Consciousness system not initialized".to_string());
-            return ERROR_NOT_INITIALIZED;
-        }
-    };
-    
-    // Parse request
-    let req = &*request;
-    let query = match from_c_string(req.query) {
-        Some(q) => q,
-        None => {
-            eprintln!("[FFI] Invalid query string");
-            (*response).error_code = ERROR_INVALID_INPUT;
-            (*response).error_message = to_c_string("Invalid query string".to_string());
-            return ERROR_INVALID_INPUT;
-        }
-    };
-    
-    let session_id = from_c_string(req.session_id)
-        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-    
-    eprintln!("[FFI] Processing query: session_id={}, query_len={}", session_id, query.len());
-    
-    // Process query (placeholder - will be replaced with real implementation in Task 5)
-    let start_time = std::time::Instant::now();
-    
-    let result = process_query_internal(&orchestrator, &query, &session_id, req.max_iterations);
-    
-    let processing_time = start_time.elapsed().as_millis() as i64;
+}
     
     // Fill response
     match result {
@@ -305,6 +445,61 @@ pub unsafe extern "C" fn consciousness_process_query(
             (*response).error_code = ERROR_UNKNOWN;
             (*response).error_message = to_c_string(e);
             ERROR_UNKNOWN
+        }
+    }
+}
+
+/// Process query with timeout enforcement
+///
+/// Wraps query processing with a timeout to prevent hanging.
+/// If processing exceeds timeout, returns ERROR_TIMEOUT.
+///
+/// # Arguments
+///
+/// * `orchestrator` - Consciousness orchestrator
+/// * `query` - Query string
+/// * `session_id` - Session identifier
+/// * `max_iterations` - Maximum iterations (1-9)
+/// * `timeout` - Maximum processing time
+///
+/// # Returns
+///
+/// Returns (answer, frequency, dimensions, iterations, return_to_source) on success
+///
+/// # Errors
+///
+/// Returns FFIError::Timeout if processing exceeds timeout
+fn process_query_with_timeout(
+    orchestrator: &Arc<Mutex<ConsciousnessOrchestrator>>,
+    query: &str,
+    session_id: &str,
+    max_iterations: u32,
+    timeout: Duration,
+) -> Result<(String, f32, Vec<String>, u32, bool), FFIError> {
+    use std::sync::mpsc;
+    use std::thread;
+    
+    let (tx, rx) = mpsc::channel();
+    let orch = orchestrator.clone();
+    let query = query.to_string();
+    let session_id = session_id.to_string();
+    
+    // Spawn processing thread
+    thread::spawn(move || {
+        let result = process_query_internal(&orch, &query, &session_id, max_iterations);
+        let _ = tx.send(result);
+    });
+    
+    // Wait with timeout
+    match rx.recv_timeout(timeout) {
+        Ok(result) => result.map_err(|e| FFIError::Unknown(e)),
+        Err(_) => {
+            let error = FFIError::Timeout(format!(
+                "Query processing exceeded {}s timeout",
+                timeout.as_secs()
+            ));
+            log_error(&error, "process_query_timeout");
+            Err(error)
         }
     }
 }
