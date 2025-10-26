@@ -81,6 +81,9 @@ pub use self::config::*;
 pub use self::circular_buffer::CircularBuffer;
 pub use self::memory_tracker::MemoryTracker;
 pub use self::crystallizer::Crystallizer;
+pub use self::synesthetic_learner::{SynestheticLearner, KeywordAssociation};
+pub use self::pattern_detector::PatternDetector;
+pub use self::proto_dimension_manager::ProtoDimensionManager;
 
 // Module declarations
 mod observation;
@@ -92,6 +95,7 @@ mod memory_tracker;
 mod pattern_detector;
 mod proto_dimension_manager;
 mod crystallizer;
+mod synesthetic_learner;
 
 /// Learning system error types
 #[derive(Error, Debug, Clone, PartialEq)]
@@ -190,7 +194,7 @@ pub struct LearningSystem {
     proto_dimension_manager: proto_dimension_manager::ProtoDimensionManager,
     memory_tracker: memory_tracker::MemoryTracker,
     crystallizer: Option<crystallizer::Crystallizer>,
-    // Other components will be added in subsequent tasks
+    synesthetic_learner: synesthetic_learner::SynestheticLearner,
 }
 
 impl std::fmt::Debug for LearningSystem {
@@ -214,6 +218,10 @@ impl LearningSystem {
         let pattern_detector = pattern_detector::PatternDetector::new(config.clone());
         let proto_dimension_manager = proto_dimension_manager::ProtoDimensionManager::new(config.clone());
         let memory_tracker = memory_tracker::MemoryTracker::with_limit(config.memory_limit);
+        let synesthetic_learner = synesthetic_learner::SynestheticLearner::new(
+            config.learning_rate,
+            config.decay_rate,
+        );
         
         Self {
             config,
@@ -222,6 +230,7 @@ impl LearningSystem {
             proto_dimension_manager,
             memory_tracker,
             crystallizer: None, // Will be initialized when memory manager is available
+            synesthetic_learner,
         }
     }
     
@@ -282,6 +291,7 @@ impl LearningSystem {
     /// Observe an interaction for pattern learning
     ///
     /// Records the query, activated dimensions, keywords, and frequency for later pattern detection.
+    /// Also strengthens synesthetic associations between co-occurring keywords.
     ///
     /// # Arguments
     ///
@@ -310,6 +320,13 @@ impl LearningSystem {
             .split_whitespace()
             .map(|s| s.to_lowercase())
             .collect();
+        
+        // Strengthen synesthetic associations between co-occurring keywords
+        for i in 0..keywords.len() {
+            for j in (i + 1)..keywords.len() {
+                self.synesthetic_learner.strengthen_association(&keywords[i], &keywords[j]);
+            }
+        }
         
         // Use first frequency or default to 1.0 Hz
         let frequency = navigation_result
@@ -414,6 +431,59 @@ impl LearningSystem {
     /// Get memory usage percentage
     pub fn memory_usage_percentage(&self) -> f64 {
         self.memory_tracker.usage_percentage()
+    }
+    
+    /// Strengthen association between keywords
+    ///
+    /// Called when keywords co-occur in a query to strengthen their relationship.
+    ///
+    /// # Arguments
+    ///
+    /// * `keyword1` - First keyword
+    /// * `keyword2` - Second keyword
+    ///
+    /// # Performance
+    ///
+    /// Completes in <1ms as required (O(1) HashMap operation)
+    pub fn strengthen_keyword_association(&mut self, keyword1: &str, keyword2: &str) {
+        self.synesthetic_learner.strengthen_association(keyword1, keyword2);
+    }
+    
+    /// Get associated keywords for a given keyword
+    ///
+    /// Returns keywords sorted by association strength (descending).
+    ///
+    /// # Arguments
+    ///
+    /// * `keyword` - Keyword to find associations for
+    ///
+    /// # Returns
+    ///
+    /// List of (keyword, strength) tuples sorted by strength
+    ///
+    /// # Performance
+    ///
+    /// Completes in <1ms as required
+    pub fn get_keyword_associations(&self, keyword: &str) -> Vec<(String, f32)> {
+        self.synesthetic_learner.get_associations(keyword)
+    }
+    
+    /// Decay unused keyword associations
+    ///
+    /// Should be called periodically (e.g., daily) to decay associations
+    /// that haven't been activated recently.
+    pub fn decay_keyword_associations(&mut self) {
+        self.synesthetic_learner.decay_unused();
+    }
+    
+    /// Get total number of keyword associations
+    pub fn keyword_association_count(&self) -> usize {
+        self.synesthetic_learner.association_count()
+    }
+    
+    /// Get association strength between two keywords
+    pub fn get_keyword_strength(&self, keyword1: &str, keyword2: &str) -> Option<f32> {
+        self.synesthetic_learner.get_strength(keyword1, keyword2)
     }
 }
 
@@ -566,5 +636,90 @@ mod tests {
         
         assert_eq!(system.observation_count(), 1);
         // Observation is stored correctly (verified by count)
+    }
+    
+    // Task 7: Synesthetic learning tests
+    
+    #[test]
+    fn test_strengthen_keyword_association() {
+        // Given: Learning system
+        let mut system = LearningSystem::new();
+        
+        // When: Strengthening association
+        system.strengthen_keyword_association("emotion", "feeling");
+        
+        // Then: Association should exist
+        assert_eq!(system.keyword_association_count(), 1);
+        let strength = system.get_keyword_strength("emotion", "feeling");
+        assert!(strength.is_some());
+        assert_eq!(strength.unwrap(), 1.0);
+    }
+    
+    #[test]
+    fn test_get_keyword_associations() {
+        // Given: Learning system with associations
+        let mut system = LearningSystem::new();
+        system.strengthen_keyword_association("emotion", "feeling");
+        system.strengthen_keyword_association("emotion", "sentiment");
+        
+        // When: Getting associations
+        let associations = system.get_keyword_associations("emotion");
+        
+        // Then: Should return associated keywords
+        assert_eq!(associations.len(), 2);
+    }
+    
+    #[test]
+    fn test_observe_interaction_strengthens_associations() {
+        // Given: Learning system
+        let mut system = LearningSystem::new();
+        let nav_result = create_test_navigation_result();
+        let iter_result = create_test_iteration_result();
+        
+        // When: Observing query with multiple keywords
+        system.observe_interaction(
+            "emotional intelligence test",
+            &nav_result,
+            &iter_result,
+        ).unwrap();
+        
+        // Then: Associations should be strengthened
+        // "emotional" ↔ "intelligence"
+        // "emotional" ↔ "test"
+        // "intelligence" ↔ "test"
+        assert!(system.keyword_association_count() >= 3);
+        
+        let strength = system.get_keyword_strength("emotional", "intelligence");
+        assert!(strength.is_some());
+    }
+    
+    #[test]
+    fn test_decay_keyword_associations() {
+        // Given: Learning system with associations
+        let mut system = LearningSystem::new();
+        system.strengthen_keyword_association("test", "example");
+        
+        // When: Decaying (no time has passed, so no effect)
+        system.decay_keyword_associations();
+        
+        // Then: Association should still exist
+        assert_eq!(system.keyword_association_count(), 1);
+    }
+    
+    #[test]
+    fn test_synesthetic_learning_performance() {
+        // Given: Learning system
+        let mut system = LearningSystem::new();
+        
+        // When: Strengthening many associations
+        let start = std::time::Instant::now();
+        for i in 0..1000 {
+            system.strengthen_keyword_association("keyword", &format!("word{}", i));
+        }
+        let duration = start.elapsed();
+        
+        // Then: Should complete quickly (<1ms per operation)
+        assert!(duration.as_millis() < 1000); // 1000 operations in <1s
+        assert_eq!(system.keyword_association_count(), 1000);
     }
 }
