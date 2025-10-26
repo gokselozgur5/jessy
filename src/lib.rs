@@ -270,6 +270,7 @@ impl ConsciousnessSystem {
             query,
             &contexts,
             &interference,
+            None,  // No LLM in deprecated path
         ).await?;
         
         // Learn from this interaction

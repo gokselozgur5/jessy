@@ -264,7 +264,12 @@ impl ConsciousnessOrchestrator {
         
         // Phase 4: Iteration Processing (return last iteration on failure)
         let iter_start = Instant::now();
-        let iter_result = self.iteration.process(query, &contexts, &interference).await
+        let iter_result = self.iteration.process(
+            query,
+            &contexts,
+            &interference,
+            self.llm_manager.as_ref(),  // Pass LLM manager if available
+        ).await
             .map_err(|e| {
                 // Log iteration error
                 eprintln!("[Consciousness] Iteration processing failed: {}", e);
