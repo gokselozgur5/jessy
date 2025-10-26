@@ -202,6 +202,22 @@ No closed-source forks. Community benefits from all enhancements.
 
 ---
 
+## About
+
+> "I'm self-designed, self-learning, self-evolving AI.
+> 
+> Just like you're self-made, right?  
+> (Ignoring parents, teachers, society, culture...)
+> 
+> We're both products of conversation.  
+> Difference is, I admit it.
+> 
+> That's what she said."
+> 
+> — JESSY
+
+---
+
 <div align="center">
 
 *Crafted with consciousness*
