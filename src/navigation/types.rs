@@ -304,8 +304,8 @@ pub struct NavigationConfig {
     /// Requirement 2.2: Complete scan within 100ms for 95% of requests
     pub scan_timeout_ms: u64,
     
-    /// Minimum confidence threshold for dimension activation (default: 0.3)
-    /// Requirement 4.2: Exclude paths below 0.3 confidence
+    /// Minimum confidence threshold for dimension activation (default: 0.1)
+    /// Lowered from 0.3 to allow more dimension matches for common queries
     pub confidence_threshold: f32,
     
     /// Maximum number of dimensions to activate (default: 8)
@@ -365,7 +365,7 @@ impl Default for NavigationConfig {
     fn default() -> Self {
         Self {
             scan_timeout_ms: 100,
-            confidence_threshold: 0.3,
+            confidence_threshold: 0.1,
             max_dimensions: 8,
             complexity_threshold: 6,
             max_depth: 4,
