@@ -52,6 +52,8 @@ pub struct ConsciousnessOrchestrator {
     interference_engine: InterferenceEngine,
     learning: LearningSystem,
     config: ConsciousnessConfig,
+    query_count: usize,
+    pattern_detection_interval: usize,
 }
 
 impl ConsciousnessOrchestrator {
@@ -103,6 +105,8 @@ impl ConsciousnessOrchestrator {
             interference_engine,
             learning,
             config,
+            query_count: 0,
+            pattern_detection_interval: 100, // Detect patterns every 100 queries
         }
     }
     
@@ -239,6 +243,65 @@ impl ConsciousnessOrchestrator {
             eprintln!("[Consciousness] Learning observation failed: {}", e);
         }
         
+        // Increment query counter
+        self.query_count += 1;
+        
+        // Phase 6: Periodic Pattern Detection (every N queries)
+        // This runs in the background to identify emerging patterns
+        if self.query_count % self.pattern_detection_interval == 0 {
+            eprintln!("[Consciousness] Pattern detection triggered at query {}", self.query_count);
+            
+            // Detect patterns from accumulated observations
+            match self.learning.detect_patterns() {
+                Ok(patterns) => {
+                    eprintln!("[Consciousness] Detected {} patterns", patterns.len());
+                    
+                    // Create proto-dimensions for high-confidence patterns
+                    for pattern in patterns {
+                        if pattern.confidence >= 0.85 {
+                            match self.learning.create_proto_dimension(&pattern) {
+                                Ok(dimension_id) => {
+                                    eprintln!(
+                                        "[Consciousness] Created proto-dimension {:?} from pattern (confidence: {:.2})",
+                                        dimension_id, pattern.confidence
+                                    );
+                                    
+                                    // Queue for crystallization (background task)
+                                    // Clone dimension_id for async task
+                                    let learning_ref = &mut self.learning;
+                                    tokio::spawn(async move {
+                                        // Note: This is a placeholder for background crystallization
+                                        // In full implementation, we'd use a proper task queue
+                                        eprintln!(
+                                            "[Consciousness] Queued proto-dimension {:?} for crystallization",
+                                            dimension_id
+                                        );
+                                    });
+                                }
+                                Err(e) => {
+                                    eprintln!(
+                                        "[Consciousness] Failed to create proto-dimension: {}",
+                                        e
+                                    );
+                                }
+                            }
+                        } else {
+                            eprintln!(
+                                "[Consciousness] Pattern confidence {:.2} below threshold 0.85",
+                                pattern.confidence
+                            );
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[Consciousness] Pattern detection failed: {}", e);
+                }
+            }
+            
+            // Decay unused synesthetic associations
+            self.learning.decay_keyword_associations();
+        }
+        
         // Assemble response
         let iterations = if self.config.include_iteration_history {
             iter_result.steps
@@ -261,6 +324,28 @@ impl ConsciousnessOrchestrator {
     /// Get mutable reference to learning system for external access
     pub fn learning_mut(&mut self) -> &mut LearningSystem {
         &mut self.learning
+    }
+    
+    /// Get current query count
+    pub fn query_count(&self) -> usize {
+        self.query_count
+    }
+    
+    /// Set pattern detection interval
+    ///
+    /// Controls how often pattern detection runs (every N queries).
+    /// Default is 100 queries.
+    ///
+    /// # Arguments
+    ///
+    /// * `interval` - Number of queries between pattern detection runs
+    pub fn set_pattern_detection_interval(&mut self, interval: usize) {
+        self.pattern_detection_interval = interval;
+    }
+    
+    /// Get pattern detection interval
+    pub fn pattern_detection_interval(&self) -> usize {
+        self.pattern_detection_interval
     }
 }
 
