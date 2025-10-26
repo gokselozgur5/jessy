@@ -39,7 +39,7 @@ mod integration_tests {
         let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
         
         // Create orchestrator
-        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         // Process a simple query
         let query = "What is empathy?";
@@ -71,7 +71,7 @@ mod integration_tests {
     async fn test_pipeline_with_various_query_types() {
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
-        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         let queries = vec![
             ("What is consciousness?", "philosophical"),
@@ -97,7 +97,7 @@ mod integration_tests {
     async fn test_metadata_accuracy() {
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
-        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         let query = "What is the meaning of life?";
         let result = orchestrator.process(query).await;
@@ -145,7 +145,7 @@ mod integration_tests {
         };
         
         let learning = crate::learning::LearningSystem::new();
-        let orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
+        let mut orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
         
         let query = "What is love?";
         let result = orchestrator.process(query).await;
@@ -177,7 +177,7 @@ mod integration_tests {
         };
         
         let learning = crate::learning::LearningSystem::new();
-        let orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
+        let mut orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
         
         // Simple query that might converge early
         let query = "What is 2+2?";
@@ -205,7 +205,7 @@ mod integration_tests {
     async fn test_dimensional_activation() {
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
-        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         // Emotional query should activate emotion dimension
         let query = "I feel happy and grateful";
@@ -232,7 +232,7 @@ mod integration_tests {
     async fn test_error_handling_empty_query() {
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
-        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         let query = "";
         let result = orchestrator.process(query).await;
@@ -247,7 +247,8 @@ mod integration_tests {
     async fn test_concurrent_queries() {
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
-        let orchestrator = Arc::new(ConsciousnessOrchestrator::new(navigation, memory));
+        use tokio::sync::Mutex;
+        let orchestrator = Arc::new(Mutex::new(ConsciousnessOrchestrator::new(navigation, memory)));
         
         let queries = vec![
             "What is empathy?",
@@ -261,7 +262,8 @@ mod integration_tests {
             let orch = orchestrator.clone();
             let q = query.to_string();
             let handle = tokio::spawn(async move {
-                orch.process(&q).await
+                let mut orch_guard = orch.lock().await;
+                orch_guard.process(&q).await
             });
             handles.push(handle);
         }
@@ -279,7 +281,7 @@ mod integration_tests {
     async fn test_response_structure_completeness() {
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
-        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         let query = "What is reality?";
         let result = orchestrator.process(query).await;

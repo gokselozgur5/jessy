@@ -5,15 +5,23 @@
 #[cfg(test)]
 mod tests {
     use crate::learning::{LearningSystem, LearningConfig};
-    use crate::navigation::NavigationPath;
-    use crate::navigation::navigator::NavigationResult;
+    use crate::navigation::{NavigationPath, NavigationResult};
     use crate::iteration::IterationResult;
     use crate::{DimensionId, Frequency, LayerId};
     
     fn create_test_navigation_result(dimensions: Vec<DimensionId>, frequencies: Vec<f64>) -> NavigationResult {
+        use crate::navigation::{QueryAnalysis, QuestionType, UrgencyLevel};
         NavigationResult {
-            frequencies,
-            dimensions: dimensions.clone(),
+            query_analysis: QueryAnalysis {
+                raw_query: "test query".to_string(),
+                keywords: vec!["test".to_string()],
+                estimated_complexity: 1.0,
+                emotional_indicators: vec![],
+                technical_indicators: vec![],
+                question_type: QuestionType::Factual,
+                urgency_level: UrgencyLevel::Medium,
+                estimated_frequency: 1.0,
+            },
             paths: dimensions.iter().map(|&dim_id| NavigationPath {
                 dimension_id: dim_id,
                 layer_sequence: vec![LayerId { dimension: dim_id, layer: 0 }],
@@ -22,6 +30,16 @@ mod tests {
                 keywords_matched: vec!["test".to_string()],
                 synesthetic_score: 0.5,
             }).collect(),
+            dimensions: dimensions.clone(),
+            frequencies: frequencies.iter().map(|&f| Frequency::new(f as f32)).collect(),
+            total_confidence: 0.8,
+            complexity_score: 1.0,
+            return_to_source_triggered: false,
+            query_analysis_duration_ms: 0,
+            dimension_scan_duration_ms: 0,
+            path_selection_duration_ms: 0,
+            depth_navigation_duration_ms: 0,
+            total_duration_ms: 0,
         }
     }
     

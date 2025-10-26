@@ -151,7 +151,7 @@ impl ConsciousnessOrchestrator {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn process(&self, query: &str) -> Result<ConsciousnessResponse> {
+    pub async fn process(&mut self, query: &str) -> Result<ConsciousnessResponse> {
         let pipeline_start = Instant::now();
         let mut metadata = ResponseMetadata::new();
         
@@ -230,6 +230,13 @@ impl ConsciousnessOrchestrator {
         if metadata.total_duration_ms > 6000 {
             eprintln!("[Consciousness] Warning: Pipeline exceeded 6s target: {}ms", 
                      metadata.total_duration_ms);
+        }
+        
+        // Phase 5: Learning - Record observation for pattern detection
+        // This happens after successful processing to learn from interactions
+        if let Err(e) = self.learning.observe_interaction(query, &nav_result, &iter_result) {
+            // Log but don't fail the query - learning is non-critical
+            eprintln!("[Consciousness] Learning observation failed: {}", e);
         }
         
         // Assemble response

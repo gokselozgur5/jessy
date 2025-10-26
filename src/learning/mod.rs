@@ -312,7 +312,7 @@ impl LearningSystem {
     pub fn observe_interaction(
         &mut self,
         query: &str,
-        navigation_result: &crate::navigation::navigator::NavigationResult,
+        navigation_result: &crate::navigation::NavigationResult,
         _iteration_result: &crate::iteration::IterationResult,
     ) -> Result<()> {
         // Extract activated dimensions
@@ -335,7 +335,7 @@ impl LearningSystem {
         let frequency = navigation_result
             .frequencies
             .first()
-            .map(|&f| Frequency::new(f as f32))
+            .map(|f| *f)
             .unwrap_or_else(|| Frequency::new(1.0));
         
         // Create observation
@@ -499,16 +499,23 @@ impl Default for LearningSystem {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::navigation::NavigationPath;
-    use crate::navigation::navigator::NavigationResult;
+    use crate::navigation::{NavigationPath, NavigationResult};
     use crate::iteration::IterationResult;
     
     fn create_test_navigation_result() -> NavigationResult {
-        use crate::navigation::NavigationPath;
+        use crate::navigation::{NavigationPath, QueryAnalysis, QuestionType, UrgencyLevel};
         use crate::LayerId;
         NavigationResult {
-            frequencies: vec![1.0], // Vec<f64>
-            dimensions: vec![DimensionId(1)],
+            query_analysis: QueryAnalysis {
+                raw_query: "test query".to_string(),
+                keywords: vec!["test".to_string()],
+                estimated_complexity: 1.0,
+                emotional_indicators: vec![],
+                technical_indicators: vec![],
+                question_type: QuestionType::Factual,
+                urgency_level: UrgencyLevel::Medium,
+                estimated_frequency: 1.0,
+            },
             paths: vec![NavigationPath {
                 dimension_id: DimensionId(1),
                 layer_sequence: vec![LayerId { dimension: DimensionId(1), layer: 0 }],
@@ -517,6 +524,16 @@ mod tests {
                 keywords_matched: vec!["test".to_string()],
                 synesthetic_score: 0.5,
             }],
+            dimensions: vec![DimensionId(1)],
+            frequencies: vec![Frequency::new(1.0)],
+            total_confidence: 0.8,
+            complexity_score: 1.0,
+            return_to_source_triggered: false,
+            query_analysis_duration_ms: 0,
+            dimension_scan_duration_ms: 0,
+            path_selection_duration_ms: 0,
+            depth_navigation_duration_ms: 0,
+            total_duration_ms: 0,
         }
     }
     

@@ -271,7 +271,9 @@ impl ConsciousnessSystem {
         ).await?;
         
         // Learn from this interaction
-        self.learning_system.observe_interaction(query, &navigation_result, &iteration_result)?;
+        // Note: This uses old navigator type - should migrate to ConsciousnessOrchestrator
+        // For now, skip learning in this deprecated path
+        // self.learning_system.observe_interaction(query, &navigation_result, &iteration_result)?;
         
         Ok(ConsciousnessResponse {
             answer: iteration_result.final_answer,
