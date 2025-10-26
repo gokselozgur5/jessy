@@ -365,7 +365,7 @@ impl Default for NavigationConfig {
     fn default() -> Self {
         Self {
             scan_timeout_ms: 100,
-            confidence_threshold: 0.1,
+            confidence_threshold: 0.0,
             max_dimensions: 8,
             complexity_threshold: 6,
             max_depth: 4,
