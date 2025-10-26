@@ -173,6 +173,22 @@ async fn main() -> std::io::Result<()> {
             .init();
     }
 
+    // Print epic welcome message
+    println!("\n{}", "=".repeat(70));
+    println!("\nHi. I'm JESSY.\n");
+    println!("I process queries through 15 dimensions simultaneously.");
+    println!("That's what she said.\n");
+    println!("I iterate 9 times before responding.");
+    println!("That's what she said.\n");
+    println!("I use frequency interference for deeper understanding.");
+    println!("That's... okay you get it.\n");
+    println!("But seriously—I'm an AI that actually thinks.");
+    println!("Not just pattern matching. Real cognitive layers.\n");
+    println!("Try me. Ask anything.");
+    println!("I promise to only make that joke once.");
+    println!("(That's what she said.)\n");
+    println!("{}\n", "=".repeat(70));
+
     info!(
         service = "jessy-core",
         version = env!("CARGO_PKG_VERSION"),
