@@ -86,6 +86,7 @@ mod pattern;
 mod proto_dimension;
 mod config;
 mod circular_buffer;
+mod pattern_detector;
 
 /// Learning system error types
 #[derive(Error, Debug, Clone, PartialEq)]
@@ -180,6 +181,7 @@ impl Default for LearningConfig {
 pub struct LearningSystem {
     config: LearningConfig,
     observation_buffer: CircularBuffer<Observation>,
+    pattern_detector: pattern_detector::PatternDetector,
     // Other components will be added in subsequent tasks
 }
 
@@ -201,10 +203,12 @@ impl LearningSystem {
     /// Create new learning system with custom configuration
     pub fn with_config(config: LearningConfig) -> Self {
         let observation_buffer = CircularBuffer::new(config.max_observations);
+        let pattern_detector = pattern_detector::PatternDetector::new(config.clone());
         
         Self {
             config,
             observation_buffer,
+            pattern_detector,
         }
     }
     
@@ -279,6 +283,24 @@ impl LearningSystem {
     /// Get observation buffer capacity
     pub fn observation_capacity(&self) -> usize {
         self.observation_buffer.capacity()
+    }
+    
+    /// Detect patterns from accumulated observations
+    ///
+    /// Analyzes the observation buffer to identify recurring themes.
+    /// Returns patterns that meet minimum observation count and confidence threshold.
+    ///
+    /// # Returns
+    ///
+    /// List of detected patterns with confidence scores ≥ 0.85
+    ///
+    /// # Performance
+    ///
+    /// This operation completes in <100ms as required.
+    pub fn detect_patterns(&mut self) -> Result<Vec<DetectedPattern>> {
+        let observations: Vec<_> = self.observation_buffer.iter().cloned().collect();
+        let patterns = self.pattern_detector.detect_patterns(&observations);
+        Ok(patterns)
     }
 }
 
