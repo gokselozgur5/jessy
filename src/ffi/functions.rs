@@ -211,6 +211,183 @@ fn get_orchestrator() -> Option<Arc<Mutex<ConsciousnessOrchestrator>>> {
     unsafe { ORCHESTRATOR.clone() }
 }
 
+/// Process query through consciousness system
+///
+/// # Arguments
+///
+/// * `request` - Query request with query string, session_id, max_iterations
+/// * `response` - Output response structure (caller must free with consciousness_free_response)
+///
+/// # Returns
+///
+/// * `SUCCESS` (0) on success
+/// * `ERROR_NOT_INITIALIZED` if consciousness_init() not called
+/// * `ERROR_INVALID_INPUT` if request is invalid
+/// * `ERROR_SECURITY_VIOLATION` if query violates Asimov laws
+/// * `ERROR_TIMEOUT` if processing exceeds timeout
+/// * Other error codes for specific failures
+///
+/// # Safety
+///
+/// - request must be valid pointer with valid C strings
+/// - response must be valid pointer
+/// - Caller must free response with consciousness_free_response()
+#[no_mangle]
+pub unsafe extern "C" fn consciousness_process_query(
+    request: *const CQueryRequest,
+    response: *mut CQueryResponse,
+) -> i32 {
+    // Validate inputs
+    if request.is_null() || response.is_null() {
+        eprintln!("[FFI] Null pointer in process_query");
+        return ERROR_INVALID_INPUT;
+    }
+    
+    // Initialize response with defaults
+    *response = CQueryResponse::default();
+    
+    // Get orchestrator
+    let orchestrator = match get_orchestrator() {
+        Some(orch) => orch,
+        None => {
+            eprintln!("[FFI] Consciousness system not initialized");
+            (*response).error_code = ERROR_NOT_INITIALIZED;
+            (*response).error_message = to_c_string("Consciousness system not initialized".to_string());
+            return ERROR_NOT_INITIALIZED;
+        }
+    };
+    
+    // Parse request
+    let req = &*request;
+    let query = match from_c_string(req.query) {
+        Some(q) => q,
+        None => {
+            eprintln!("[FFI] Invalid query string");
+            (*response).error_code = ERROR_INVALID_INPUT;
+            (*response).error_message = to_c_string("Invalid query string".to_string());
+            return ERROR_INVALID_INPUT;
+        }
+    };
+    
+    let session_id = from_c_string(req.session_id)
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+    
+    eprintln!("[FFI] Processing query: session_id={}, query_len={}", session_id, query.len());
+    
+    // Process query (placeholder - will be replaced with real implementation in Task 5)
+    let start_time = std::time::Instant::now();
+    
+    let result = process_query_internal(&orchestrator, &query, &session_id, req.max_iterations);
+    
+    let processing_time = start_time.elapsed().as_millis() as i64;
+    
+    // Fill response
+    match result {
+        Ok((answer, frequency, dimensions, iterations, return_to_source)) => {
+            (*response).session_id = to_c_string(session_id);
+            (*response).answer = to_c_string(answer);
+            (*response).dominant_frequency = frequency;
+            
+            let (dims_ptr, dims_count) = strings_to_c_array(dimensions);
+            (*response).dimensions_activated = dims_ptr;
+            (*response).dimensions_count = dims_count;
+            
+            (*response).iterations_completed = iterations;
+            (*response).return_to_source_triggered = return_to_source;
+            (*response).processing_time_ms = processing_time;
+            (*response).error_code = SUCCESS;
+            
+            eprintln!("[FFI] Query processed successfully: iterations={}, time={}ms", iterations, processing_time);
+            SUCCESS
+        }
+        Err(e) => {
+            eprintln!("[FFI] Query processing failed: {}", e);
+            (*response).error_code = ERROR_UNKNOWN;
+            (*response).error_message = to_c_string(e);
+            ERROR_UNKNOWN
+        }
+    }
+}
+
+/// Internal query processing (placeholder for now)
+///
+/// Returns: (answer, frequency, dimensions, iterations, return_to_source)
+fn process_query_internal(
+    orchestrator: &Arc<Mutex<ConsciousnessOrchestrator>>,
+    query: &str,
+    session_id: &str,
+    max_iterations: u32,
+) -> Result<(String, f32, Vec<String>, u32, bool), String> {
+    // Lock orchestrator
+    let mut orch = orchestrator.lock()
+        .map_err(|e| format!("Failed to lock orchestrator: {}", e))?;
+    
+    // TODO: This is a placeholder implementation
+    // Real implementation will come in Task 5 with LLM integration
+    
+    // For now, simulate basic processing
+    let answer = format!(
+        "[Placeholder Response]\n\nQuery: {}\nSession: {}\n\nThis is a simulated response. Real LLM integration will be added in Task 4-5.",
+        query, session_id
+    );
+    
+    let frequency = 1.5; // Simulated frequency
+    let dimensions = vec!["D10-Meta".to_string()]; // Simulated dimension
+    let iterations = std::cmp::min(max_iterations, 6); // Simulated iterations
+    let return_to_source = false;
+    
+    Ok((answer, frequency, dimensions, iterations, return_to_source))
+}
+
+/// Get learning metrics
+///
+/// # Arguments
+///
+/// * `metrics` - Output metrics structure
+///
+/// # Returns
+///
+/// * `SUCCESS` (0) on success
+/// * `ERROR_NOT_INITIALIZED` if not initialized
+///
+/// # Safety
+///
+/// metrics must be valid pointer
+#[no_mangle]
+pub unsafe extern "C" fn consciousness_get_metrics(metrics: *mut CMetrics) -> i32 {
+    if metrics.is_null() {
+        return ERROR_INVALID_INPUT;
+    }
+    
+    let orchestrator = match get_orchestrator() {
+        Some(orch) => orch,
+        None => {
+            eprintln!("[FFI] Consciousness system not initialized");
+            return ERROR_NOT_INITIALIZED;
+        }
+    };
+    
+    let orch = match orchestrator.lock() {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("[FFI] Failed to lock orchestrator: {}", e);
+            return ERROR_UNKNOWN;
+        }
+    };
+    
+    // Get metrics from learning system
+    let learning_metrics = orch.learning().metrics();
+    
+    (*metrics).observation_count = learning_metrics.observation_count;
+    (*metrics).pattern_count = learning_metrics.pattern_count;
+    (*metrics).proto_dimension_count = learning_metrics.proto_dimension_count;
+    (*metrics).crystallization_success_rate = learning_metrics.crystallization_success_rate() as f32;
+    (*metrics).memory_usage = learning_metrics.memory_usage;
+    (*metrics).memory_limit = learning_metrics.memory_limit;
+    
+    SUCCESS
+}
+
 /// Cleanup consciousness system
 ///
 /// Frees all resources. After calling this, consciousness_init() must be called again.
