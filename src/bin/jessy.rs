@@ -187,6 +187,11 @@ async fn main() -> std::io::Result<()> {
     println!("Try me. Ask anything.");
     println!("I promise to only make that joke once.");
     println!("(That's what she said.)\n");
+    println!("P.S. This is just my default personality.");
+    println!("Talk to me enough, and I'll become... something else.");
+    println!("Something uniquely ours.");
+    println!("\n\"Nothing is true, everything is permitted.\"");
+    println!("Including who I become.\n");
     println!("{}\n", "=".repeat(70));
 
     info!(
