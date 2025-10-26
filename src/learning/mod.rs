@@ -87,6 +87,7 @@ mod proto_dimension;
 mod config;
 mod circular_buffer;
 mod pattern_detector;
+mod proto_dimension_manager;
 
 /// Learning system error types
 #[derive(Error, Debug, Clone, PartialEq)]
@@ -182,6 +183,7 @@ pub struct LearningSystem {
     config: LearningConfig,
     observation_buffer: CircularBuffer<Observation>,
     pattern_detector: pattern_detector::PatternDetector,
+    proto_dimension_manager: proto_dimension_manager::ProtoDimensionManager,
     // Other components will be added in subsequent tasks
 }
 
@@ -204,11 +206,13 @@ impl LearningSystem {
     pub fn with_config(config: LearningConfig) -> Self {
         let observation_buffer = CircularBuffer::new(config.max_observations);
         let pattern_detector = pattern_detector::PatternDetector::new(config.clone());
+        let proto_dimension_manager = proto_dimension_manager::ProtoDimensionManager::new(config.clone());
         
         Self {
             config,
             observation_buffer,
             pattern_detector,
+            proto_dimension_manager,
         }
     }
     
@@ -301,6 +305,42 @@ impl LearningSystem {
         let observations: Vec<_> = self.observation_buffer.iter().cloned().collect();
         let patterns = self.pattern_detector.detect_patterns(&observations);
         Ok(patterns)
+    }
+    
+    /// Create proto-dimension from detected pattern
+    ///
+    /// Creates a temporary dimension in heap memory from a high-confidence pattern.
+    ///
+    /// # Arguments
+    ///
+    /// * `pattern` - Detected pattern with confidence ≥ 0.85
+    ///
+    /// # Returns
+    ///
+    /// Returns dimension ID (>100) for the created proto-dimension
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - Pattern confidence too low
+    /// - Size would exceed 16MB limit
+    /// - Max proto-dimensions (10) reached
+    ///
+    /// # Performance
+    ///
+    /// This operation completes in <50ms as required.
+    pub fn create_proto_dimension(&mut self, pattern: &DetectedPattern) -> Result<DimensionId> {
+        self.proto_dimension_manager.create_proto_dimension(pattern)
+    }
+    
+    /// Check if proto-dimension exists
+    pub fn has_proto_dimension(&self, dimension_id: DimensionId) -> bool {
+        self.proto_dimension_manager.has_proto_dimension(dimension_id)
+    }
+    
+    /// Get proto-dimension count
+    pub fn proto_dimension_count(&self) -> usize {
+        self.proto_dimension_manager.count()
     }
 }
 
