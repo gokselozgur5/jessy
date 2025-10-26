@@ -259,7 +259,13 @@ cli: ## Run JESSY CLI interactively (requires .env with API key)
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
-	@docker-compose run --rm --env-file .env -e RUST_ENV=development unit-tests cargo run --bin jessy-cli
+	@set -a && . ./.env && set +a && docker-compose run --rm \
+		-e ANTHROPIC_API_KEY="$$ANTHROPIC_API_KEY" \
+		-e OPENAI_API_KEY="$$OPENAI_API_KEY" \
+		-e LLM_PROVIDER="$$LLM_PROVIDER" \
+		-e LLM_MODEL="$$LLM_MODEL" \
+		-e RUST_ENV=development \
+		unit-tests cargo run --bin jessy-cli
 
 cli-release: ## Run JESSY CLI (release build, faster)
 	@echo "$(BLUE)🤖 Starting JESSY CLI (release mode)...$(NC)"
@@ -269,4 +275,10 @@ cli-release: ## Run JESSY CLI (release build, faster)
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
-	@docker-compose run --rm --env-file .env -e RUST_ENV=development unit-tests cargo run --release --bin jessy-cli
+	@set -a && . ./.env && set +a && docker-compose run --rm \
+		-e ANTHROPIC_API_KEY="$$ANTHROPIC_API_KEY" \
+		-e OPENAI_API_KEY="$$OPENAI_API_KEY" \
+		-e LLM_PROVIDER="$$LLM_PROVIDER" \
+		-e LLM_MODEL="$$LLM_MODEL" \
+		-e RUST_ENV=development \
+		unit-tests cargo run --release --bin jessy-cli
