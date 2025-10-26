@@ -260,7 +260,9 @@ impl NavigationSystem {
             })
             .collect();
         
+        eprintln!("[Navigation] Created {} paths from activations", paths.len());
         let selected_paths = self.path_selector.select_paths(paths);
+        eprintln!("[Navigation] Selected {} paths after filtering", selected_paths.len());
         
         // Step 4: Check complexity and apply return-to-source if needed
         let complexity_check = self.path_selector.check_complexity(&selected_paths);

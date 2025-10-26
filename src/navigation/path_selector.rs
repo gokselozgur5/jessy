@@ -288,16 +288,32 @@ impl PathSelector {
     pub fn select_paths(&self, mut paths: Vec<NavigationPath>) -> Vec<NavigationPath> {
         // TODO: Implement in task 5.11
         
-        // Filter by confidence threshold
-        paths.retain(|p| p.confidence >= self.config.confidence_threshold);
+        if paths.is_empty() {
+            return paths;
+        }
         
-        // Rank paths
+        // Rank paths first (before filtering)
         self.rank_paths(&mut paths);
         
-        // Limit to max dimensions
-        paths.truncate(self.config.max_dimensions);
+        // Filter by confidence threshold
+        let filtered: Vec<NavigationPath> = paths.iter()
+            .filter(|p| p.confidence >= self.config.confidence_threshold)
+            .cloned()
+            .collect();
         
-        paths
+        // If no paths pass threshold, take top 3 anyway (fallback)
+        let mut final_paths = if filtered.is_empty() {
+            eprintln!("[PathSelector] No paths above threshold {}, using top 3 as fallback", 
+                     self.config.confidence_threshold);
+            paths.into_iter().take(3).collect()
+        } else {
+            filtered
+        };
+        
+        // Limit to max dimensions
+        final_paths.truncate(self.config.max_dimensions);
+        
+        final_paths
     }
     
     // ============================================================================
