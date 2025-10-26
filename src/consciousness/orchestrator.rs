@@ -466,6 +466,18 @@ impl ConsciousnessOrchestrator {
         // Return enhanced query
         enhanced_keywords.join(" ")
     }
+    
+    /// Get learning system metrics
+    ///
+    /// Returns current statistics from the learning system including
+    /// observations, patterns, proto-dimensions, and memory usage.
+    ///
+    /// # Returns
+    ///
+    /// Learning metrics structure with current statistics
+    pub fn get_learning_metrics(&self) -> crate::learning::LearningMetrics {
+        self.learning.get_metrics()
+    }
 }
 
 #[cfg(test)]
