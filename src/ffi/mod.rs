@@ -20,6 +20,8 @@
 
 pub mod types;
 pub mod functions;
+pub mod error;
 
 pub use types::*;
 pub use functions::*;
+pub use error::*;
