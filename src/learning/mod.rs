@@ -262,7 +262,7 @@ impl LearningSystem {
         let frequency = navigation_result
             .frequencies
             .first()
-            .copied()
+            .map(|&f| Frequency::new(f as f32))
             .unwrap_or_else(|| Frequency::new(1.0));
         
         // Create observation
@@ -378,9 +378,19 @@ mod tests {
     use crate::iteration::IterationResult;
     
     fn create_test_navigation_result() -> NavigationResult {
+        use crate::navigation::NavigationPath;
+        use crate::LayerId;
         NavigationResult {
-            frequencies: vec![Frequency::new(1.0)],
+            frequencies: vec![1.0], // Vec<f64>
             dimensions: vec![DimensionId(1)],
+            paths: vec![NavigationPath {
+                dimension_id: DimensionId(1),
+                layer_sequence: vec![LayerId { dimension: DimensionId(1), layer: 0 }],
+                confidence: 0.8,
+                frequency: Frequency::new(1.0),
+                keywords_matched: vec!["test".to_string()],
+                synesthetic_score: 0.5,
+            }],
         }
     }
     
@@ -390,6 +400,7 @@ mod tests {
             steps: vec![],
             return_to_source_triggered: false,
             convergence_achieved: true,
+            iterations_completed: 1,
         }
     }
     
