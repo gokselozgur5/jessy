@@ -97,9 +97,15 @@ func NewConsciousnessService() (*ConsciousnessService, error) {
 		sessions: make(map[string]*QuerySession),
 	}
 	
-	// Initialize the Rust consciousness system
-	// In real implementation: call Rust initialization via CGO
+	// Initialize the Rust consciousness system via CGO
 	log.Info().Msg("Initializing consciousness system")
+	
+	if err := InitConsciousness(500); err != nil {
+		log.Error().Err(err).Msg("Failed to initialize Rust consciousness system")
+		return nil, err
+	}
+	
+	log.Info().Msg("Rust consciousness system initialized successfully")
 	
 	return service, nil
 }
@@ -123,7 +129,12 @@ func (cs *ConsciousnessService) Close() error {
 	
 	cs.sessions = make(map[string]*QuerySession)
 	
-	// In real implementation: cleanup Rust resources via CGO
+	// Cleanup Rust resources via CGO
+	if err := CleanupConsciousness(); err != nil {
+		log.Error().Err(err).Msg("Failed to cleanup Rust consciousness system")
+		return err
+	}
+	
 	log.Info().Msg("Consciousness system shutdown complete")
 	
 	return nil
@@ -169,9 +180,8 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 	cs.sessions[sessionID] = session
 	cs.mutex.Unlock()
 	
-	// Process query through consciousness system
-	// In real implementation: call Rust consciousness system via CGO
-	response, err := cs.simulateConsciousnessProcessing(session)
+	// Process query through Rust consciousness system via CGO
+	response, err := ProcessQueryNative(req.Query, sessionID, 9)
 	if err != nil {
 		cs.mutex.Lock()
 		session.Status = "error"
@@ -193,8 +203,6 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 	session.Status = "completed"
 	cs.mutex.Unlock()
 	
-	response.ProcessingTimeMs = time.Since(startTime).Milliseconds()
-	
 	log.Info().
 		Str("session_id", sessionID).
 		Int64("processing_time_ms", response.ProcessingTimeMs).
@@ -211,11 +219,18 @@ func (cs *ConsciousnessService) GetStatus(c *fiber.Ctx) error {
 	activeSessions := len(cs.sessions)
 	cs.mutex.RUnlock()
 	
+	// Get learning metrics from Rust
+	learningMetrics, err := GetLearningMetrics()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to get learning metrics")
+		learningMetrics = &LearningMetrics{} // Use empty metrics on error
+	}
+	
 	status := SystemStatus{
 		Status:         "healthy",
 		ActiveSessions: activeSessions,
-		TotalQueries:   0, // Would track this in real implementation
-		MemoryUsageMB:  280, // Simulated - would get from Rust system
+		TotalQueries:   int64(learningMetrics.ObservationCount),
+		MemoryUsageMB:  learningMetrics.MemoryUsage / (1024 * 1024), // Convert bytes to MB
 		DimensionsLoaded: []string{
 			"D01-Emotion", "D02-Cognition", "D03-Intention", "D04-Social",
 			"D05-Temporal", "D06-Philosophical", "D07-Technical", "D08-Creative",
@@ -225,10 +240,12 @@ func (cs *ConsciousnessService) GetStatus(c *fiber.Ctx) error {
 		Uptime:  "0h 0m 0s", // Would calculate actual uptime
 		Version: "1.0.0",
 		Metrics: map[string]interface{}{
-			"avg_processing_time_ms": 3500,
-			"avg_iterations": 7.2,
-			"return_to_source_rate": 0.15,
-			"security_blocks": 0,
+			"observation_count":            learningMetrics.ObservationCount,
+			"pattern_count":                learningMetrics.PatternCount,
+			"proto_dimension_count":        learningMetrics.ProtoDimensionCount,
+			"crystallization_success_rate": learningMetrics.CrystallizationSuccessRate,
+			"memory_usage_bytes":           learningMetrics.MemoryUsage,
+			"memory_limit_bytes":           learningMetrics.MemoryLimit,
 		},
 	}
 	
