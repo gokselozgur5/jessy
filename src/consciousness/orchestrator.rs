@@ -159,9 +159,18 @@ impl ConsciousnessOrchestrator {
         let pipeline_start = Instant::now();
         let mut metadata = ResponseMetadata::new();
         
+        // Phase 0: Synesthetic Enhancement (optional, non-blocking)
+        // Enhance query with learned keyword associations to improve navigation
+        let enhanced_query = self.enhance_query_with_synesthesia(query);
+        let query_to_use = if !enhanced_query.is_empty() {
+            &enhanced_query
+        } else {
+            query
+        };
+        
         // Phase 1: Navigation (fail fast on error)
         let nav_start = Instant::now();
-        let nav_result = self.navigation.navigate(query).await
+        let nav_result = self.navigation.navigate(query_to_use).await
             .map_err(|e| {
                 // Preserve full error context for debugging
                 eprintln!("[Consciousness] Navigation failed: {}", e);
@@ -347,11 +356,77 @@ impl ConsciousnessOrchestrator {
     pub fn pattern_detection_interval(&self) -> usize {
         self.pattern_detection_interval
     }
+    
+    /// Enhance query with synesthetic keyword associations
+    ///
+    /// Uses learned keyword associations to expand the query with related terms
+    /// that have strong synesthetic connections (strength > 2.0).
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - Original query string
+    ///
+    /// # Returns
+    ///
+    /// Enhanced query string with associated keywords, or empty string if no enhancement
+    ///
+    /// # Example
+    ///
+    /// ```text
+    /// Original: "emotional intelligence"
+    /// Enhanced: "emotional intelligence empathy feeling awareness"
+    /// ```
+    fn enhance_query_with_synesthesia(&self, query: &str) -> String {
+        // Extract keywords from query (simple tokenization)
+        let keywords: Vec<String> = query
+            .split_whitespace()
+            .map(|s| s.to_lowercase())
+            .collect();
+        
+        if keywords.is_empty() {
+            return String::new();
+        }
+        
+        // Collect associated keywords with strong connections
+        let mut enhanced_keywords = keywords.clone();
+        let mut added_keywords = std::collections::HashSet::new();
+        
+        for keyword in &keywords {
+            // Get associations for this keyword
+            let associations = self.learning.get_keyword_associations(keyword);
+            
+            // Add strongly associated keywords (strength > 2.0)
+            for (associated_keyword, strength) in associations {
+                if strength > 2.0 && !added_keywords.contains(&associated_keyword) {
+                    enhanced_keywords.push(associated_keyword.clone());
+                    added_keywords.insert(associated_keyword);
+                }
+            }
+        }
+        
+        // If no enhancement, return empty string to signal using original query
+        if enhanced_keywords.len() == keywords.len() {
+            return String::new();
+        }
+        
+        // Log enhancement for observability
+        if enhanced_keywords.len() > keywords.len() {
+            eprintln!(
+                "[Consciousness] Synesthetic enhancement: {} → {} keywords",
+                keywords.len(),
+                enhanced_keywords.len()
+            );
+        }
+        
+        // Return enhanced query
+        enhanced_keywords.join(" ")
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::navigation::DimensionRegistry;
     
     #[test]
     fn test_orchestrator_creation_with_default_config() {
@@ -423,5 +498,70 @@ mod tests {
         
         let error_string = wrapped_error.to_string();
         assert!(error_string.contains(original_error));
+    }
+    
+    #[test]
+    fn test_synesthetic_enhancement_no_associations() {
+        // Given: Orchestrator with no learned associations
+        let navigation = create_test_navigation();
+        let memory = Arc::new(MmapManager::new(280).unwrap());
+        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        
+        // When: Enhancing query with no associations
+        let enhanced = orchestrator.enhance_query_with_synesthesia("test query");
+        
+        // Then: Should return empty string (no enhancement)
+        assert_eq!(enhanced, "");
+    }
+    
+    #[test]
+    fn test_synesthetic_enhancement_with_associations() {
+        // Given: Orchestrator with learned associations
+        let navigation = create_test_navigation();
+        let memory = Arc::new(MmapManager::new(280).unwrap());
+        let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        
+        // Learn some associations (strengthen multiple times to get strength > 2.0)
+        // Learning rate is 1.1, so 1.1^9 = 2.36 > 2.0
+        for _ in 0..9 {
+            orchestrator.learning_mut().strengthen_keyword_association("emotional", "feeling");
+            orchestrator.learning_mut().strengthen_keyword_association("emotional", "empathy");
+        }
+        
+        // Verify associations are strong enough
+        let strength = orchestrator.learning().get_keyword_strength("emotional", "feeling");
+        assert!(strength.is_some());
+        assert!(strength.unwrap() > 2.0, "Strength should be > 2.0, got {:?}", strength);
+        
+        // When: Enhancing query with associations
+        let enhanced = orchestrator.enhance_query_with_synesthesia("emotional intelligence");
+        
+        // Then: Should include associated keywords
+        assert!(!enhanced.is_empty(), "Enhanced query should not be empty");
+        assert!(enhanced.contains("emotional"));
+        assert!(enhanced.contains("intelligence"));
+        // Should include strongly associated keywords (strength > 2.0)
+        assert!(enhanced.contains("feeling") || enhanced.contains("empathy"), 
+               "Enhanced query should contain associated keywords: {}", enhanced);
+    }
+    
+    #[test]
+    fn test_synesthetic_enhancement_empty_query() {
+        // Given: Orchestrator
+        let navigation = create_test_navigation();
+        let memory = Arc::new(MmapManager::new(280).unwrap());
+        let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+        
+        // When: Enhancing empty query
+        let enhanced = orchestrator.enhance_query_with_synesthesia("");
+        
+        // Then: Should return empty string
+        assert_eq!(enhanced, "");
+    }
+    
+    // Helper function for tests
+    fn create_test_navigation() -> Arc<NavigationSystem> {
+        let registry = Arc::new(DimensionRegistry::new());
+        Arc::new(NavigationSystem::new(registry).expect("Failed to create navigation"))
     }
 }
