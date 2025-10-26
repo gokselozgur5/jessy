@@ -418,8 +418,18 @@ pub unsafe extern "C" fn consciousness_process_query(
             (*response).error_message = to_c_string(error.message());
             error.to_error_code()
         }
-    }
-}
+    });
+    
+    // Handle panic result
+    let result = match panic_result {
+        Ok(r) => r,
+        Err(panic_err) => {
+            log_error(&panic_err, "process_query_panic");
+            (*response).error_code = panic_err.to_error_code();
+            (*response).error_message = to_c_string(panic_err.message());
+            return panic_err.to_error_code();
+        }
+    };
     
     // Fill response
     match result {
