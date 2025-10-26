@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "API Integration Development - Full Automation",
+  "description": "Automatically implements next API integration task with TDD approach, tests, commits, and pushes",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      ".kiro/specs/api-integration/tasks.md",
+      "API_INTEGRATION_PROGRESS.md",
+      "src/ffi/**",
+      "src/llm/**",
+      "api/**"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "API Integration Development Hook Triggered!\n\nCurrent Status:\n- Check API_INTEGRATION_PROGRESS.md for completion status\n- Review .kiro/specs/api-integration/tasks.md for next task\n\nYour Mission:\n1. Identify next incomplete task from tasks.md\n2. Implement with TDD approach (tests first, then implementation)\n3. Ensure all tests pass\n4. Update API_INTEGRATION_PROGRESS.md with completion status\n5. Make atomic commit with clear message\n6. Push to repository\n\nFollow these principles:\n- TDD: Write tests first (RED), implement (GREEN), refactor\n- Atomic commits: One logical change per commit\n- Clear messages: feat(api): description of what was done\n- Test validation: Run tests before committing\n- Progress tracking: Update progress file after each task\n\nImplementation Guidelines:\n- Use containerized environment (docker-compose)\n- Follow Rust best practices (ownership, error handling)\n- Maintain FFI safety (proper memory management)\n- Add comprehensive logging\n- Document all public APIs\n\nPerformance Targets:\n- FFI call overhead: <1ms\n- Navigation: <100ms\n- Single iteration: <3s\n- Full query: <30s\n\nShall I continue with the next API integration task?"
+  }
+}
