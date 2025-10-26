@@ -68,7 +68,7 @@
 //! # }
 //! ```
 
-use crate::{DimensionId, Frequency, Result};
+use crate::{DimensionId, Frequency, Result, ConsciousnessError};
 use std::collections::HashMap;
 use std::time::SystemTime;
 use thiserror::Error;
@@ -80,6 +80,7 @@ pub use self::proto_dimension::*;
 pub use self::config::*;
 pub use self::circular_buffer::CircularBuffer;
 pub use self::memory_tracker::MemoryTracker;
+pub use self::crystallizer::Crystallizer;
 
 // Module declarations
 mod observation;
@@ -90,6 +91,7 @@ mod circular_buffer;
 mod memory_tracker;
 mod pattern_detector;
 mod proto_dimension_manager;
+mod crystallizer;
 
 /// Learning system error types
 #[derive(Error, Debug, Clone, PartialEq)]
@@ -187,6 +189,7 @@ pub struct LearningSystem {
     pattern_detector: pattern_detector::PatternDetector,
     proto_dimension_manager: proto_dimension_manager::ProtoDimensionManager,
     memory_tracker: memory_tracker::MemoryTracker,
+    crystallizer: Option<crystallizer::Crystallizer>,
     // Other components will be added in subsequent tasks
 }
 
@@ -218,7 +221,57 @@ impl LearningSystem {
             pattern_detector,
             proto_dimension_manager,
             memory_tracker,
+            crystallizer: None, // Will be initialized when memory manager is available
         }
+    }
+    
+    /// Initialize crystallizer with memory manager
+    ///
+    /// This must be called before crystallization can be performed.
+    pub fn init_crystallizer(&mut self, memory_manager: std::sync::Arc<crate::memory::MmapManager>) {
+        self.crystallizer = Some(crystallizer::Crystallizer::new(memory_manager));
+    }
+    
+    /// Crystallize a proto-dimension to MMAP
+    ///
+    /// Migrates a proto-dimension from heap to permanent MMAP storage.
+    ///
+    /// # Arguments
+    ///
+    /// * `dimension_id` - ID of proto-dimension to crystallize
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` on success
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - Crystallizer not initialized
+    /// - Proto-dimension not found
+    /// - Confidence too low (<0.85)
+    /// - MMAP allocation fails
+    /// - Integrity check fails
+    pub async fn crystallize(&mut self, dimension_id: DimensionId) -> Result<()> {
+        // Check if crystallizer is initialized
+        let crystallizer = self.crystallizer.as_mut()
+            .ok_or_else(|| ConsciousnessError::LearningError(
+                "Crystallizer not initialized - call init_crystallizer() first".to_string()
+            ))?;
+        
+        // Get proto-dimension
+        let proto = self.proto_dimension_manager.get(dimension_id)
+            .ok_or_else(|| ConsciousnessError::LearningError(
+                format!("Proto-dimension {:?} not found", dimension_id)
+            ))?;
+        
+        // Crystallize
+        crystallizer.crystallize(proto).await?;
+        
+        // Remove from proto-dimension manager after successful crystallization
+        self.proto_dimension_manager.remove(dimension_id);
+        
+        Ok(())
     }
     
     /// Get current configuration
