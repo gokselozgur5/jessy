@@ -139,6 +139,40 @@ impl From<ConsciousnessError> for FFIError {
             ConsciousnessError::Timeout(msg) => {
                 FFIError::Timeout(msg)
             }
+            // Map other variants to appropriate FFI errors
+            ConsciousnessError::AllocationFailed(msg) => {
+                FFIError::MemoryLimit(format!("Allocation failed: {}", msg))
+            }
+            ConsciousnessError::LimitExceeded { current_mb, limit_mb, requested_mb } => {
+                FFIError::MemoryLimit(format!(
+                    "Memory limit exceeded: current={}MB, limit={}MB, requested={}MB",
+                    current_mb, limit_mb, requested_mb
+                ))
+            }
+            ConsciousnessError::LayerNotFound { dimension, layer } => {
+                FFIError::NavigationFailed(format!(
+                    "Layer not found: dimension={}, layer={}",
+                    dimension, layer
+                ))
+            }
+            ConsciousnessError::RegionNotFound { region_id } => {
+                FFIError::MemoryLimit(format!("Region not found: {}", region_id))
+            }
+            ConsciousnessError::OutOfBounds { offset, size, region_size } => {
+                FFIError::MemoryLimit(format!(
+                    "Out of bounds: offset={}, size={}, region_size={}",
+                    offset, size, region_size
+                ))
+            }
+            ConsciousnessError::DimensionNotFound { dimension } => {
+                FFIError::NavigationFailed(format!("Dimension not found: {}", dimension))
+            }
+            ConsciousnessError::AnalysisParalysis => {
+                FFIError::IterationFailed("Analysis paralysis detected".to_string())
+            }
+            ConsciousnessError::LearningError(msg) => {
+                FFIError::Unknown(format!("Learning error: {}", msg))
+            }
         }
     }
 }
