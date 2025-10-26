@@ -97,6 +97,9 @@ mod proto_dimension_manager;
 mod crystallizer;
 mod synesthetic_learner;
 
+#[cfg(test)]
+mod integration_tests;
+
 /// Learning system error types
 #[derive(Error, Debug, Clone, PartialEq)]
 pub enum LearningError {
