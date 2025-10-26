@@ -259,7 +259,7 @@ cli: ## Run JESSY CLI interactively (requires .env with API key)
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
-	@docker-compose run --rm -e RUST_ENV=development unit-tests cargo run --bin jessy-cli
+	@docker-compose run --rm --env-file .env -e RUST_ENV=development unit-tests cargo run --bin jessy-cli
 
 cli-release: ## Run JESSY CLI (release build, faster)
 	@echo "$(BLUE)🤖 Starting JESSY CLI (release mode)...$(NC)"
@@ -269,4 +269,4 @@ cli-release: ## Run JESSY CLI (release build, faster)
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
-	@docker-compose run --rm -e RUST_ENV=development unit-tests cargo run --release --bin jessy-cli
+	@docker-compose run --rm --env-file .env -e RUST_ENV=development unit-tests cargo run --release --bin jessy-cli
