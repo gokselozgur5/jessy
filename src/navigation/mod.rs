@@ -150,12 +150,11 @@ impl NavigationResult {
     
     /// Add navigation path to result
     pub fn add_path(&mut self, path: NavigationPath) {
-        if path.is_viable(0.3) {
-            self.dimensions.push(path.dimension_id);
-            self.frequencies.push(path.frequency);
-            self.total_confidence += path.confidence;
-            self.paths.push(path);
-        }
+        // Always add path - let caller decide if it's viable
+        self.dimensions.push(path.dimension_id);
+        self.frequencies.push(path.frequency);
+        self.total_confidence += path.confidence;
+        self.paths.push(path);
     }
     
     /// Calculate complexity score based on active dimensions and depth
