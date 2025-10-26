@@ -249,3 +249,24 @@ mmap-info: ## Show MMAP volume information
 	@echo "$(YELLOW)Container mounts:$(NC)"
 	@docker-compose ps -q jessy-core 2>/dev/null | xargs -I {} docker inspect {} --format='  Rust: {{range .Mounts}}{{if eq .Destination "/app/data/mmap"}}{{.Source}} -> {{.Destination}} ({{.Mode}}){{end}}{{end}}' 2>/dev/null || echo "  Rust service not running"
 	@docker-compose ps -q jessy-api 2>/dev/null | xargs -I {} docker inspect {} --format='  Go: {{range .Mounts}}{{if eq .Destination "/app/data/mmap"}}{{.Source}} -> {{.Destination}} ({{.Mode}}){{end}}{{end}}' 2>/dev/null || echo "  Go service not running"
+
+
+cli: ## Run JESSY CLI interactively (requires .env with API key)
+	@echo "$(BLUE)🤖 Starting JESSY CLI...$(NC)"
+	@if [ ! -f .env ]; then \
+		echo "$(RED)❌ .env file not found$(NC)"; \
+		echo "$(YELLOW)💡 Copy .env.example to .env and add your API key$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
+	@docker-compose run --rm -e RUST_ENV=development unit-tests cargo run --bin jessy-cli
+
+cli-release: ## Run JESSY CLI (release build, faster)
+	@echo "$(BLUE)🤖 Starting JESSY CLI (release mode)...$(NC)"
+	@if [ ! -f .env ]; then \
+		echo "$(RED)❌ .env file not found$(NC)"; \
+		echo "$(YELLOW)💡 Copy .env.example to .env and add your API key$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Loading configuration from .env...$(NC)"
+	@docker-compose run --rm -e RUST_ENV=development unit-tests cargo run --release --bin jessy-cli
