@@ -7,7 +7,7 @@ use crate::consciousness::{
     ConsciousnessConfig, ConsciousnessResponse, ResponseMetadata,
 };
 use crate::interference::{InterferenceEngine, FrequencyState};
-use crate::iteration::IterationProcessor;
+use crate::iteration::ParallelIterationProcessor;
 use crate::learning::LearningSystem;
 use crate::llm::{LLMManager, LLMConfig};
 use crate::memory::MmapManager;
@@ -49,7 +49,7 @@ use std::time::Instant;
 pub struct ConsciousnessOrchestrator {
     navigation: Arc<NavigationSystem>,
     memory: Arc<MmapManager>,
-    iteration: IterationProcessor,
+    iteration: ParallelIterationProcessor,
     interference_engine: InterferenceEngine,
     learning: LearningSystem,
     llm_manager: Option<LLMManager>,  // Optional for testing without API keys
@@ -129,7 +129,7 @@ impl ConsciousnessOrchestrator {
         config: ConsciousnessConfig,
         learning: LearningSystem,
     ) -> Self {
-        let iteration = IterationProcessor::new(
+        let iteration = ParallelIterationProcessor::new(
             config.max_iterations,
             config.convergence_threshold,
             6, // complexity_threshold for return-to-source
@@ -262,20 +262,31 @@ impl ConsciousnessOrchestrator {
                 e
             })?;
         
-        // Phase 4: Iteration Processing (return last iteration on failure)
+        // Phase 4: Parallel Iteration Processing (8 concurrent + 1 synthesis)
         let iter_start = Instant::now();
-        let iter_result = self.iteration.process(
-            query,
-            &contexts,
-            &interference,
-            self.llm_manager.as_ref(),  // Pass LLM manager if available
-        ).await
-            .map_err(|e| {
-                // Log iteration error
-                eprintln!("[Consciousness] Iteration processing failed: {}", e);
-                eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}", 
-                         contexts.len(), nav_result.dimensions.len());
-                e // Propagate original error
+        let iter_result = if self.llm_manager.is_some() {
+            eprintln!("[Consciousness] Using PARALLEL iteration (8 concurrent + 1 synthesis)");
+            self.iteration.process_parallel(
+                query,
+                &contexts,
+                &interference,
+                self.llm_manager.as_ref(),
+            ).await
+        } else {
+            // No LLM - use simple processing
+            eprintln!("[Consciousness] No LLM available - using simple processing");
+            self.iteration.process_parallel(
+                query,
+                &contexts,
+                &interference,
+                self.llm_manager.as_ref(),  // Pass LLM manager if available
+            ).await
+        }.map_err(|e| {
+            // Log iteration error
+            eprintln!("[Consciousness] Iteration processing failed: {}", e);
+            eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}", 
+                     contexts.len(), nav_result.dimensions.len());
+            e // Propagate original error
             })?;
         metadata.iteration_duration_ms = iter_start.elapsed().as_millis() as u64;
         metadata.iterations_completed = iter_result.iterations_completed;
