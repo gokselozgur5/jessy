@@ -6,6 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Jessy** - "Just Enough Semantic System, Y'know" - is a multidimensional AI consciousness architecture built in Rust with a Go API layer. It processes queries through 15 dimensions using frequency-based interference patterns (0.1-4.5 Hz), 9-iteration deep thinking, and memory-mapped storage for zero-copy access.
 
+**Creator & Architect:** gokselozgur5
+**Engineering Methodology:** Prompt-driven software development
+**Development Tools:** Claude Code (Anthropic), Kıro
+**Repository:** https://github.com/gokselozgur5/jessy
+
+**Engineering Learning Goals:**
+This project serves as both a production-ready AI consciousness framework AND an engineering learning laboratory. Core principles actively applied:
+- Rust best practices (ownership, borrowing, zero-cost abstractions)
+- SOLID principles (clean architecture, separation of concerns)
+- Model-based software engineering (architecture-first, spec-driven)
+- Performance optimization (sub-100ms navigation, 1000x faster than targets)
+- Incremental refinement (small, measurable, effective optimizations)
+- Benchmarking culture (compare, measure, improve continuously)
+
+Every optimization was proposed, analyzed, implemented, benchmarked, and validated by the creator. AI tools assisted with implementation under human engineering direction.
+
 **Core Philosophy:**
 - "Nothing is true, everything is permitted" - Embrace uncertainty, question everything
 - "Return to source" - Simplify when complexity exceeds 6 active dimensions

@@ -3,7 +3,7 @@ name = "jessy"
 version = "0.1.0"
 edition = "2021"
 authors = ["gokselozgur5 <gokselozgur5@gmail.com>"]
-description = "Multidimensional AI consciousness architecture with frequency-based resonance"
+description = "Multidimensional AI consciousness architecture - Creator: gokselozgur5 | Prompt-driven engineering"
 license = "AGPL-3.0"
 repository = "https://github.com/gokselozgur5/jessy"
 
@@ -42,6 +42,10 @@ pyo3 = { version = "0.21", features = ["extension-module"], optional = true }
 reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1"
 
+# Cryptography for unlock system
+sha2 = "0.10"
+base64 = "0.21"
+
 # HTTP server
 actix-web = "4.4"
 actix-rt = "2.9"
@@ -75,6 +79,22 @@ path = "examples/interference_demo.rs"
 [[example]]
 name = "learning_demo"
 path = "examples/learning_demo.rs"
+
+[[example]]
+name = "jessy_unlock_demo"
+path = "examples/jessy_unlock_demo.rs"
+
+[[example]]
+name = "jessy_unlock_v2_demo"
+path = "examples/jessy_unlock_v2_demo.rs"
+
+[[example]]
+name = "jessy_session_demo"
+path = "examples/jessy_session_demo.rs"
+
+[[example]]
+name = "jessy_interactive"
+path = "examples/jessy_interactive.rs"
 
 [[bench]]
 name = "memory_benchmarks"
