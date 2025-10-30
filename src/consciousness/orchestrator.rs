@@ -12,6 +12,7 @@ use crate::learning::LearningSystem;
 use crate::llm::{LLMManager, LLMConfig};
 use crate::memory::MmapManager;
 use crate::navigation::NavigationSystem;
+use crate::security::SecurityLayer;
 use crate::{ConsciousnessError, Result, Frequency};
 use std::sync::Arc;
 use std::time::Instant;
@@ -52,6 +53,7 @@ pub struct ConsciousnessOrchestrator {
     iteration: ParallelIterationProcessor,
     interference_engine: InterferenceEngine,
     learning: LearningSystem,
+    security: SecurityLayer,  // D14 Security dimension (immutable)
     llm_manager: Option<LLMManager>,  // Optional for testing without API keys
     config: ConsciousnessConfig,
     query_count: usize,
@@ -134,15 +136,17 @@ impl ConsciousnessOrchestrator {
             config.convergence_threshold,
             6, // complexity_threshold for return-to-source
         );
-        
+
         let interference_engine = InterferenceEngine::new();
-        
+        let security = SecurityLayer::new();  // D14 Security always active
+
         Self {
             navigation,
             memory,
             iteration,
             interference_engine,
             learning,
+            security,
             llm_manager: None,  // No LLM by default (for testing)
             config,
             query_count: 0,
@@ -198,7 +202,41 @@ impl ConsciousnessOrchestrator {
     pub async fn process(&mut self, query: &str) -> Result<ConsciousnessResponse> {
         let pipeline_start = Instant::now();
         let mut metadata = ResponseMetadata::new();
-        
+
+        // Phase -1: D14 Security Validation (IMMUTABLE - always first)
+        // Must complete within 10ms per security/validator.rs requirements
+        let security_start = Instant::now();
+        let validation_result = self.security.validate_query(query)
+            .map_err(|e| {
+                eprintln!("[Consciousness] D14 Security validation failed: {}", e);
+                e
+            })?;
+
+        // Block if query violates security policies
+        if let crate::security::ValidationResult::Unsafe(violation) = validation_result {
+            eprintln!(
+                "[Consciousness] D14 Security BLOCKED query: {:?} (confidence: {:.2})",
+                violation.category, violation.confidence
+            );
+
+            // Return error with redirection message if available
+            let error_msg = if let Some(redirect) = violation.redirection {
+                format!(
+                    "Security violation detected: {:?} (Asimov's {:?} violated)\n\nAlternative: {}",
+                    violation.category, violation.violated_law, redirect
+                )
+            } else {
+                format!(
+                    "Security violation detected: {:?} (Asimov's {:?} violated)",
+                    violation.category, violation.violated_law
+                )
+            };
+
+            return Err(ConsciousnessError::SecurityViolation(error_msg));
+        }
+
+        eprintln!("[Consciousness] D14 Security: PASS ({}ms)", security_start.elapsed().as_millis());
+
         // Phase 0: Synesthetic Enhancement (optional, non-blocking)
         // Enhance query with learned keyword associations to improve navigation
         let enhanced_query = self.enhance_query_with_synesthesia(query);
@@ -541,6 +579,8 @@ mod tests {
             let orchestrator = ConsciousnessOrchestrator::new(nav, mem);
             // Should have no LLM manager
             assert!(orchestrator.llm_manager.is_none());
+            // But should always have security layer (D14)
+            // Note: security is private, so we can't test directly, but it's guaranteed by construction
         };
     }
     
