@@ -258,6 +258,18 @@ pub enum NavigationError {
     /// Serialization/deserialization error
     #[error("Serialization error: {message}")]
     SerializationError { message: String },
+
+    /// Invalid dimension count for LLM selector
+    #[error("Invalid dimension count: {count}, expected {expected}")]
+    InvalidDimensionCount { count: usize, expected: String },
+
+    /// External service (LLM API) error
+    #[error("External service '{service}' error: {details}")]
+    ExternalServiceError { service: String, details: String },
+
+    /// Response parsing error
+    #[error("Parsing error: {details}")]
+    ParsingError { details: String },
 }
 
 impl NavigationError {
