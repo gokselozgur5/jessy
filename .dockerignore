@@ -1,0 +1,39 @@
+# Build artifacts
+target/
+*.so
+*.dylib
+*.dll
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Test data
+data/
+logs/
+
+# Environment
+.env
+.env.local
+
+# Training data
+training/
+jessy-*/
+
+# Kiro
+.kiro/
+
+# Temporary files
+*.tmp
+*.log
