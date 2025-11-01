@@ -5,10 +5,12 @@
 //! coherent responses with convergence detection and return-to-source protocol.
 
 pub mod processor;
+pub mod parallel_processor;
 pub mod convergence;
 pub mod context;
 
 pub use processor::{IterationProcessor, IterationResult};
+pub use parallel_processor::ParallelIterationProcessor;
 pub use convergence::{ConvergenceDetector, ConvergenceState};
 pub use context::{IterationContext, ThoughtChain};
 

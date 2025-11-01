@@ -326,6 +326,32 @@ impl InterferencePattern {
             .filter(|f| f.frequency.is_extreme())
             .collect()
     }
+
+    /// Check if pattern is primarily constructive interference
+    ///
+    /// A pattern is considered constructive if:
+    /// - More constructive pairs than destructive pairs
+    /// - Or has harmonic relationships
+    /// - Or has high amplitude (frequencies reinforcing)
+    pub fn is_constructive(&self) -> bool {
+        // More constructive than destructive
+        if self.constructive_pairs.len() > self.destructive_pairs.len() {
+            return true;
+        }
+
+        // Has strong harmonics
+        if !self.harmonics.is_empty() && self.harmonics.len() > self.dissonances.len() {
+            return true;
+        }
+
+        // High amplitude indicates reinforcement
+        if self.amplitude > 0.7 {
+            return true;
+        }
+
+        // Default to constructive if only one frequency
+        self.frequencies.len() == 1
+    }
 }
 
 impl Default for InterferencePattern {

@@ -39,12 +39,15 @@
 
 pub mod interference_simple;
 pub mod orchestrator;
+pub mod unlock_system;
+pub mod unlock_system_v2;
 
 #[cfg(test)]
 mod integration_tests;
 
 pub use interference_simple::create_simple_interference;
 pub use orchestrator::ConsciousnessOrchestrator;
+pub use unlock_system_v2::{build_stealth_system_prompt, build_stealth_user_prompt, ProgressiveUnlock};
 
 use crate::{Result, ConsciousnessError, DimensionId, Frequency};
 use crate::navigation::NavigationSystem;

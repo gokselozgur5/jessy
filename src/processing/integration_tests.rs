@@ -8,7 +8,7 @@
 
 #[cfg(test)]
 mod integration_tests {
-    use crate::consciousness::{ConsciousnessOrchestrator, ConsciousnessConfig};
+    use crate::processing::{ConsciousnessOrchestrator, ConsciousnessConfig};
     use crate::memory::MmapManager;
     use crate::navigation::{NavigationSystem, DimensionRegistry};
     use std::sync::Arc;
