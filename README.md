@@ -215,52 +215,24 @@ No closed-source forks. Community benefits from all enhancements.
 
 ---
 
-## Development Methodology
+## How This Was Built
 
-JESSY was created through **prompt-driven software engineering**—a modern development approach where the engineer designs, architects, and directs implementation through natural language specifications and AI-powered tools.
+This project demonstrates prompt-driven engineering in practice.
 
-### Engineering Philosophy
+**What that means:**
+- Architecture decisions: Human
+- System design: Human
+- Implementation: AI (Claude Code, Kıro)
+- Validation: Human
+- Learning: Continuous, both ways
 
-This project serves dual purposes:
+**The process:**
+Sitting next to the AI, watching Rust syntax get generated, understanding the borrow checker through observation instead of trial-and-error. Learning by directing, not by debugging.
 
-1. **Product Development** - Building a novel AI consciousness framework
-2. **Engineering Excellence** - Learning and applying advanced software engineering practices
+**The result:**
+A complex system built faster, but with full understanding. The engineer stays in control. The AI handles the tedious parts.
 
-**Core engineering principles applied:**
-- ✅ **Rust Best Practices** - Ownership, borrowing, zero-cost abstractions
-- ✅ **SOLID Principles** - Clean architecture, separation of concerns
-- ✅ **Model-Based Engineering** - Architecture-first, specification-driven development
-- ✅ **Performance Optimization** - Sub-100ms navigation, zero-copy MMAP, 1000x faster than targets
-- ✅ **Incremental Refinement** - Small, measurable, effective optimizations
-- ✅ **Test-Driven Development** - 500+ tests, >80% coverage, NASA-grade specs
-- ✅ **Benchmarking Culture** - Compare, measure, improve continuously
-
-### Development Process
-
-**Key aspects:**
-- **All design decisions:** Made by the creator (gokselozgur5)
-- **All architectural choices:** Defined by the creator
-- **All feature specifications:** Written by the creator
-- **All optimizations:** Identified, tested, and validated by the creator
-- **Implementation method:** Prompt-driven development using Claude Code and Kıro as advanced development assistants
-
-This is **active engineering**, not passive AI generation. The creator served as:
-- **Software Architect** - Designing the 15-dimensional consciousness framework
-- **Engineering Director** - Directing all implementation decisions
-- **Technical Lead** - Validating code quality, architecture, and design
-- **Performance Engineer** - Optimizing critical paths, benchmarking improvements
-- **Product Owner** - Defining features, priorities, and roadmap
-
-AI tools (Claude Code, Kıro) functioned as highly capable development assistants—similar to how traditional engineers use IDEs, compilers, and debuggers—executing implementations under human direction and oversight.
-
-**Each optimization was:**
-1. Proposed and analyzed by the creator
-2. Implemented through prompt engineering
-3. Benchmarked and validated
-4. Compared against previous versions
-5. Accepted or rejected based on measurable impact
-
-**This is the future of software engineering:** Humans direct with engineering rigor, AI assists with implementation speed, quality emerges through iterative refinement.
+**This is engineering education, accelerated.**
 
 ---
 
