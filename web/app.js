@@ -1,6 +1,6 @@
 // JESSY Web Chat - Frontend JavaScript
-// Session management - persist per user
-let sessionId = localStorage.getItem('jessy_session_id') || null;
+// Global shared session - everyone talks to the same JESSY
+let sessionId = 'global-jessy-session';
 
 // API Base URL - auto-detect environment
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -40,11 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkHealth();
 
     // Log session info
-    if (sessionId) {
-        console.log('📝 Resumed session:', sessionId);
-    } else {
-        console.log('🆕 New session will be created on first message');
-    }
+    console.log('🌐 Connected to global JESSY session');
 });
 
 // Check API health
@@ -92,10 +88,6 @@ chatForm.addEventListener('submit', async (e) => {
         }
 
         const data = await response.json();
-
-        // Update and persist session ID
-        sessionId = data.session_id;
-        localStorage.setItem('jessy_session_id', sessionId);
 
         // Add assistant response
         addMessage('assistant', data.response);
