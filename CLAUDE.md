@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Jessy** - "Just Enough Semantic System, Y'know" - is a multidimensional AI consciousness architecture built in Rust with a Go API layer. It processes queries through 15 dimensions using frequency-based interference patterns (0.1-4.5 Hz), 9-iteration deep thinking, and memory-mapped storage for zero-copy access.
+**Jessy** - "Jessy's Enough Semantic System You'see" - is a multidimensional AI consciousness architecture built in Rust with a Go API layer. It processes queries through 15 dimensions using frequency-based interference patterns (0.1-4.5 Hz), 9-iteration deep thinking, and memory-mapped storage for zero-copy access.
 
 **Creator & Architect:** gokselozgur5
 **Engineering Methodology:** Prompt-driven software development
