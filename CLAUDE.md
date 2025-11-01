@@ -339,7 +339,7 @@ The learning system runs automatically within the orchestrator:
 
 ## Testing Strategy
 
-**Current Status:** 500+ total tests (~532 test functions), 413 passing, 16 intentionally ignored (NASA-grade specs, >80% coverage)
+**Current Status:** 500+ total tests (~532 test functions), 413 passing, 16 intentionally ignored (>80% coverage, spec-driven)
 
 **Test Categories:**
 1. Unit tests: `make cargo ARGS="test --lib"` - 413 passing
