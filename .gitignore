@@ -50,25 +50,13 @@ wheels/
 *.tmp
 *.log
 
-# Kiro IDE configuration (private)
-.kiro/
-# Ignore any files with kiro in the name
-*kiro*.*
+# Security - keep private
+*.key
+*.pem
+*.crt
+secrets/
+.env
+.env.local
+credentials/
 
-# Test files
-sonnet4545.txt
-
-# Knowledge base (extracted wisdom - private)
-training/knowledge_base/
-training/knowledge_base/*.json
-sonnet4545_*.json
-
-# Agent rules (private, session-specific)
-AGENT_RULES.md
-
-# Progress reports and status files (local only)
-PROJECT_PROGRESS.md
-TEST_RESULTS.md
-*_PROGRESS.md
-*_STATUS.md
-*_REPORT.md
+# Development process - share everything else for transparency
