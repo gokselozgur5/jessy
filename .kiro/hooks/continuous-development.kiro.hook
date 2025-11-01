@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Continuous Development Cycle",
+  "description": "Automatically continues with next compilation fix, commit, and push without waiting",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "./*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": ""
+  }
+}u bitireyim mi (initialization tests + implementation)?\n"
+  }
+}
