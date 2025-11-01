@@ -1,0 +1,18 @@
+# Render.com Blueprint for JESSY Web Chat
+services:
+  - type: web
+    name: jessy
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false  # You'll add this manually in Render dashboard
+      - key: RUST_LOG
+        value: info
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8080
