@@ -42,6 +42,9 @@ pyo3 = { version = "0.21", features = ["extension-module"], optional = true }
 reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1"
 
+# Pattern matching
+regex = "1.10"
+
 # Cryptography for unlock system
 sha2 = "0.10"
 base64 = "0.21"
@@ -95,6 +98,10 @@ path = "examples/jessy_session_demo.rs"
 [[example]]
 name = "jessy_interactive"
 path = "examples/jessy_interactive.rs"
+
+[[example]]
+name = "llm_dimension_selector_demo"
+path = "examples/llm_dimension_selector_demo.rs"
 
 [[bench]]
 name = "memory_benchmarks"
