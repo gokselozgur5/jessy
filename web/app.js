@@ -5,7 +5,7 @@ let sessionId = 'global-jessy-session';
 // API Base URL - auto-detect environment
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '' // Localhost: same origin
-    : 'https://jessy-xlow.onrender.com'; // Production: Render.com backend
+    : ''; // Production: same origin (jessys.online)
 
 // DOM elements
 const chatForm = document.getElementById('chatForm');
