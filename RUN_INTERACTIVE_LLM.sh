@@ -24,6 +24,9 @@ fi
 
 echo "🚀 Starting LLM-based interactive chat (full integration)..."
 echo ""
+echo "⚡ Dimension selection: claude-haiku-4-5 (~1 second)"
+echo "🧠 Response generation: claude-sonnet-4 (~10 seconds)"
+echo ""
 
 # Bypass cargo function if it exists
 unset -f cargo 2>/dev/null
