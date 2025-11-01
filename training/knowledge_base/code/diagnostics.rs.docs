@@ -1,0 +1,18 @@
+//! Diagnostic utilities for memory manager
+//!
+//! Provides comprehensive state dumps for debugging and monitoring
+/// Complete memory manager state snapshot
+///
+/// This structure captures everything needed to diagnose issues:
+/// - All loaded regions and their metadata
+/// - Complete layer index
+/// - Pool allocator state
+/// - Current memory usage
+/// - Historical statistics
+/// Region state snapshot
+/// Layer information in region
+/// Layer index entry
+/// Pool allocator state
+/// Individual pool state
+/// Memory usage snapshot
+/// Historical statistics

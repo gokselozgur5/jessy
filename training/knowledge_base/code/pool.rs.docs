@@ -1,0 +1,29 @@
+//! Memory pool allocator for MMAP regions
+//!
+//! Implements a multi-pool allocator with different block sizes for efficient
+//! memory management of consciousness layers.
+//!
+//! # Design Pattern: Segregated Free Lists
+//!
+//! This is similar to how jemalloc and tcmalloc work - multiple pools with
+//! different block sizes reduce fragmentation. Small allocations don't waste
+//! space in large blocks, and large allocations don't fragment small blocks.
+//!
+//! # Why Multiple Pools?
+//!
+//! Single pool with variable-size blocks → fragmentation over time
+//! Multiple pools with fixed-size blocks → predictable, fast allocation
+/// Pool allocator managing multiple memory pools with different block sizes
+///
+/// Design: Each pool has fixed-size blocks tracked by a bitmap
+/// u8 pool_id limits us to 256 pools - sufficient for our use case
+/// Using u8 instead of usize saves memory in MmapOffset structs
+/// Individual memory pool with fixed block size
+///
+/// Design: All blocks in a pool are the same size
+/// This makes allocation O(1) - just find first free bit in bitmap
+/// Deallocation is also O(1) - just set the bit
+///
+/// MmapMut is mutable MMAP - we can write to it
+/// BitVec is from bitvec crate - space-efficient bitmap (1 bit per block)
+/// Statistics for pool allocator

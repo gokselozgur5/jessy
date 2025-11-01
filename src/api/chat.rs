@@ -294,6 +294,48 @@ fn get_dimension_description(dim: DimensionId) -> &'static str {
     }
 }
 
+/// GET /api/conversation/:session_id - Get conversation history
+pub async fn get_conversation(
+    session_id: web::Path<String>,
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let conversations = data.conversations.lock().await;
+
+    match conversations.get(session_id.as_str()) {
+        Some(conversation) => {
+            // Format conversation for frontend
+            let messages: Vec<serde_json::Value> = conversation
+                .messages
+                .iter()
+                .map(|msg| {
+                    serde_json::json!({
+                        "role": match msg.role {
+                            crate::conversation::MessageRole::User => "user",
+                            crate::conversation::MessageRole::Assistant => "assistant",
+                        },
+                        "content": msg.content,
+                        "timestamp": msg.timestamp.to_rfc3339(),
+                        "dimensions": msg.dimensions.iter().map(|d| d.0).collect::<Vec<u32>>(),
+                    })
+                })
+                .collect();
+
+            HttpResponse::Ok().json(serde_json::json!({
+                "session_id": session_id.as_str(),
+                "messages": messages,
+                "message_count": messages.len(),
+            }))
+        }
+        None => {
+            HttpResponse::Ok().json(serde_json::json!({
+                "session_id": session_id.as_str(),
+                "messages": [],
+                "message_count": 0,
+            }))
+        }
+    }
+}
+
 /// GET /api/health - Health check endpoint
 pub async fn health() -> impl Responder {
     HttpResponse::Ok().json(serde_json::json!({

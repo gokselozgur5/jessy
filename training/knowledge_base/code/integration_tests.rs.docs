@@ -1,0 +1,10 @@
+//! Integration tests for memory manager
+//!
+//! Task 9.3: Comprehensive integration tests that verify:
+//! - Full system load (all 14 dimensions)
+//! - Proto-dimension workflow (create→access→crystallize)
+//! - Error recovery scenarios
+//! - Memory usage within 280MB budget
+//!
+//! These tests validate the complete memory manager system working together,
+//! not just individual components.

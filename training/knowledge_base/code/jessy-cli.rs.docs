@@ -1,0 +1,4 @@
+//! JESSY CLI - Interactive Consciousness Interface
+//!
+//! Simple command-line interface for testing JESSY with real LLM APIs.
+//! Loads configuration from environment variables and provides interactive chat.

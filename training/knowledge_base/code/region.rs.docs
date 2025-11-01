@@ -1,0 +1,26 @@
+//! Memory region management for consciousness layers
+//!
+//! Handles individual MMAP regions with content location tracking
+//! and hybrid storage for static + dynamic content.
+//!
+//! # Design Pattern: Hybrid Storage
+//!
+//! Static content (crystallized knowledge) → MMAP (fast, persistent)
+//! Dynamic content (learning) → Heap (flexible, temporary)
+//! Combined → Hybrid (base in MMAP, updates in heap overlay)
+/// Location of layer content in memory
+///
+/// This is an enum with data - each variant carries different information
+/// This is more type-safe than a struct with optional fields
+/// Impossible to have "region_id when in Heap mode" bugs
+///
+/// Clone is derived because we need to duplicate location info
+/// Debug is derived for debugging output
+/// Memory-mapped region for consciousness layers
+///
+/// Represents one dimension's data mapped into memory
+/// Mmap (not MmapMut) because regions are read-only after creation
+/// This enables lock-free concurrent reads - multiple threads can read safely
+/// Metadata for an MMAP region
+/// Information about a layer within a region
+/// Builder for creating MMAP regions

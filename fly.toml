@@ -1,0 +1,34 @@
+# fly.toml - Fly.io deployment configuration
+app = "jessy"
+primary_region = "ams" # Amsterdam - closest to EU users
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  HOST = "0.0.0.0"
+  PORT = "8080"
+  RUST_LOG = "info"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"  # Better than stop - faster wake up
+  auto_start_machines = true
+  min_machines_running = 0  # Scale to zero when idle (free tier)
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"  # 256MB RAM, 1 shared CPU (free tier)
+  memory = "256mb"

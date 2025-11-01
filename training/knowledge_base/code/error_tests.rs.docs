@@ -1,0 +1,10 @@
+//! Test-driven development for comprehensive error handling
+//!
+//! These tests define the expected behavior for error scenarios
+//! before implementing the actual error handling logic.
+//!
+//! # Testing Philosophy
+//!
+//! Write tests first (TDD) - they document expected behavior
+//! Test error paths, not just happy paths - errors are part of the API
+//! Use descriptive test names - they're documentation

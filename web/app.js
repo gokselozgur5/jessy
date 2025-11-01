@@ -32,6 +32,9 @@ const dimensionNames = {
     14: 'Security'
 };
 
+// Track displayed messages to avoid duplicates
+let displayedMessageCount = 0;
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     messageInput.focus();
@@ -39,9 +42,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check health
     checkHealth();
 
+    // Load existing conversation
+    loadConversation();
+
+    // Poll for new messages every 3 seconds
+    setInterval(loadConversation, 3000);
+
     // Log session info
     console.log('🌐 Connected to global JESSY session');
 });
+
+// Load conversation history from server
+async function loadConversation() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/conversation/${sessionId}`);
+        const data = await response.json();
+
+        // Only update if there are new messages
+        if (data.message_count > displayedMessageCount) {
+            // Clear chat and redraw all messages
+            chatMessages.innerHTML = '';
+            displayedMessageCount = 0;
+
+            data.messages.forEach(msg => {
+                addMessage(msg.role, msg.content, false); // false = don't scroll yet
+                displayedMessageCount++;
+            });
+
+            // Scroll to bottom after all messages loaded
+            scrollToBottom();
+        }
+    } catch (error) {
+        console.error('Failed to load conversation:', error);
+    }
+}
 
 // Check API health
 async function checkHealth() {
@@ -64,8 +98,8 @@ chatForm.addEventListener('submit', async (e) => {
     // Clear input
     messageInput.value = '';
 
-    // Add user message to chat
-    addMessage('user', message);
+    // Don't add message locally - polling will show it
+    // addMessage('user', message);
 
     // Disable input while processing
     setInputEnabled(false);
@@ -89,8 +123,8 @@ chatForm.addEventListener('submit', async (e) => {
 
         const data = await response.json();
 
-        // Add assistant response
-        addMessage('assistant', data.response);
+        // Trigger immediate reload to show new messages
+        await loadConversation();
 
         // Update dimensional state
         updateDimensionalState(data.dimensions_activated, data.selection_duration_ms, data.contexts_loaded);
@@ -105,7 +139,7 @@ chatForm.addEventListener('submit', async (e) => {
 });
 
 // Add message to chat
-function addMessage(role, content) {
+function addMessage(role, content, shouldScroll = true) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message-${role} mb-4`;
 
@@ -142,7 +176,9 @@ function addMessage(role, content) {
     }
 
     chatMessages.appendChild(messageDiv);
-    scrollToBottom();
+    if (shouldScroll) {
+        scrollToBottom();
+    }
 }
 
 // Update dimensional state display

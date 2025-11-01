@@ -1,0 +1,13 @@
+//! Performance optimizations for memory manager
+//!
+//! Cache alignment, prefetching, and zero-copy optimizations
+/// Cache-aligned allocation for hot path structures
+///
+/// Modern CPUs have 64-byte cache lines. Aligning frequently accessed
+/// data to cache line boundaries reduces false sharing and improves
+/// cache utilization.
+/// OS prefetching hints for predictable access patterns
+/// Zero-copy slice window
+///
+/// Returns a slice reference without copying data
+/// This is the core of our zero-copy design

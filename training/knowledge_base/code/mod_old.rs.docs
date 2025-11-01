@@ -1,0 +1,10 @@
+//! LLM Provider Integration
+//!
+//! This module provides integration with external LLM providers (OpenAI, Anthropic).
+//! It handles API calls, retries, timeouts, and error handling.
+/// Trait for LLM providers
+///
+/// All LLM providers must implement this trait to be used by the system.
+/// LLM Manager
+///
+/// Manages LLM provider selection and API calls.

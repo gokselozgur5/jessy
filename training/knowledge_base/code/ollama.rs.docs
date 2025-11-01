@@ -1,0 +1,24 @@
+//! Ollama Local Model Provider
+//!
+//! Provides integration with Ollama for local LLM inference.
+//! Ollama runs models locally on your machine (M1/M2 Mac, Linux, Windows).
+//!
+//! # Setup
+//!
+//! 1. Install Ollama: `brew install ollama` (macOS)
+//! 2. Pull a model: `ollama pull llama3.2:3b`
+//! 3. Start Ollama: `ollama serve` (runs on http://localhost:11434)
+//!
+//! # Recommended Models for M2 Mac
+//!
+//! - `llama3.2:3b` - Fastest, ~50 tokens/s, good quality
+//! - `phi3:mini` - Small but smart, ~40 tokens/s
+//! - `mistral:7b` - Better quality, ~20 tokens/s, slower
+//!
+//! # Performance
+//!
+//! - No network latency (local)
+//! - No API costs
+//! - Privacy (nothing leaves your machine)
+//! - M2 Mac: 3B models run at ~50 tokens/s
+/// Ollama Local Model Provider

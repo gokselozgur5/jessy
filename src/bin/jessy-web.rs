@@ -53,6 +53,7 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/api")
                     .route("/health", web::get().to(chat::health))
                     .route("/chat", web::post().to(chat::chat))
+                    .route("/conversation/{session_id}", web::get().to(chat::get_conversation))
                     .route("/chat/stream", web::get().to(sse::chat_stream))
             )
             // Static files (web UI)

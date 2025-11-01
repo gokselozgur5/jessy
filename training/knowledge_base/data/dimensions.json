@@ -1,0 +1,1144 @@
+{
+  "dimensions": [
+    {
+      "id": 1,
+      "name": "Emotion",
+      "frequency_min": 0.5,
+      "frequency_max": 2.5,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 2,
+      "name": "Cognition",
+      "frequency_min": 1.0,
+      "frequency_max": 3.0,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 3,
+      "name": "Intention",
+      "frequency_min": 1.5,
+      "frequency_max": 3.5,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 4,
+      "name": "Social Context",
+      "frequency_min": 0.8,
+      "frequency_max": 2.8,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 5,
+      "name": "Temporal State",
+      "frequency_min": 0.3,
+      "frequency_max": 2.3,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 6,
+      "name": "Philosophical Depth",
+      "frequency_min": 0.1,
+      "frequency_max": 1.5,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 7,
+      "name": "Technical Level",
+      "frequency_min": 2.0,
+      "frequency_max": 4.0,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 8,
+      "name": "Creative Mode",
+      "frequency_min": 1.2,
+      "frequency_max": 3.2,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 9,
+      "name": "Ethical Framework",
+      "frequency_min": 0.5,
+      "frequency_max": 2.0,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 10,
+      "name": "Meta-Awareness",
+      "frequency_min": 0.2,
+      "frequency_max": 1.8,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 11,
+      "name": "Sensory Processing",
+      "frequency_min": 2.5,
+      "frequency_max": 4.5,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 12,
+      "name": "Memory Integration",
+      "frequency_min": 0.8,
+      "frequency_max": 2.5,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 13,
+      "name": "Pattern Recognition",
+      "frequency_min": 1.5,
+      "frequency_max": 3.8,
+      "size_bytes": 20971520
+    },
+    {
+      "id": 14,
+      "name": "Linguistic Structure",
+      "frequency_min": 1.8,
+      "frequency_max": 3.5,
+      "size_bytes": 20971520
+    }
+  ],
+  "layers": [
+    {
+      "dimension_id": 1,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "emotion",
+        "feeling",
+        "mood",
+        "affect",
+        "sentiment",
+        "happy",
+        "sad",
+        "feel",
+        "love",
+        "hate",
+        "like",
+        "enjoy"
+      ],
+      "frequency": 1.5,
+      "mmap_offset": 0
+    },
+    {
+      "dimension_id": 1,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "positive",
+        "negative",
+        "neutral",
+        "mixed"
+      ],
+      "frequency": 1.6,
+      "mmap_offset": 1048576
+    },
+    {
+      "dimension_id": 1,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "happy",
+        "sad",
+        "angry",
+        "fearful",
+        "surprised",
+        "disgusted"
+      ],
+      "frequency": 1.8,
+      "mmap_offset": 2097152
+    },
+    {
+      "dimension_id": 1,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "joy",
+        "elation",
+        "contentment",
+        "grief",
+        "melancholy",
+        "rage",
+        "fury",
+        "terror",
+        "anxiety",
+        "awe",
+        "shock",
+        "revulsion"
+      ],
+      "frequency": 2.0,
+      "mmap_offset": 3145728
+    },
+    {
+      "dimension_id": 2,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "cognition",
+        "thinking",
+        "reasoning",
+        "understanding",
+        "knowledge",
+        "think",
+        "know",
+        "understand",
+        "learn",
+        "remember",
+        "wonder",
+        "believe"
+      ],
+      "frequency": 2.0,
+      "mmap_offset": 20971520
+    },
+    {
+      "dimension_id": 2,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "analytical",
+        "intuitive",
+        "creative",
+        "critical"
+      ],
+      "frequency": 2.2,
+      "mmap_offset": 22020096
+    },
+    {
+      "dimension_id": 2,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "logic",
+        "deduction",
+        "induction",
+        "insight",
+        "imagination",
+        "evaluation",
+        "judgment"
+      ],
+      "frequency": 2.5,
+      "mmap_offset": 23068672
+    },
+    {
+      "dimension_id": 2,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "syllogism",
+        "proof",
+        "inference",
+        "pattern",
+        "hypothesis",
+        "synthesis",
+        "innovation",
+        "critique",
+        "assessment"
+      ],
+      "frequency": 2.8,
+      "mmap_offset": 24117248
+    },
+    {
+      "dimension_id": 3,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "intention",
+        "goal",
+        "purpose",
+        "aim",
+        "objective",
+        "want",
+        "need",
+        "try",
+        "help",
+        "do",
+        "make",
+        "get"
+      ],
+      "frequency": 2.5,
+      "mmap_offset": 41943040
+    },
+    {
+      "dimension_id": 3,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "achieve",
+        "avoid",
+        "maintain",
+        "explore"
+      ],
+      "frequency": 2.7,
+      "mmap_offset": 42991616
+    },
+    {
+      "dimension_id": 3,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "success",
+        "completion",
+        "prevention",
+        "escape",
+        "stability",
+        "preservation",
+        "discovery",
+        "learning"
+      ],
+      "frequency": 3.0,
+      "mmap_offset": 44040192
+    },
+    {
+      "dimension_id": 3,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "mastery",
+        "excellence",
+        "victory",
+        "safety",
+        "security",
+        "equilibrium",
+        "homeostasis",
+        "insight",
+        "understanding",
+        "growth"
+      ],
+      "frequency": 3.2,
+      "mmap_offset": 45088768
+    },
+    {
+      "dimension_id": 4,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "social",
+        "relationship",
+        "interaction",
+        "connection",
+        "community",
+        "hi",
+        "hello",
+        "hey",
+        "how",
+        "you",
+        "me",
+        "we",
+        "us",
+        "greet",
+        "greeting",
+        "talk",
+        "chat",
+        "conversation"
+      ],
+      "frequency": 1.8,
+      "mmap_offset": 62914560
+    },
+    {
+      "dimension_id": 4,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "individual",
+        "group",
+        "cultural",
+        "institutional"
+      ],
+      "frequency": 1.9,
+      "mmap_offset": 63963136
+    },
+    {
+      "dimension_id": 4,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "personal",
+        "friendship",
+        "family",
+        "team",
+        "organization",
+        "society",
+        "tradition",
+        "norms",
+        "authority",
+        "structure"
+      ],
+      "frequency": 2.1,
+      "mmap_offset": 65011712
+    },
+    {
+      "dimension_id": 4,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "identity",
+        "intimacy",
+        "trust",
+        "collaboration",
+        "hierarchy",
+        "belonging",
+        "customs",
+        "values",
+        "power",
+        "governance"
+      ],
+      "frequency": 2.3,
+      "mmap_offset": 66060288
+    },
+    {
+      "dimension_id": 5,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "temporal",
+        "time",
+        "duration",
+        "sequence",
+        "timing",
+        "today",
+        "now",
+        "when",
+        "day",
+        "yesterday",
+        "tomorrow"
+      ],
+      "frequency": 1.3,
+      "mmap_offset": 83886080
+    },
+    {
+      "dimension_id": 5,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "past",
+        "present",
+        "future",
+        "timeless"
+      ],
+      "frequency": 1.4,
+      "mmap_offset": 84934656
+    },
+    {
+      "dimension_id": 5,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "memory",
+        "history",
+        "experience",
+        "now",
+        "immediate",
+        "current",
+        "anticipation",
+        "planning",
+        "prediction",
+        "eternal",
+        "infinite",
+        "transcendent"
+      ],
+      "frequency": 1.6,
+      "mmap_offset": 85983232
+    },
+    {
+      "dimension_id": 5,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "nostalgia",
+        "regret",
+        "lesson",
+        "awareness",
+        "presence",
+        "mindfulness",
+        "hope",
+        "anxiety",
+        "vision",
+        "permanence",
+        "unchanging",
+        "absolute"
+      ],
+      "frequency": 1.8,
+      "mmap_offset": 87031808
+    },
+    {
+      "dimension_id": 6,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "philosophical",
+        "existential",
+        "metaphysical",
+        "ontological",
+        "epistemological"
+      ],
+      "frequency": 0.8,
+      "mmap_offset": 104857600
+    },
+    {
+      "dimension_id": 6,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "being",
+        "knowing",
+        "meaning",
+        "value"
+      ],
+      "frequency": 0.9,
+      "mmap_offset": 105906176
+    },
+    {
+      "dimension_id": 6,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "existence",
+        "essence",
+        "reality",
+        "truth",
+        "belief",
+        "certainty",
+        "purpose",
+        "significance",
+        "good",
+        "right",
+        "beauty"
+      ],
+      "frequency": 1.0,
+      "mmap_offset": 106954752
+    },
+    {
+      "dimension_id": 6,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "consciousness",
+        "identity",
+        "substance",
+        "causation",
+        "knowledge",
+        "justification",
+        "skepticism",
+        "teleology",
+        "nihilism",
+        "virtue",
+        "duty",
+        "aesthetics"
+      ],
+      "frequency": 1.2,
+      "mmap_offset": 108003328
+    },
+    {
+      "dimension_id": 7,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "technical",
+        "engineering",
+        "implementation",
+        "system",
+        "architecture"
+      ],
+      "frequency": 3.0,
+      "mmap_offset": 125829120
+    },
+    {
+      "dimension_id": 7,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "software",
+        "hardware",
+        "algorithm",
+        "protocol"
+      ],
+      "frequency": 3.2,
+      "mmap_offset": 126877696
+    },
+    {
+      "dimension_id": 7,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "code",
+        "program",
+        "application",
+        "circuit",
+        "processor",
+        "memory",
+        "sorting",
+        "searching",
+        "optimization",
+        "network",
+        "communication",
+        "security"
+      ],
+      "frequency": 3.5,
+      "mmap_offset": 127926272
+    },
+    {
+      "dimension_id": 7,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "function",
+        "class",
+        "module",
+        "api",
+        "logic",
+        "gate",
+        "cache",
+        "quicksort",
+        "binary",
+        "graph",
+        "tcp",
+        "http",
+        "encryption",
+        "authentication"
+      ],
+      "frequency": 3.8,
+      "mmap_offset": 128974848
+    },
+    {
+      "dimension_id": 8,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "creative",
+        "imagination",
+        "innovation",
+        "originality",
+        "expression"
+      ],
+      "frequency": 2.2,
+      "mmap_offset": 146800640
+    },
+    {
+      "dimension_id": 8,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "artistic",
+        "inventive",
+        "exploratory",
+        "playful"
+      ],
+      "frequency": 2.3,
+      "mmap_offset": 147849216
+    },
+    {
+      "dimension_id": 8,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "visual",
+        "musical",
+        "literary",
+        "design",
+        "discovery",
+        "experiment",
+        "curiosity",
+        "fun",
+        "spontaneity"
+      ],
+      "frequency": 2.5,
+      "mmap_offset": 148897792
+    },
+    {
+      "dimension_id": 8,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "painting",
+        "sculpture",
+        "melody",
+        "harmony",
+        "poetry",
+        "narrative",
+        "aesthetics",
+        "form",
+        "breakthrough",
+        "hypothesis",
+        "wonder",
+        "joy",
+        "improvisation"
+      ],
+      "frequency": 2.7,
+      "mmap_offset": 149946368
+    },
+    {
+      "dimension_id": 9,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "ethical",
+        "moral",
+        "values",
+        "principles",
+        "responsibility"
+      ],
+      "frequency": 1.25,
+      "mmap_offset": 167772160
+    },
+    {
+      "dimension_id": 9,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "consequentialist",
+        "deontological",
+        "virtue",
+        "care"
+      ],
+      "frequency": 1.3,
+      "mmap_offset": 168820736
+    },
+    {
+      "dimension_id": 9,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "utility",
+        "happiness",
+        "duty",
+        "rights",
+        "character",
+        "excellence",
+        "compassion",
+        "relationship"
+      ],
+      "frequency": 1.5,
+      "mmap_offset": 169869312
+    },
+    {
+      "dimension_id": 9,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "maximize",
+        "minimize",
+        "obligation",
+        "autonomy",
+        "justice",
+        "courage",
+        "wisdom",
+        "empathy",
+        "kindness",
+        "connection"
+      ],
+      "frequency": 1.7,
+      "mmap_offset": 170917888
+    },
+    {
+      "dimension_id": 10,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "meta",
+        "awareness",
+        "reflection",
+        "consciousness",
+        "self-reference",
+        "i",
+        "am",
+        "are",
+        "is",
+        "be",
+        "being"
+      ],
+      "frequency": 1.0,
+      "mmap_offset": 188743680
+    },
+    {
+      "dimension_id": 10,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "observation",
+        "monitoring",
+        "evaluation",
+        "recursion"
+      ],
+      "frequency": 1.1,
+      "mmap_offset": 189792256
+    },
+    {
+      "dimension_id": 10,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "watching",
+        "noticing",
+        "tracking",
+        "measuring",
+        "judging",
+        "assessing",
+        "loop",
+        "iteration",
+        "self-similarity"
+      ],
+      "frequency": 1.3,
+      "mmap_offset": 190840832
+    },
+    {
+      "dimension_id": 10,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "mindfulness",
+        "attention",
+        "vigilance",
+        "metrics",
+        "feedback",
+        "critique",
+        "analysis",
+        "fractal",
+        "nested",
+        "infinite"
+      ],
+      "frequency": 1.5,
+      "mmap_offset": 191889408
+    },
+    {
+      "dimension_id": 11,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "sensory",
+        "perception",
+        "input",
+        "stimulus",
+        "sensation"
+      ],
+      "frequency": 3.5,
+      "mmap_offset": 209715200
+    },
+    {
+      "dimension_id": 11,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "visual",
+        "auditory",
+        "tactile",
+        "olfactory",
+        "gustatory"
+      ],
+      "frequency": 3.7,
+      "mmap_offset": 210763776
+    },
+    {
+      "dimension_id": 11,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "sight",
+        "color",
+        "shape",
+        "sound",
+        "pitch",
+        "volume",
+        "touch",
+        "texture",
+        "temperature",
+        "smell",
+        "scent",
+        "taste",
+        "flavor"
+      ],
+      "frequency": 4.0,
+      "mmap_offset": 211812352
+    },
+    {
+      "dimension_id": 11,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "brightness",
+        "hue",
+        "form",
+        "pattern",
+        "tone",
+        "rhythm",
+        "loudness",
+        "pressure",
+        "pain",
+        "warmth",
+        "aroma",
+        "fragrance",
+        "sweet",
+        "sour",
+        "bitter"
+      ],
+      "frequency": 4.3,
+      "mmap_offset": 212860928
+    },
+    {
+      "dimension_id": 12,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "memory",
+        "recall",
+        "recognition",
+        "integration",
+        "consolidation"
+      ],
+      "frequency": 1.65,
+      "mmap_offset": 230686720
+    },
+    {
+      "dimension_id": 12,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "episodic",
+        "semantic",
+        "procedural",
+        "working"
+      ],
+      "frequency": 1.75,
+      "mmap_offset": 231735296
+    },
+    {
+      "dimension_id": 12,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "event",
+        "experience",
+        "autobiography",
+        "fact",
+        "concept",
+        "knowledge",
+        "skill",
+        "habit",
+        "routine",
+        "temporary",
+        "active",
+        "manipulation"
+      ],
+      "frequency": 1.9,
+      "mmap_offset": 232783872
+    },
+    {
+      "dimension_id": 12,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "specific",
+        "contextual",
+        "personal",
+        "general",
+        "abstract",
+        "semantic",
+        "motor",
+        "cognitive",
+        "automatic",
+        "attention",
+        "rehearsal",
+        "encoding"
+      ],
+      "frequency": 2.1,
+      "mmap_offset": 233832448
+    },
+    {
+      "dimension_id": 13,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "pattern",
+        "recognition",
+        "detection",
+        "matching",
+        "classification"
+      ],
+      "frequency": 2.65,
+      "mmap_offset": 251658240
+    },
+    {
+      "dimension_id": 13,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "visual",
+        "auditory",
+        "temporal",
+        "spatial"
+      ],
+      "frequency": 2.8,
+      "mmap_offset": 252706816
+    },
+    {
+      "dimension_id": 13,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "shape",
+        "face",
+        "object",
+        "rhythm",
+        "melody",
+        "speech",
+        "sequence",
+        "trend",
+        "cycle",
+        "location",
+        "arrangement",
+        "structure"
+      ],
+      "frequency": 3.0,
+      "mmap_offset": 253755392
+    },
+    {
+      "dimension_id": 13,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "edge",
+        "contour",
+        "feature",
+        "identity",
+        "category",
+        "beat",
+        "harmony",
+        "phoneme",
+        "word",
+        "order",
+        "repetition",
+        "position",
+        "proximity",
+        "symmetry"
+      ],
+      "frequency": 3.3,
+      "mmap_offset": 254803968
+    },
+    {
+      "dimension_id": 14,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "linguistic",
+        "language",
+        "grammar",
+        "syntax",
+        "semantics"
+      ],
+      "frequency": 2.65,
+      "mmap_offset": 272629760
+    },
+    {
+      "dimension_id": 14,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "phonology",
+        "morphology",
+        "syntax",
+        "semantics",
+        "pragmatics"
+      ],
+      "frequency": 2.8,
+      "mmap_offset": 273678336
+    },
+    {
+      "dimension_id": 14,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "sound",
+        "phoneme",
+        "word",
+        "morpheme",
+        "sentence",
+        "structure",
+        "meaning",
+        "reference",
+        "context",
+        "usage",
+        "intention"
+      ],
+      "frequency": 3.0,
+      "mmap_offset": 274726912
+    },
+    {
+      "dimension_id": 14,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "vowel",
+        "consonant",
+        "syllable",
+        "prefix",
+        "suffix",
+        "root",
+        "phrase",
+        "clause",
+        "parse",
+        "denotation",
+        "connotation",
+        "implicature",
+        "speech-act"
+      ],
+      "frequency": 3.2,
+      "mmap_offset": 275775488
+    }
+  ]
+}

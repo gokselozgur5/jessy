@@ -1,0 +1,13 @@
+//! Configuration Management
+//!
+//! Loads system configuration from environment variables with validation.
+//! Handles LLM API keys, system limits, and operational parameters.
+/// System configuration loaded from environment variables
+///
+/// All configuration is loaded at startup from environment variables.
+/// Missing required variables or invalid values result in initialization errors.
+/// LLM provider configuration
+/// LLM provider selection
+/// System resource limits
+/// Operational configuration
+/// Runtime environment

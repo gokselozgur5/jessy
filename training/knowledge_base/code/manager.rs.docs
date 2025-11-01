@@ -1,0 +1,19 @@
+//! MMAP memory manager for consciousness system
+//!
+//! Coordinates pool allocation, region management, and context loading
+//! for zero-copy access to dimensional layers.
+/// Main memory manager for the consciousness system
+///
+/// Thread Safety: RwLock enables multiple concurrent readers with exclusive writes
+/// - Multiple threads can read regions simultaneously (shared lock)
+/// - Only one thread can modify regions at a time (exclusive lock)
+/// - This is optimal for read-heavy workloads like query processing
+///
+/// Design note: This struct doesn't implement Clone because it manages
+/// exclusive ownership of memory-mapped regions. Use Arc<MmapManager>
+/// for shared access across threads (RwLock is already internal).
+/// Location information for a layer
+/// Memory usage statistics
+///
+/// Comprehensive monitoring data for operational visibility
+/// Per-pool utilization details

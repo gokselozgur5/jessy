@@ -1,0 +1,27 @@
+[
+  {
+    "question": "How can you customize the appearance of the self-marker?",
+    "answer": "You can customize the appearance of the self-marker by selecting the \"Settings\" and then \"My Location\".",
+    "page": 10
+  },
+  {
+    "question": "How do you add a marker to the map using the Marker tool?",
+    "answer": "Add a marker by manually entering coordinates, choose the location on the map, then tap to drop the marker.",
+    "page": 11
+  },
+  {
+    "question": "How do I access the tools for measuring distance and angles within ATAK?",
+    "answer": "Range Tools provides several types of measuring distance and angles using the ATAK.",
+    "page": 14
+  },
+  {
+    "question": "How do you move a marker on the map?",
+    "answer": "Select the marker on the map to move it.",
+    "page": 20
+  },
+  {
+    "question": "What types of files are supported when importing map data?",
+    "answer": "Imagery and tile package files can be imported directly into ATAK.",
+    "page": 25
+  }
+]
