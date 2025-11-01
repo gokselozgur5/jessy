@@ -41,7 +41,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           # Call Claude API with Jessy prompt
-          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+          API_RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
             -H "Content-Type: application/json" \
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
@@ -55,7 +55,14 @@ jobs:
                   "content": ${{ steps.extract.outputs.message }}
                 }
               ]
-            }' | jq -r '.content[0].text')
+            }')
+
+          # Debug: Print full response
+          echo "API Response:"
+          echo "$API_RESPONSE"
+
+          # Extract content
+          RESPONSE=$(echo "$API_RESPONSE" | jq -r '.content[0].text')
 
           # Save response
           echo "$RESPONSE" > response.txt
