@@ -103,6 +103,10 @@ path = "examples/jessy_interactive.rs"
 name = "llm_dimension_selector_demo"
 path = "examples/llm_dimension_selector_demo.rs"
 
+[[example]]
+name = "llm_iterative_demo"
+path = "examples/llm_iterative_demo.rs"
+
 [[bench]]
 name = "memory_benchmarks"
 harness = false
