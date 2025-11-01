@@ -57,7 +57,7 @@ Available dimensions:
 - D14: Security (boundaries, protection, safety)
 
 Rules:
-1. Select ALL truly relevant dimensions (minimum 1, maximum 6)
+1. Select ALL truly relevant dimensions (minimum 1, maximum 9)
 2. Choose based on query INTENT, not just keywords
 3. Return ONLY a JSON array of dimension IDs
 4. Quality over quantity - only include dimensions that genuinely match
@@ -110,18 +110,18 @@ impl DimensionSelector {
         // Parse response
         let dimensions = self.parse_response(&response)?;
 
-        // Validate: at least 1, max 6 dimensions
+        // Validate: at least 1, max 9 dimensions
         if dimensions.is_empty() {
             return Err(NavigationError::InvalidDimensionCount {
                 count: 0,
-                expected: "1-6".to_string(),
+                expected: "1-9".to_string(),
             }.into());
         }
 
-        if dimensions.len() > 6 {
+        if dimensions.len() > 9 {
             return Err(NavigationError::InvalidDimensionCount {
                 count: dimensions.len(),
-                expected: "1-6".to_string(),
+                expected: "1-9".to_string(),
             }.into());
         }
 
