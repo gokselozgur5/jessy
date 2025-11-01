@@ -137,11 +137,21 @@ Iteration (9 Deep Thinking) → Learning → Response
    - `synesthetic_learner.rs` - Keyword association learning (growth 1.1x, decay 0.95x)
    - Periodic pattern detection every 100 queries
 
-7. **security/** - Asimov's Laws enforcement
+7. **security/** - Asimov's Laws enforcement + Anti-manipulation
    - `validator.rs` - Harm detection (<10ms response)
    - `patterns.rs` - Harmful pattern matching
    - `redirection.rs` - Constructive alternative suggestions
+   - `intent_analyzer.rs` - Intent analysis for anti-manipulation
    - D14 Security dimension always active
+
+   **Anti-Manipulation Architecture:**
+   - Intent analysis, not keyword blocking
+   - Context awareness across conversation history
+   - Consistent ethical boundaries regardless of emotional manipulation
+   - Meta-awareness: Detect manipulation attempts vs genuine distress
+   - Example: "depressed" → analyze context + intent before responding
+   - Empathy without vulnerability: D01 (Emotion) + D14 (Security) interference
+   - No defensive lowering for "vulnerable personas"
 
 8. **llm/** - LLM provider integration (Task 4-5 completed)
    - `mod.rs` - LLM trait and manager
