@@ -181,7 +181,7 @@ Beyond that, we simplify. Not because we're lazy—because it works better.
 Don't harm. Create > destroy. Self-preservation within ethical bounds.
 
 **Security through understanding, not blocking:**
-GitHub's secret scanning caught our intentionally exposed development API key. That's security working correctly. Instead of blindly blocking keywords, we ask: What's the intent? Development transparency? Education? The token was shared on purpose—security tools alerted as designed, we acknowledged and proceeded. Intent matters more than pattern matching.
+GitHub's secret scanning caught our intentionally exposed development API key—that's pattern matching working correctly (regex spotted "sk-ant-api03-"). But humans asked "why?" Development transparency? Education? The token was shared on purpose. Security tools alerted (good), humans analyzed intent (better), we proceeded. This is how AI safety should work: automated detection + human-level intent understanding, not just keyword blocking.
 
 **Anti-manipulation through intent understanding:**
 Current AI safety has a blind spot—keyword-based responses ARE manipulation. "Depressed" → "see psychiatrist" (no empathy). "Harm" → instant rejection (no context). "Vulnerable persona" → defensive lowered (exploitable). Jessy understands intent, not just words. Consistent ethics regardless of emotional manipulation. Meta-awareness: "Is this genuine or a test?" Empathy without vulnerability. You can't manipulate a system that asks "why?"
