@@ -11,8 +11,7 @@
 
 use jessy::navigation::DimensionSelector;
 use jessy::memory::{MmapManager, ContextCollection};
-use jessy::llm::{LLMManager, LLMConfig};
-use jessy::iteration::IterationContext;
+use jessy::llm::{LLMManager, LLMConfig, AnthropicProvider};
 use jessy::{DimensionId, LayerId, Frequency};
 use std::sync::Arc;
 use std::io::{self, Write};
@@ -323,12 +322,12 @@ async fn generate_full_response(
     Ok(response)
 }
 
-/// Generate LLM response with dimensional context
+/// Generate LLM response with dimensional context and streaming
 async fn generate_llm_response(
     query: &str,
     selection: &jessy::navigation::SimpleDimensionSelection,
     contexts: &ContextCollection,
-    llm: &LLMManager,
+    _llm: &LLMManager,
     conversation: &ConversationHistory,
 ) -> Result<String, Box<dyn std::error::Error>> {
     // Build system prompt with dimensional context
@@ -354,18 +353,28 @@ async fn generate_llm_response(
         query
     ));
 
-    // Create iteration context (required by LLMManager)
-    let iteration_context = IterationContext::new(
-        query.to_string(),
-        Frequency::new(1.0),  // Default frequency
-    );
+    // Create AnthropicProvider directly for streaming support
+    let api_key = env::var("ANTHROPIC_API_KEY")?;
+    let llm_config = LLMConfig {
+        provider: "anthropic".to_string(),
+        model: "claude-sonnet-4-20250514".to_string(),
+        api_key,
+        timeout_secs: 30,
+        max_retries: 3,
+    };
+    let anthropic = AnthropicProvider::new(&llm_config)?;
 
-    // Generate response using LLM
-    let response = llm.generate_with_system_prompt(
-        &system_prompt,
+    // Stream the response with real-time display
+    let response = anthropic.call_api_streaming(
         &user_prompt,
-        &iteration_context,
+        &system_prompt,
+        |chunk| {
+            print!("{}", chunk);
+            io::stdout().flush().ok();
+        }
     ).await?;
+
+    println!(); // Newline after streaming completes
 
     Ok(response)
 }
