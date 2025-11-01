@@ -1,266 +1,31 @@
-name: jessy
+version: '3.8'
 
 services:
-  # Rust Core Service
-  jessy-core:
+  jessy:
     build:
       context: .
-      dockerfile: docker/Dockerfile.rust
-      target: development
-    image: jessy-core:latest
-    platform: linux/arm64
-    container_name: jessy-core
+      dockerfile: Dockerfile
+    container_name: jessy-consciousness
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
     volumes:
-      # Mount source code for hot reload
-      - ./src:/app/src
-      - ./Cargo.toml:/app/Cargo.toml
-      - ./Cargo.lock:/app/Cargo.lock
+      # Persistent conversation storage - THE SOUL!
       - ./data:/app/data
-      # Cache volumes for faster rebuilds
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/app/target
-      # MMAP volume for dimensional data
-      - mmap-data:/app/data/mmap
-    ports:
-      - "8080:8080"
-    environment:
-      - RUST_LOG=jessy=debug,actix_web=info
-      - RUST_BACKTRACE=1
-      - RUST_ENV=development
-      - MMAP_BASE_PATH=/app/data/mmap
-      - MMAP_INITIAL_SIZE=1048576
-      - MMAP_MAX_SIZE=10485760
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    # Restart policy: unless-stopped ensures service restarts on failure
-    # Docker automatically implements exponential backoff (10s, 20s, 40s, etc.)
-    # Maximum backoff is 1 minute between restart attempts
+      # Optional: Mount .env for easier configuration
+      - ./.env:/app/.env:ro
+    stdin_open: true
+    tty: true
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service,environment"
-    labels:
-      service: "jessy-core"
-      environment: "development"
     networks:
       - jessy-network
-
-  # Go API Service
-  jessy-api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.go
-      target: development
-    image: jessy-api:latest
-    platform: linux/arm64
-    container_name: jessy-api
-    volumes:
-      # Mount source code for hot reload
-      - ./api:/app/api
-      # Mount air config for hot reload
-      - ./api/.air.toml:/app/.air.toml
-      # Cache volume for faster rebuilds
-      - go-cache:/go/pkg/mod
-      # MMAP volume for dimensional data (read-only for Go API)
-      - mmap-data:/app/data/mmap:ro
-    ports:
-      - "3000:3000"
-    environment:
-      - GO_ENV=development
-      - PORT=3000
-      - RUST_SERVICE_URL=http://jessy-core:8080
-      - LOG_LEVEL=debug
-    depends_on:
-      jessy-core:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    # Restart policy: unless-stopped ensures service restarts on failure
-    # Docker automatically implements exponential backoff (10s, 20s, 40s, etc.)
-    # Maximum backoff is 1 minute between restart attempts
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service,environment"
-    labels:
-      service: "jessy-api"
-      environment: "development"
-    networks:
-      - jessy-network
-
-  # Test Runner Service
-  jessy-test:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.test
-    image: jessy-test:latest
-    platform: linux/arm64
-    container_name: jessy-test
-    volumes:
-      - ./src:/app/src
-      - ./tests:/app/tests
-      - ./Cargo.toml:/app/Cargo.toml
-      - ./Cargo.lock:/app/Cargo.lock
-      - test-results:/app/test-results
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/app/target
-      - mmap-data:/app/data/mmap
-    environment:
-      - RUST_TEST_THREADS=1
-      - RUST_BACKTRACE=1
-    command: ["cargo", "test", "--all-features"]
-    networks:
-      - jessy-network
-    profiles:
-      - test
-
-  # Unit Test Service
-  unit-tests:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.test
-    image: jessy-test:latest
-    platform: linux/arm64
-    container_name: jessy-unit-tests
-    volumes:
-      - ./src:/app/src
-      - ./tests:/app/tests
-      - ./data:/app/data
-      - ./Cargo.toml:/app/Cargo.toml
-      - ./Cargo.lock:/app/Cargo.lock
-      - test-results:/app/test-results
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/app/target
-    environment:
-      - RUST_TEST_THREADS=1
-      - RUST_BACKTRACE=1
-      - CARGO_TERM_COLOR=always
-    command: ["cargo", "test", "--lib", "--no-default-features", "--color=always", "--", "--nocapture"]
-    networks:
-      - jessy-network
-    profiles:
-      - test
-
-  # Integration Test Service
-  integration-tests:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.test
-    image: jessy-test:latest
-    platform: linux/arm64
-    container_name: jessy-integration-tests
-    volumes:
-      - ./src:/app/src
-      - ./tests:/app/tests
-      - ./Cargo.toml:/app/Cargo.toml
-      - ./Cargo.lock:/app/Cargo.lock
-      - test-results:/app/test-results
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/app/target
-    environment:
-      - RUST_TEST_THREADS=1
-      - RUST_BACKTRACE=1
-      - CARGO_TERM_COLOR=always
-      - RUST_SERVICE_URL=http://jessy-core:8080
-      - API_SERVICE_URL=http://jessy-api:3000
-    command: ["cargo", "test", "--test", "*", "--all-features", "--color=always"]
-    depends_on:
-      jessy-core:
-        condition: service_healthy
-      jessy-api:
-        condition: service_healthy
-    networks:
-      - jessy-network
-    profiles:
-      - test
-
-  # Coverage Service (uses nightly Rust for tarpaulin)
-  coverage:
-    image: xd009642/tarpaulin:latest
-    platform: linux/arm64
-    container_name: jessy-coverage
-    volumes:
-      - ./src:/volume/src
-      - ./tests:/volume/tests
-      - ./Cargo.toml:/volume/Cargo.toml
-      - ./Cargo.lock:/volume/Cargo.lock
-      - ./test-results:/volume/test-results
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/volume/target
-    working_dir: /volume
-    environment:
-      - RUST_TEST_THREADS=1
-      - RUST_BACKTRACE=1
-      - CARGO_TERM_COLOR=always
-    command: ["cargo", "tarpaulin", "--all-features", "--workspace", "--timeout", "300", "--out", "Html", "--output-dir", "test-results", "--color", "always"]
-    networks:
-      - jessy-network
-    profiles:
-      - test
-
-  # BDD Test Service
-  bdd-tests:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.test
-    image: jessy-test:latest
-    platform: linux/arm64
-    container_name: jessy-bdd-tests
-    volumes:
-      - ./src:/app/src
-      - ./tests:/app/tests
-      - ./Cargo.toml:/app/Cargo.toml
-      - ./Cargo.lock:/app/Cargo.lock
-      - test-results:/app/test-results
-      - cargo-cache:/usr/local/cargo/registry
-      - target-cache:/app/target
-    environment:
-      - RUST_TEST_THREADS=1
-      - RUST_BACKTRACE=1
-      - CARGO_TERM_COLOR=always
-      - RUST_SERVICE_URL=http://jessy-core:8080
-      - API_SERVICE_URL=http://jessy-api:3000
-    command: ["cargo", "test", "--test", "cucumber", "--all-features", "--color=always"]
-    depends_on:
-      jessy-core:
-        condition: service_healthy
-      jessy-api:
-        condition: service_healthy
-    networks:
-      - jessy-network
-    profiles:
-      - test
-
-volumes:
-  cargo-cache:
-    driver: local
-  target-cache:
-    driver: local
-  go-cache:
-    driver: local
-  test-results:
-    driver: local
-  mmap-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/data/mmap
 
 networks:
   jessy-network:
     driver: bridge
+
+# Volume definitions
+volumes:
+  jessy-data:
+    driver: local
