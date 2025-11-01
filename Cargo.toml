@@ -111,6 +111,10 @@ path = "examples/llm_iterative_demo.rs"
 name = "llm_chat_demo"
 path = "examples/llm_chat_demo.rs"
 
+[[example]]
+name = "llm_interactive_full"
+path = "examples/llm_interactive_full.rs"
+
 [[bench]]
 name = "memory_benchmarks"
 harness = false
