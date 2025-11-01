@@ -1,0 +1,143 @@
+/* JESSY Web Chat - Custom Styles */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(147, 51, 234, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 51, 234, 0.7);
+}
+
+/* Message animations */
+.message-user,
+.message-assistant,
+.message-error {
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Typing indicator */
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Input focus glow */
+input:focus {
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2);
+}
+
+/* Button hover effects */
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Code blocks */
+code {
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+/* Dimension badges pulse */
+#dimensionList span {
+    animation: badgeFadeIn 0.4s ease-out;
+}
+
+@keyframes badgeFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Loading state */
+.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* Gradient text */
+.gradient-text {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Glass morphism effect */
+.glass {
+    background: rgba(17, 24, 39, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Message bubble effects */
+.message-user > div > div {
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2);
+}
+
+.message-assistant > div > div {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .message-user > div,
+    .message-assistant > div {
+        max-width: 90% !important;
+    }
+}
+
+/* Selection color */
+::selection {
+    background: rgba(147, 51, 234, 0.5);
+    color: white;
+}
+
+/* Link styles */
+a {
+    color: #a855f7;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #ec4899;
+    text-decoration: underline;
+}
