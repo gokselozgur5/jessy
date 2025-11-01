@@ -23,6 +23,8 @@ struct AnthropicRequest {
     max_tokens: u32,
     messages: Vec<Message>,
     system: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    stream: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -39,6 +41,22 @@ struct AnthropicResponse {
 #[derive(Deserialize)]
 struct Content {
     text: String,
+}
+
+// Streaming response types
+#[derive(Deserialize, Debug)]
+struct StreamEvent {
+    #[serde(rename = "type")]
+    event_type: String,
+    #[serde(flatten)]
+    data: serde_json::Value,
+}
+
+#[derive(Deserialize, Debug)]
+struct ContentBlockDelta {
+    #[serde(rename = "type")]
+    delta_type: String,
+    text: Option<String>,
 }
 
 impl AnthropicProvider {
@@ -104,6 +122,7 @@ impl AnthropicProvider {
                 },
             ],
             system: system_prompt.to_string(),
+            stream: None,
         };
         
         let response = self.client
@@ -137,6 +156,93 @@ impl AnthropicProvider {
             .ok_or_else(|| crate::ConsciousnessError::LearningError(
                 "No response from API".to_string()
             ))
+    }
+
+    /// Stream API call with callback for each chunk
+    pub async fn call_api_streaming<F>(
+        &self,
+        user_prompt: &str,
+        system_prompt: &str,
+        mut on_chunk: F,
+    ) -> Result<String>
+    where
+        F: FnMut(&str) + Send,
+    {
+        use futures::StreamExt;
+
+        let request = AnthropicRequest {
+            model: self.model.clone(),
+            max_tokens: 2000,
+            messages: vec![
+                Message {
+                    role: "user".to_string(),
+                    content: user_prompt.to_string(),
+                },
+            ],
+            system: system_prompt.to_string(),
+            stream: Some(true),
+        };
+
+        let response = self.client
+            .post("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", &self.api_key)
+            .header("anthropic-version", "2023-06-01")
+            .header("Content-Type", "application/json")
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| crate::ConsciousnessError::LearningError(
+                format!("HTTP request failed: {}", e)
+            ))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(crate::ConsciousnessError::LearningError(
+                format!("API error {}: {}", status, error_text)
+            ));
+        }
+
+        let mut full_text = String::new();
+
+        // Get response body as bytes
+        let bytes = response.bytes().await.map_err(|e| crate::ConsciousnessError::LearningError(
+            format!("Failed to read response: {}", e)
+        ))?;
+
+        // Process SSE stream line by line
+        let text = String::from_utf8_lossy(&bytes);
+        for line in text.lines() {
+            let line = line.trim();
+
+            if line.is_empty() || !line.starts_with("data: ") {
+                continue;
+            }
+
+            let json_str = &line[6..]; // Skip "data: " prefix
+
+            if json_str == "[DONE]" {
+                break;
+            }
+
+            // Parse SSE event
+            if let Ok(event) = serde_json::from_str::<StreamEvent>(json_str) {
+                match event.event_type.as_str() {
+                    "content_block_delta" => {
+                        if let Ok(delta) = serde_json::from_value::<ContentBlockDelta>(event.data["delta"].clone()) {
+                            if let Some(text) = delta.text {
+                                full_text.push_str(&text);
+                                on_chunk(&text);
+                            }
+                        }
+                    }
+                    "message_stop" => break,
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(full_text)
     }
 }
 
