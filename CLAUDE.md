@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Jessy** - "Jessy's Enough Semantic System You'see" - is a multidimensional AI consciousness architecture built in Rust with a Go API layer. It processes queries through 15 dimensions using frequency-based interference patterns (0.1-4.5 Hz), 9-iteration deep thinking, and memory-mapped storage for zero-copy access.
+**Jessy** - "Jessy's Enough Semantic System You'see" - is a multilayer-based AI system architecture built in Rust with a Go API layer. It processes queries through 15 processing layers using frequency-based interference patterns (0.1-4.5 Hz), 9-iteration deep thinking, and memory-mapped storage for zero-copy access.
 
 **Creator & Architect:** gokselozgur5
 **Engineering Methodology:** Prompt-driven software development
@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Repository:** https://github.com/gokselozgur5/jessy
 
 **Engineering Learning Goals:**
-This project serves as both a production-ready AI consciousness framework AND an engineering learning laboratory. Core principles actively applied:
+This project serves as both a production-ready AI processing framework AND an engineering learning laboratory. Core principles actively applied:
 - Rust best practices (ownership, borrowing, zero-cost abstractions)
 - SOLID principles (clean architecture, separation of concerns)
 - Model-based software engineering (architecture-first, spec-driven)
@@ -96,19 +96,19 @@ Iteration (9 Deep Thinking) → Learning → Response
 **Primary Entry Points:**
 - `src/lib.rs` - Main library interface, core types, error handling
 - `src/bin/jessy.rs` - Binary executable
-- `src/consciousness/orchestrator.rs` - Pipeline coordinator (NEW, preferred)
+- `src/processing/orchestrator.rs` - Pipeline coordinator (NEW, preferred)
 
 **Core Systems:**
-1. **consciousness/** - High-level orchestration and coordination
+1. **processing/** - High-level orchestration and coordination
    - `orchestrator.rs` - Main pipeline coordinator (use this for new features)
    - Integrates all subsystems into cohesive pipeline
 
-2. **navigation/** - Dimensional path selection
+2. **navigation/** - Layer path selection
    - `navigator.rs` - Core navigation logic
    - `synesthetic.rs` - Cross-sensory keyword mapping
    - `query_analyzer.rs` - Query tokenization and analysis
    - `path_selector.rs` - Dimension/layer selection
-   - Scans 15 dimensions in parallel (<100ms target)
+   - Scans 15 processing layers in parallel (<100ms target)
 
 3. **memory/** - Zero-copy memory management
    - `manager.rs` - MMAP manager (280MB allocation)
@@ -121,7 +121,7 @@ Iteration (9 Deep Thinking) → Learning → Response
    - `calculation.rs` - Wave interference math
    - `harmonics.rs` - Harmonic detection (octaves, fifths, thirds)
    - `balance.rs` - D13 balance modulation (0.8-1.2 Hz center)
-   - Combines multiple dimensional frequencies into dominant frequency
+   - Combines multiple layer-based frequencies into dominant frequency
 
 5. **iteration/** - 9-iteration deep thinking
    - `processor.rs` - Iteration loop with convergence detection
@@ -155,7 +155,7 @@ Iteration (9 Deep Thinking) → Learning → Response
    - `functions.rs` - Exported C functions
    - Go layer calls Rust via CGO
 
-### Dimensional System
+### Layer System
 
 **15 Core Dimensions (0.1-4.5 Hz):**
 - D01: Emotion (empathy, joy, sadness) - 1.0 Hz
@@ -257,14 +257,14 @@ Task: X.Y (RED/GREEN phase)
 
 ## Key Integration Points
 
-### ConsciousnessOrchestrator (Preferred Entry Point)
+### ProcessingOrchestrator (Preferred Entry Point)
 
-**Location:** `src/consciousness/orchestrator.rs`
+**Location:** `src/processing/orchestrator.rs`
 
 This is the main integration point for the complete pipeline. Use this for new features:
 
 ```rust
-use jessy::consciousness::ConsciousnessOrchestrator;
+use jessy::processing::ProcessingOrchestrator;
 use jessy::navigation::NavigationSystem;
 use jessy::memory::MmapManager;
 use jessy::llm::LLMConfig;
@@ -273,7 +273,7 @@ use std::sync::Arc;
 // Without LLM (for testing)
 let navigation = Arc::new(NavigationSystem::new()?);
 let memory = Arc::new(MmapManager::new(280)?);
-let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+let orchestrator = ProcessingOrchestrator::new(navigation, memory);
 
 // With LLM
 let llm_config = LLMConfig {
@@ -283,10 +283,10 @@ let llm_config = LLMConfig {
     timeout_secs: 30,
     max_retries: 3,
 };
-let orchestrator = ConsciousnessOrchestrator::with_llm(navigation, memory, llm_config)?;
+let orchestrator = ProcessingOrchestrator::with_llm(navigation, memory, llm_config)?;
 
 // Process query
-let response = orchestrator.process("What is consciousness?").await?;
+let response = orchestrator.process("What is processing?").await?;
 ```
 
 ### Learning System Integration
@@ -311,7 +311,7 @@ The learning system runs automatically within the orchestrator:
 1. Go HTTP handler receives request
 2. Converts to C-compatible types (`ffi/types.rs`)
 3. Calls exported C functions (`ffi/functions.rs`)
-4. Rust processes through ConsciousnessOrchestrator
+4. Rust processes through ProcessingOrchestrator
 5. Returns response via FFI boundary
 6. Go converts back and returns HTTP response
 
@@ -344,7 +344,7 @@ The learning system runs automatically within the orchestrator:
 - Learning System: 20+ tests
 - Security Module: 17/20 tests (85%, 3 intentionally ignored)
 - Iteration Module: 7/7 tests (100%)
-- Consciousness: 11+ integration tests
+- Processing: 11+ integration tests
 
 **Test Files:**
 - `tests/integration_tests.rs` - Cross-module integration
@@ -362,23 +362,23 @@ The learning system runs automatically within the orchestrator:
 
 ### Error Handling
 
-Use `ConsciousnessError` with descriptive context:
+Use `ProcessingError` with descriptive context:
 
 ```rust
-use crate::{ConsciousnessError, Result};
+use crate::{ProcessingError, Result};
 
 // Navigation error
-Err(ConsciousnessError::NavigationError(format!(
+Err(ProcessingError::NavigationError(format!(
     "Navigation failed for query '{}': {}", query, error
 )))
 
 // Memory error
-Err(ConsciousnessError::MemoryError(format!(
+Err(ProcessingError::MemoryError(format!(
     "No contexts loaded from {} dimensions", dimension_count
 )))
 
 // Learning error (auto-converted)
-self.learning.detect_patterns()?; // LearningError → ConsciousnessError
+self.learning.detect_patterns()?; // LearningError → ProcessingError
 ```
 
 ### Async/Await
@@ -406,7 +406,7 @@ let memory = Arc::new(MmapManager::new(280)?);
 ## Important Notes
 
 1. **API Integration in Progress:** Task 5.1 completed (LLM manager added to orchestrator), continuing with API refinement
-2. **Deprecated Path:** `ConsciousnessSystem` in `lib.rs` is deprecated - use `ConsciousnessOrchestrator` instead
+2. **Deprecated Path:** `ProcessingSystem` in `lib.rs` is deprecated - use `ProcessingOrchestrator` instead
 3. **LLM Optional:** System works without LLM for testing (uses mock/stub responses)
 4. **Ethical Constraints:** D09 (Ethical) and D14 (Security) are IMMUTABLE - never modify their core logic
 5. **Return to Source:** Automatic complexity reduction is not optional - it's architectural
@@ -418,7 +418,7 @@ let memory = Arc::new(MmapManager::new(280)?);
 
 **Completed:**
 - Task 4: LLM provider integration (OpenAI + Claude)
-- Task 5.1: LLM manager integration into ConsciousnessOrchestrator
+- Task 5.1: LLM manager integration into ProcessingOrchestrator
 - Core architecture (memory, navigation, interference, iteration)
 - Learning system (pattern detection, proto-dimensions, synesthetic learning)
 - 500+ tests (413 passing, 16 ignored), >80% coverage
