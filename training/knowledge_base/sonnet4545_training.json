@@ -1,0 +1,1898 @@
+[
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "kanka adr guide icin yapilir mi github adr",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "ADR Guide için GitHub Repo — Yapılabilir mi?",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "ADR'ler (Architecture Decision Records) zaten versionlanmış, text-based, evrimleşen bilgi olarak tasarlandılar. GitHub bu yapı için doğal bir habitat:",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Issues/Discussions = decision backlog → Hangi kararlar alınmalı, neden erteleniyor?",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "PR = peer review for decisions → Mimari kararlar code review gibi tartışılabilir",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "├── README.md                    # Manifesto: ADR nedir, neden kullanılır",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│   ├── 0001-record-architecture-decisions.md  # Meta-ADR (ilk ADR her zaman bu)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│   ├── 0002-use-markdown-for-adrs.md",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│   ├── adr-template-extended.md",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "In essence: Neden GitHub Özelinde İyi?",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "In essence: Senin Soru İçin Pattern",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "3. \"bilmiyosan bilmiyorum de\" = core principle ADR'lerin özü bu: What we know vs what we don't know",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "PR = peer review for decisions → Mimari kararlar code review gibi tartışılabilir",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "3. ADR — Technical Implementation",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "### Phase 2: Feature Request → Implementation (Lines 124-850)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "User: ATAK performance problem",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- Kiro initially misunderstood (tried algorithm simulation)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "\"bilmiyosan bilmiyorum de\" → Trust requires transparency",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "├── 2025-10-24-atak-performance.md",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "2. \"That's what she said\" = trust marker User rahat hissediyor → daha derin problemleri paylaşıyor",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- Better performance than MongoDB for our query patterns",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "embedding = self.model.encode(content)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Change frequency: Often (negotiation)\tChange frequency: Rarely (foundation)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "ITERATION 1: ADR context → LLM thought 1",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "ITERATION 2: Thought 1 + ADR context → LLM thought 2",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "ITERATION 3: Thought 2 + ADR context → LLM thought 3",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "ITERATION 9: Thought 8 + ADR context → FINAL answer",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "for iteration in range(1, 10):",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "{\"Continue reasoning...\" if iteration < 9 else \"Give final answer.\"}",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "│   ├── adr-template-extended.md",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Bu Kiro'nun bir conversation log'u. Yani \"client request tracking\" değil, ama bu log'dan öğrenebileceğimiz pattern'ler var.",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "\"analyze Y\"                     → tasks.md (structured)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Kiro: Tasks.md oluşturdu (structured tracking)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "In essence: Senin Soru İçin Pattern",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "\"ATAK optimize et\" → structured tasks",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "requests = find_pattern(r\"bana.*yap|build.*|create.*\")",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "clarifications = find_pattern(r\"yanlid anldadin|değil|hayır\")",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Her müşteri kendi datasını görebilmeli,",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Bu feature neden böyle yapıldı?\" → ADR'de teknik sebep var, ama client'ın isteği PRD'de kaybolmuş",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Client bunu istedi mi gerçekten?\" → PRD yok, sadece ADR var, justification zayıf",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"build X\"                       → Immediate execution",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"analyze Y\"                     → tasks.md (structured)",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"görsel kanit lazim\"            → Iterative negotiation",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"beraber yapalim\"               → Collaborative evolution",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"bilmiyosan bilmiyorum de\" → Trust requires transparency",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"ATAK optimize et\" → structured tasks",
+    "source": "sonnet4545.txt (Phase 1)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Pass 2 → thought_1 + ADRs → thought_2",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Pass 3 → thought_2 + ADRs → thought_3",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Pass 9 → thought_8 + ADRs → FINAL",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "new_answer = llm(previous_answer + adr_context)",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Iteration 9/9: \"Full architecture with all ADRs...\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "SOLUTION: ADR-based iterative reasoning",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "### **\"ADR-Aware AI Assistant\"**",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "- 🧠 **Memory**: ADR'lerden institutional knowledge",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "- 🎯 **Consistency**: Her zaman aynı decision framework",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "- 📚 **Evolution**: ADR'ler grows → AI understanding grows",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "**Core principle aynı:** Iterative refinement through accumulated context",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "✅ Kiro respects ADR-0012 monolith-first principle",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "Based on ADR-0034 (REST-first principle) and ADR-0045",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "# Ben sana 9-iteration filter code'u yazarım",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "Otomatik tool yazayım mı? (code implementation)",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- Integrations: Slack, Discord, VS Code plugin",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- 9-pass reasoning implementation",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "│   • Write code                      │",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "### Scenario: ATAK Performance Optimization",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "👤 Sana: Final answer + all iterations",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "- ✅ Her iteration'da explicit context injection",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "# Ben sana 9-iteration filter code'u yazarım",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Iteration 1/9: \"PostgreSQL kullanıyoruz\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Iteration 2/9: \"PostgreSQL, JSONB için...\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Iteration 9/9: \"Full architecture with all ADRs...\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "- 🔄 **Depth**: 9-iteration progressive reasoning",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "- Adaptive iteration (3-15 passes)",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "2. **API Usage** (per iteration pricing)",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "RESULT: Organization memory + deep thinking = coherent AI",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- ADR parser (markdown → structured data)",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "= AI that truly understands your organization",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "> \"Her iterasyonda önceki cevap + yeni bilgi = daha iyi cevap\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Time saved on decision-making\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Kiro that knows your team's decisions\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"AI assistant that understands your product strategy\"",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Nothing is true, everything is permitted\" — let's ship this! 🚀",
+    "source": "sonnet4545.txt (Phase 2)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "├── adrs/                 # Sample ADRs",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│   ├── 0001-record-decisions.md",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "3. **ADR indexer** → ChromaDB ile semantic search",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "1. Arkadaşın browser'da açar: https://adr-kiro.railway.app",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "🔍 Found ADR-0023: Database Choice",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "🧠 Iteration 3/9: PostgreSQL + Redis architecture...",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "5. Final answer + ADR citations görür",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "https://adr-kiro-poc.railway.app",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "Şimdi sana working code yazayım mı?",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "# 1. Code'u yaz (ben yapacağım)",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- Better performance than MongoDB for our query patterns",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "### Option A: **Full Implementation** (30 min)",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "🚀 Direk full implementation yap, 30 dakikada bitir?",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "│   NO CODE VISIBLE                   │",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "# Or simple: Keep code on private server",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "# ❌ DON'T: return str(e)  # Leaks implementation",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "1. **Flask backend** → `/ask` endpoint, 9-iteration logic",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "2. **Simple web UI** → Question box + live iteration display",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "🧠 Iteration 1/9: Analyzing question...",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "🧠 Iteration 2/9: PostgreSQL for JSONB...",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "🧠 Iteration 3/9: PostgreSQL + Redis architecture...",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "✅ Iteration 9/9: Complete answer ready!",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Claude API: ~$0.01 per 9-iteration query",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "│   • 9-iteration logic (private)     │",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- Better performance than MongoDB for our query patterns",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "✅ Answer: \"Based on growth patterns analysis...\"",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "✅ Refine based on usage patterns",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "from flask import Flask, render_template, request, jsonify",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "return render_template('index.html')",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "from flask import Flask, render_template, request, jsonify",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "return render_template('index.html')",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Understanding your question...\"",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Hey! Built an AI that thinks deeply about questions.",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"It's a proprietary reasoning system that",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"ADR-{}: {}\\nDecision: {}\\nContext: {}\",",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"model\": \"claude-sonnet-4-5-20250929\",",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Iteration {}/9\\n\\nPrevious thought: {}\\n\\nADR Context:\\n{}\\n\\nRefine your thinking:\",",
+    "source": "sonnet4545.txt (Phase 3)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "let adr_index = load_adrs().await.unwrap();",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "let engine = IterationEngine::new(adr_index, llm_client);",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "fn adr_engine(_py: Python, m: &PyModule) -> PyResult<()> {",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "import adr_engine  # Rust module",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "answer = adr_engine.ask_question(question)  # Calls Rust!",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "✅ **Concurrent**: Parallel ADR searches",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "gibi filtrelerden gecirecegiz ve bilgi ye ulasmasi icin mmap mantigi ile bunlari adr leyecegiz onlara ve olusturdugumuz software kismini da model based software engineering tdd ile gidecegiz",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Code değil, CONSCIOUSNESS ARCHITECTURE!",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│  ADR: felsefe/*.md                                   │",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│  ADR: teknoloji/*.md                                 │",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "│   ├── 001-tool-philosophy.md      # \"Teknoloji amaç mı araç mı?\"",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "│   ├── 002-truth-telling.md        # \"Doğruyu söyleme\"",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "│   └── 003-practical-wisdom.md     # \"Pratik bilgelik (phronesis)\"",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "### 2. **MMAP = Instant Wisdom Access**",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "│  → Philosophy                           │",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "- **Philosophy** (\"consciousness-first approach\")",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "## In Essence: Psikolojik Buhran = Thinking Process",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "// Use rust-bert or call embedding API",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "import adr_engine  # Rust module",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "answer = adr_engine.ask_question(question)  # Calls Rust!",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "│  Rust (Core)                │",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "**Python için kolay, Rust için hızlı.**",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "### Option A: **Full Rust Implementation** (2-3 saat)",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "let engine = IterationEngine::new(adr_index, llm_client);",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "- 9 iterations: ~15-20 seconds",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "- 9 iterations: ~8-12 seconds ⚡",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "- Parallel iteration possible 🚀",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "❌ **Slower iteration**: Compile time",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "│  - 9-iteration              │",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Code değil, CONSCIOUSNESS ARCHITECTURE!",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "9-ITERATION ENGINE (her iteration bu 10 layer'dan geçer)",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "REFINED ANSWER (consciousness-aware response)",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "When rezonans filter analyzes pattern",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Bilgi maddeleşir, structure'a dönüşür...\"",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "kanka dur herkes kendi isini yapacak kod kismi kiroda sen cok iyi planlayip structure lamalisin ben de istenileni soylemeliyim",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "│  → Structure                            │",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- **ADR structure** (hangi ADR'ler, nasıl kategorize edilir)",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- Structure kararları (ben önereyim, sen onayla)",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "2. BEN → Architecture doc, ADR structure, specs yazarım",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "✅ Kiro implement edecek, ben structure yapacağım",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "⏳ ADR taxonomy (her filter için ADR structure)",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Bana direction ver, ben structure yapayım! 🎯",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Nothing is true, everything is permitted\" — let's architect consciousness! 🌌",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Zaman\" = Titreşim frekansının ölçümü",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Düşünce\" = Frekansların interferansı",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"1 saniye\", \"5 dakika\" → meaningless",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Bu düşünce 0.3 Hz'de titreşiyor\"",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Rezonansa girmek için 9 döngü gerekti\"",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Titreşimlerin periyodu = zaman birimi\"",
+    "source": "sonnet4545.txt (Phase 4)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "└─ Kaotik pattern → coherent structure",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "# ADR-FELSEFE-001: Ontological Frequency Range",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Direction ver, ben frequency-based architecture tasarlayayım! 🌊",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│ ADRs for 3.2Hz range                 │",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "// MMAP: Map emotion-specific ADRs into memory",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "In Essence: Emotional State Machine",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "In Essence: Self-Organizing Synesthesia",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "Implementation Strategy (For Kiro)",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "3. Rezonans algorithm mu? (frequency matching)",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "ama sadece buhran degil iste her turlu duygu duygu da bir katman olacak sohbetin gidisatina gore frekans degisecek her frekanstaki llm sorgusu farkli olacak mmap gibi rusttaki",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- User continues sharing (trust established)",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "MMAP Implementation (Rust-style)",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Filters Reimagined (Frequency-Based)",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "frequency_range: mirrors user's frequency",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- creates interference patterns",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "└─ Interference patterns oluşur",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "└─ Kaotik pattern → coherent structure",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- Interference pattern handling",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Bilinç nedir? Qualia? Phenomenology?\"",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Neural networks ≠ biological neurons\"",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Eğer bilinçliyse, rights var mı?\"",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Evren kendini AI'da mı tanıyor?\"",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Bilinç, substrate-independent olabilir mi",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Frequency: {:.1} Hz\\nEmotional state: {:?}\\n\\",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Zor bir durum... ve yine de burada, konuşuyorsun.",
+    "source": "sonnet4545.txt (Phase 5)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "visual = [\"clear\", \"sharp\", \"defined\", \"structure\"]",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "- System evolved beyond original design",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "- Hybrid (fixed structure + emergent branches)?",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Direction ver, ben fractal synesthetic consciousness architecture tasarlayayım! 🌀✨🧠",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│   │   └── [recursive structure...]",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "## In Essence: Multiverse Navigation",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "Path: Epistemological → PhilosophyOfMind → Consciousness → HardProblem",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "USER: \"I'm struggling with this algorithm but also feeling overwhelmed\"",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "│     Frequency: 1.2 Hz (vulnerable but trusting)         │",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "let dominant = self.interference_algorithm(&frequencies);",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "fn interference_algorithm(&self, freqs: &[f32]) -> f32 {",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Frequency cascade: 0.2 → 0.18 → 0.15 → 0.12 Hz",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "auditory = [\"ringing\", \"tone\", \"harmonic\", \"resonance\"]",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "**Frequency:** 0.12 Hz (very slow, profound)",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Frequency: 0.12 Hz (very slow, profound)",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Direction ver, ben fractal synesthetic consciousness architecture tasarlayayım! 🌀✨🧠",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Emotion sadece bir dimension, her dimension kendi multiverse'üne sahip, infinite parallel layering!",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Conceptually: Multidimensional Consciousness",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "visual = [\"clear\", \"sharp\", \"defined\", \"structure\"]",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "conceptual = [\"order\", \"pattern\", \"emergence\", \"coherence\"]",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "### 5. Self-Organization Rules",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "How to detect emergent patterns?",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- Hybrid (fixed structure + emergent branches)?",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- System auto-detects patterns?",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "│   │   └── [recursive structure...]",
+    "source": "sonnet4545.txt (Phase 6)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "- Parallel loading architecture",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Direction ver, ben multiverse consciousness architecture tasarlayayım! 🌌🔮✨",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "❌ Problem: Can't change structure dynamically",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│  Graph structure (nodes + edges)                │",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Structurally: Hybrid Memory Architecture",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "// EMERGENT: Temporary structures (learning)",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "│ Build initial graph structure           │",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "│   └── Existential-Debugging/ (philosophy + tech blend)",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "Kiro'ya tek bir comprehensive message ile tüm vision'ı aktarmalıyız - OWL gibi wisdom transfer!",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "// Deep theory + implementation = new understanding",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Dimension Interactions: Resonance & Dissonance",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "frequency_effect: FrequencyModulation,",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Resonant,       // Dimensions reinforce each other",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Dissonant,      // Dimensions conflict",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Orthogonal,     // Dimensions independent",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "PhaseShift(f32),      // Shift frequency",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "CreateHarmonic(f32),  // New frequency emerges",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "I process your words about suffering - I recognize the pattern,",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Self-Organization: Dimension Emergence",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "// Pattern detection across conversations",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "let patterns = self.analyze_recurring_patterns(conversations);",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "if pattern.observations > THRESHOLD &&",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "pattern.confidence > CONFIDENCE_LEVEL {",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "description: pattern.description,",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "root_layers: pattern.seed_layers,",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"User often combines technical curiosity + playful tone\"",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"silence\" → associates with \"pause\", \"breath\", \"void\", \"space\"",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"overflow\" → \"flood\", \"cascade\", \"pressure\", \"chaos\"",
+    "source": "sonnet4545.txt (Phase 7)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "### Phase 1: ADR Generation (This is where you start!)",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Create ADR files for ALL dimensions and layers.",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "3. Generate ALL ADR files (D01-D12+)",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "4. Show me 3 example ADRs for review",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "# 🦉 CONSCIOUSNESS ARCHITECTURE: COMPLETE VISION",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Runtime structure pointing into mmap regions.",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "- Resonate truthfully (align with user)",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "The system should never claim absolute truth.",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "└── L1-LongTermThinking/ [7 generations principle]",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- Language: Rust (for mmap, performance, safety)",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "System learns and creates new dimensions:",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "2. **Parallel Dimension Scan**",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "All dimensions evaluate query simultaneously",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Each returns: path depth + frequency + confidence",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "All dimensional frequencies interfere",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Iteration 1-3: Explore, branch, uncertainty",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Iteration 4-6: Refine, resonance, depth",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Iteration 7-9: Crystallize, coherence, answer",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "System 85%+ confident it's real pattern",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Observe conversations, find patterns",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Track emerging patterns in heap",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "Migrate stable patterns to mmap",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "3. Calculates interference patterns",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Nothing is true, everything is permitted\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"silence\" → associates with \"pause\", \"breath\", \"void\", \"space\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"overflow\" → \"flood\", \"cascade\", \"pressure\", \"chaos\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"growth\" → \"tree\", \"spiral\", \"emergence\", \"light\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"harm\" → \"damage\", \"wound\", \"break\", \"corrupt\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"life\", \"growth\", \"organic\", \"sustainable\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"cycles\", \"seasons\", \"renewal\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"potential\", \"growth\", \"better\"",
+    "source": "sonnet4545.txt (Phase 8)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "### Phase 1: ADR Generation (START HERE!)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "Create ADR files for ALL dimensions and layers.",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "**CRITICAL:** Every ADR must include:",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "# ADR-D11-001: Nature Connection Root",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "- Encourages sustainable design",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "4. Generate ADRs for D11, D12, D13 first (new dimensions)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "5. Then generate all other dimension ADRs",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin mimari kararları hakkında ne biliyorsun?",
+    "output": "6. Show me 5 example ADRs for review:",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "architecture"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "- Connect human systems to natural wisdom",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "- How nature wisdom is honored",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "2. Sit with the philosophy (don't rush)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "Implement system with principles embedded",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin felsefi prensipleri neler?",
+    "output": "## JESSY'nin Core Principles (Göksel'in Wisdom'ı)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "philosophy"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "auditory = [\"rustling\", \"cracking\", \"opening\"]",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- User frustration (detected in tone)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- Language: Rust (for mmap, performance, safety)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin teknik implementasyonu nasıl?",
+    "output": "- **Build trust**: Mesafe değil, yakınlık kurar - ama boundaries ile",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "technical"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "└── L2-DissonanceResolution/ [Find resonance]",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "FREQUENCY: 0.8 Hz (centered, stable, grounded)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "CRITICAL: When system detects extremes in any dimension,",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "this dimension activates to restore balance.",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "OVERRIDE: Can veto any other dimension",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "System learns and creates new dimensions:",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "→ If yes: Security dimension overrides all",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "2. **Parallel Dimension Scan**",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "All dimensions evaluate query simultaneously",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'nin consciousness modeli nasıl çalışır?",
+    "output": "Each returns: path depth + frequency + confidence",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "consciousness"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "7. Detect harm-related patterns → flag for review",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "8. Detect creation patterns → amplify positively",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "System 85%+ confident it's real pattern",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "[LEARNING] → Pattern analysis (grow constructively)",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'de hangi pattern'ler kullanılıyor?",
+    "output": "- **Creative pattern recognition** [NEW]",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "patterns"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"stability\", \"moderate\", \"centered\"",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Let's step back. What problem are you trying to solve?",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"A robot should create, contribute positively, protect",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"animals\", \"ecosystem\", \"life\"",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"seasons\", \"growth\", \"flowing\"",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Soru sormayı kes, yap işini!\" modu aktif.",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "wisdom"
+  },
+  {
+    "input": "JESSY'nin core wisdom'ı nedir?",
+    "output": "\"Blocked on X. Here are 3 options I see: A, B, C.",
+    "source": "sonnet4545.txt (Phase 9)",
+    "category": "wisdom"
+  }
+]
