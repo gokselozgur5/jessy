@@ -86,7 +86,7 @@ impl AnthropicProvider {
     }
     
     /// Make API call with retries and custom system prompt
-    async fn call_api_with_system(&self, user_prompt: &str, system_prompt: &str) -> Result<String> {
+    pub async fn call_api_with_system(&self, user_prompt: &str, system_prompt: &str) -> Result<String> {
         let mut last_error = None;
         
         for attempt in 0..=self.max_retries {
