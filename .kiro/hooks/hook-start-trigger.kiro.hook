@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Hook Start Monitor",
+  "description": "Monitors and responds when any hook begins execution, providing context and initialization support",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "./*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "read makefile. Continue with the next task."
+  }
+}
