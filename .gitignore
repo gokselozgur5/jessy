@@ -60,3 +60,13 @@ secrets/
 credentials/
 
 # Development process - share everything else for transparency
+
+# Training models and checkpoints (too large for GitHub)
+jessy-full-trained/
+jessy-turkish-merged/
+jessy-turkish-simple/
+training/venv*/
+*.safetensors
+*.pt
+*.pth
+*.bin
