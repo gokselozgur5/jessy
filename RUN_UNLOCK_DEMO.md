@@ -7,7 +7,7 @@
 cd /Users/gok/Projects/DeepCode/jessy
 
 # 2. API Key'i export et
-export ANTHROPIC_API_KEY="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"
+export ANTHROPIC_API_KEY="your-key-here"
 
 # 3. Cargo function'ını bypass et
 unset -f cargo
@@ -20,7 +20,7 @@ unset -f cargo
 
 ```bash
 cd /Users/gok/Projects/DeepCode/jessy && \
-export ANTHROPIC_API_KEY="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" && \
+export ANTHROPIC_API_KEY="your-key-here" && \
 unset -f cargo && \
 /Users/gok/.cargo/bin/cargo run --example jessy_unlock_demo 2>&1 | grep -A 500 "🧠 JESSY"
 ```

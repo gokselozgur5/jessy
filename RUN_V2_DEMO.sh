@@ -24,8 +24,8 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Set API key
-export ANTHROPIC_API_KEY="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"
+# API key should be set in environment or .env file
+# export ANTHROPIC_API_KEY="your-key-here"
 
 # Navigate to project
 cd /Users/gok/Projects/DeepCode/jessy
