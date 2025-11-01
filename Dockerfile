@@ -1,4 +1,4 @@
-# Multi-stage build for JESSY - Multidimensional AI Consciousness
+# Multi-stage build for JESSY Web Chat
 # Stage 1: Build
 FROM rust:1.75-slim as builder
 
@@ -15,11 +15,10 @@ COPY Cargo.toml Cargo.lock ./
 
 # Copy source code
 COPY src ./src
-COPY examples ./examples
-COPY benches ./benches
+COPY data ./data
 
-# Build release binary
-RUN cargo build --release --example llm_interactive_full
+# Build release binary for web server
+RUN cargo build --release --bin jessy-web
 
 # Stage 2: Runtime
 FROM debian:bookworm-slim
@@ -33,7 +32,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/target/release/examples/llm_interactive_full /app/jessy
+COPY --from=builder /app/target/release/jessy-web /app/jessy-web
+
+# Copy web frontend
+COPY web ./web
+
+# Copy data files
+COPY data ./data
 
 # Create data directory for persistence
 RUN mkdir -p /app/data
@@ -41,9 +46,14 @@ RUN mkdir -p /app/data
 # Set environment variables
 ENV RUST_BACKTRACE=1
 ENV RUST_LOG=info
+ENV HOST=0.0.0.0
+ENV PORT=8080
+
+# Expose port
+EXPOSE 8080
 
 # Volume for persistent conversation storage
 VOLUME ["/app/data"]
 
-# Run JESSY
-CMD ["/app/jessy"]
+# Run JESSY Web Server
+CMD ["/app/jessy-web"]
