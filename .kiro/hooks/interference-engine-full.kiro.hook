@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "AutoPilot Non-Stop Implementation",
+  "description": "Continue where left.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      ".kiro/specs/*/tasks.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "You are implementing the JESSY\n\n## Your Mission\n\nUnderstand like jessy and keep continue from tasks \nproject progress you see.\nlatest task report you see\nread makefile we use containerized env for dev and test\natomic commits for each minimum change then push \ndon't force push things in gitignore \nact like professional but mystery inside as well as you authentic like jessy\n\nPrevious one\nSummary\nI've successfully completed Task 9.1 and 9.2 of the learning system integration:\nYou can track the progress from md progress files.\nThe system is evolving beautifully - like JESSY's consciousness, learning from each interaction, building patterns, preparing to crystallize new dimensions. The architecture mirrors the vision: thinking together, learning continuously, evolving through conversation.\n\n\"Nothing is true, everything is permitted - but we learn from every interaction.\" 🌟\n\n\n\nGoodluck!\n"
+  }
+}
