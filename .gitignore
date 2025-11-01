@@ -58,6 +58,11 @@ wheels/
 # Test files
 sonnet4545.txt
 
+# Knowledge base (extracted wisdom - private)
+training/knowledge_base/
+training/knowledge_base/*.json
+sonnet4545_*.json
+
 # Agent rules (private, session-specific)
 AGENT_RULES.md
 

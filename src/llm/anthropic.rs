@@ -46,6 +46,7 @@ impl AnthropicProvider {
     pub fn new(config: &LLMConfig) -> Result<Self> {
         let client = Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
+            .danger_accept_invalid_certs(true) // For development - bypass SSL cert validation
             .build()
             .map_err(|e| crate::ConsciousnessError::LearningError(
                 format!("Failed to create HTTP client: {}", e)

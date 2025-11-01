@@ -4,7 +4,7 @@
 
 use super::types::*;
 use super::error::{FFIError, validate_query, validate_session_id};
-use crate::consciousness::{ConsciousnessOrchestrator, ConsciousnessConfig};
+use crate::processing::{ConsciousnessOrchestrator, ConsciousnessConfig};
 use crate::navigation::NavigationSystem;
 use crate::memory::MmapManager;
 use std::ffi::{CStr, CString};

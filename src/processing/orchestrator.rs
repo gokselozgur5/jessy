@@ -3,7 +3,7 @@
 //! This module implements the main orchestrator that coordinates the complete
 //! consciousness pipeline: Navigation → Memory → Interference → Iteration
 
-use crate::consciousness::{
+use crate::processing::{
     ConsciousnessConfig, ConsciousnessResponse, ResponseMetadata,
 };
 use crate::interference::{InterferenceEngine, FrequencyState};
