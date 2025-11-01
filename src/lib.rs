@@ -64,7 +64,7 @@ pub mod interference;
 pub mod iteration;
 pub mod learning;
 pub mod security;
-pub mod consciousness;
+pub mod processing;
 pub mod ffi;
 pub mod llm;
 pub mod config;
