@@ -2,6 +2,11 @@
 // Session management - persist per user
 let sessionId = localStorage.getItem('jessy_session_id') || null;
 
+// API Base URL - auto-detect environment
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? '' // Localhost: same origin
+    : 'https://jessy-api.onrender.com'; // Production: Render.com backend
+
 // DOM elements
 const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
@@ -45,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Check API health
 async function checkHealth() {
     try {
-        const response = await fetch('/api/health');
+        const response = await fetch(`${API_BASE_URL}/api/health`);
         const data = await response.json();
         console.log('✅ API Health:', data);
     } catch (error) {
@@ -71,7 +76,7 @@ chatForm.addEventListener('submit', async (e) => {
 
     // Send message to API
     try {
-        const response = await fetch('/api/chat', {
+        const response = await fetch(`${API_BASE_URL}/api/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

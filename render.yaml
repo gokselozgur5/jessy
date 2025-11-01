@@ -2,14 +2,15 @@
 services:
   - type: web
     name: jessy
-    runtime: docker
+    env: docker
     plan: free
     branch: main
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: ANTHROPIC_API_KEY
-        sync: false  # You'll add this manually in Render dashboard
+        sync: false
       - key: RUST_LOG
         value: info
       - key: HOST
