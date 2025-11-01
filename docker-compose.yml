@@ -1,25 +1,29 @@
-version: '3.8'
-
 services:
-  jessy:
+  jessy-web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: jessy-consciousness
+    container_name: jessy-web-chat
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - RUST_LOG=info
       - RUST_BACKTRACE=1
+      - HOST=0.0.0.0
+      - PORT=8080
+    ports:
+      - "8080:8080"
     volumes:
       # Persistent conversation storage - THE SOUL!
       - ./data:/app/data
-      # Optional: Mount .env for easier configuration
-      - ./.env:/app/.env:ro
-    stdin_open: true
-    tty: true
     restart: unless-stopped
     networks:
       - jessy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 networks:
   jessy-network:
