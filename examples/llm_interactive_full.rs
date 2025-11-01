@@ -18,6 +18,78 @@ use std::sync::Arc;
 use std::io::{self, Write};
 use std::env;
 
+/// Conversation history for multi-turn chat
+#[derive(Debug, Clone)]
+struct ConversationHistory {
+    messages: Vec<ConversationMessage>,
+}
+
+#[derive(Debug, Clone)]
+struct ConversationMessage {
+    role: MessageRole,
+    content: String,
+    dimensions: Vec<DimensionId>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum MessageRole {
+    User,
+    Assistant,
+}
+
+impl ConversationHistory {
+    fn new() -> Self {
+        Self {
+            messages: Vec::new(),
+        }
+    }
+
+    fn add_user_message(&mut self, content: String, dimensions: Vec<DimensionId>) {
+        self.messages.push(ConversationMessage {
+            role: MessageRole::User,
+            content,
+            dimensions,
+        });
+    }
+
+    fn add_assistant_message(&mut self, content: String) {
+        self.messages.push(ConversationMessage {
+            role: MessageRole::Assistant,
+            content,
+            dimensions: Vec::new(),
+        });
+    }
+
+    fn format_for_context(&self, max_messages: usize) -> String {
+        let start = if self.messages.len() > max_messages {
+            self.messages.len() - max_messages
+        } else {
+            0
+        };
+
+        let mut context = String::new();
+        for msg in &self.messages[start..] {
+            match msg.role {
+                MessageRole::User => {
+                    context.push_str(&format!("User: {}\n", msg.content));
+                }
+                MessageRole::Assistant => {
+                    context.push_str(&format!("Assistant: {}\n", msg.content));
+                }
+            }
+        }
+        context
+    }
+
+    fn is_empty(&self) -> bool {
+        self.messages.is_empty()
+    }
+
+    fn len(&self) -> usize {
+        self.messages.len()
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🤖 JESSY - LLM-Based Interactive Chat (Full Integration)");
@@ -57,6 +129,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ Memory manager ready (280 MB limit)");
     println!();
 
+    // Initialize conversation history
+    let mut conversation = ConversationHistory::new();
+
     // Main chat loop
     loop {
         // Prompt user
@@ -89,7 +164,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Process query
         println!();
-        match process_query_full(query, &selector, &memory_manager, &llm).await {
+        match process_query_full(query, &selector, &memory_manager, &llm, &mut conversation).await {
             Ok(response) => {
                 println!("{}", response);
             }
@@ -110,6 +185,7 @@ async fn process_query_full(
     selector: &DimensionSelector,
     memory_manager: &Arc<MmapManager>,
     llm: &LLMManager,
+    conversation: &mut ConversationHistory,
 ) -> Result<String, Box<dyn std::error::Error>> {
     use std::time::Instant;
 
@@ -127,16 +203,34 @@ async fn process_query_full(
         Err(_) => create_simulated_contexts(&paths),
     };
 
-    // Step 4: Generate response based on dimensions and contexts
-    let response = generate_full_response(
+    // Step 4: Add user message to conversation history
+    conversation.add_user_message(query.to_string(), selection.dimensions.clone());
+
+    // Step 5: Generate response based on dimensions, contexts, and conversation history
+    let llm_response = generate_full_response(
         query,
         &selection,
         &contexts,
         selection_duration,
         llm,
+        conversation,
     ).await?;
 
-    Ok(response)
+    // Step 6: Extract just the LLM response text (without the header) for history
+    let response_text = extract_response_text(&llm_response);
+    conversation.add_assistant_message(response_text);
+
+    Ok(llm_response)
+}
+
+/// Extract just the response text from the full formatted response
+fn extract_response_text(full_response: &str) -> String {
+    // Find the "💬 Response:" marker and extract everything after it
+    if let Some(pos) = full_response.find("💬 Response:\n") {
+        full_response[pos + "💬 Response:\n".len()..].trim().to_string()
+    } else {
+        full_response.to_string()
+    }
 }
 
 /// Create navigation paths from dimension IDs
@@ -201,6 +295,7 @@ async fn generate_full_response(
     contexts: &ContextCollection,
     selection_duration: std::time::Duration,
     llm: &LLMManager,
+    conversation: &ConversationHistory,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut response = String::new();
 
@@ -215,13 +310,14 @@ async fn generate_full_response(
     }
     response.push_str("\n");
 
-    // Show contexts loaded
+    // Show contexts loaded and conversation turns
     response.push_str(&format!("Loaded {} contexts from memory\n", contexts.len()));
+    response.push_str(&format!("Conversation turns: {}\n", conversation.len() / 2)); // User + Assistant = 1 turn
     response.push_str(&format!("Selection time: {} ms\n\n", selection_duration.as_millis()));
 
     // Generate actual LLM response
     response.push_str("💬 Response:\n");
-    let llm_response = generate_llm_response(query, selection, contexts, llm).await?;
+    let llm_response = generate_llm_response(query, selection, contexts, llm, conversation).await?;
     response.push_str(&llm_response);
 
     Ok(response)
@@ -233,17 +329,30 @@ async fn generate_llm_response(
     selection: &jessy::navigation::SimpleDimensionSelection,
     contexts: &ContextCollection,
     llm: &LLMManager,
+    conversation: &ConversationHistory,
 ) -> Result<String, Box<dyn std::error::Error>> {
     // Build system prompt with dimensional context
     let system_prompt = build_system_prompt(selection, contexts);
 
-    // Build user prompt
-    let user_prompt = format!(
-        "User query: {}\n\n\
-         Based on the activated dimensions and loaded contexts, provide a thoughtful, \
-         helpful response that integrates insights from all relevant dimensions.",
+    // Build user prompt with conversation history
+    let mut user_prompt = String::new();
+
+    // Add conversation history if exists (excluding the current message which was just added)
+    if conversation.len() > 1 {
+        user_prompt.push_str("CONVERSATION HISTORY:\n");
+        user_prompt.push_str(&conversation.format_for_context(10)); // Last 10 messages (5 turns)
+        user_prompt.push_str("\n");
+    }
+
+    user_prompt.push_str(&format!(
+        "CURRENT QUERY: {}\n\n\
+         Based on the activated dimensions, loaded contexts, and conversation history, \
+         provide a thoughtful, helpful response that:\n\
+         - Maintains continuity with previous messages\n\
+         - References earlier parts of the conversation when relevant\n\
+         - Integrates insights from all relevant dimensions",
         query
-    );
+    ));
 
     // Create iteration context (required by LLMManager)
     let iteration_context = IterationContext::new(
