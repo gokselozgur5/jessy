@@ -315,7 +315,7 @@ pub async fn get_conversation(
                         },
                         "content": msg.content,
                         "timestamp": msg.timestamp.to_rfc3339(),
-                        "dimensions": msg.dimensions.iter().map(|d| d.0).collect::<Vec<u32>>(),
+                        "dimensions": msg.dimensions.iter().map(|d| d.0 as u32).collect::<Vec<u32>>(),
                     })
                 })
                 .collect();
