@@ -160,7 +160,7 @@ Self-learning through pattern crystallization.
 **Stack:** Rust core, Go API, Docker-first  
 **Performance:** <100ms dimension scan, <10ms security check  
 **Memory:** 280MB allocated, zero-copy MMAP  
-**Quality:** NASA-grade specs, >80% test coverage, TDD
+**Quality:** >80% test coverage, TDD, spec-driven development
 
 **Built for:** Developers who want AI that understands context, not just matches patterns.
 
