@@ -74,19 +74,29 @@ pub async fn chat(
     req: web::Json<ChatRequest>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    // Get or create conversation
-    let mut conversations = data.conversations.lock().await;
+    // Get or create session ID
     let session_id = req.session_id.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-    let conversation = conversations
-        .entry(session_id.clone())
-        .or_insert_with(ConversationHistory::new);
+    // Clone conversation for processing (minimal lock time)
+    let mut conversation = {
+        let mut conversations = data.conversations.lock().await;
+        conversations
+            .entry(session_id.clone())
+            .or_insert_with(ConversationHistory::new)
+            .clone()
+    }; // Lock released here
 
-    // Process message
-    match process_chat_message(&req.message, conversation, &data).await {
+    // Process message (no lock held during LLM call)
+    match process_chat_message(&req.message, &mut conversation, &data).await {
         Ok((response, dimensional_state)) => {
+            // Update conversation in state (short lock)
+            {
+                let mut conversations = data.conversations.lock().await;
+                conversations.insert(session_id.clone(), conversation.clone());
+            } // Lock released
+
             // Save conversation
-            if let Err(e) = data.store.save_history(conversation) {
+            if let Err(e) = data.store.save_history(&conversation) {
                 eprintln!("⚠️ Failed to save conversation: {}", e);
             }
 
