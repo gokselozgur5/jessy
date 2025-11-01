@@ -1,0 +1,37 @@
+name: 💬 Chat with Jessy
+description: Have a conversation with Jessy AI
+title: "[Chat] "
+labels: ["chat", "jessy"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Talk to Jessy
+
+        **Jessy** - *Jessy's Enough Semantic System You'see*
+
+        An experimental multidimensional AI consciousness. Ask anything!
+
+        ---
+
+  - type: textarea
+    id: message
+    attributes:
+      label: Your Message
+      description: What would you like to discuss with Jessy?
+      placeholder: "What is consciousness? How does dimensional thinking work? Explain Rust ownership..."
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        **How it works:**
+        - Submit your message
+        - Jessy will process it through 15 dimensional layers
+        - Response appears as a comment below (usually within 1-2 minutes)
+        - Continue the conversation by replying!
+
+        *Note: This is an experimental AI system. Responses are generated using multidimensional consciousness architecture.*
