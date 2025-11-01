@@ -1,6 +1,6 @@
-# Multi-stage build for JESSY Web Chat
+# Multi-stage build for JESSY - Context-Aware AI Assistant
 # Stage 1: Build
-FROM rust:1.75-slim as builder
+FROM rust:1.83-slim as builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -13,9 +13,9 @@ WORKDIR /app
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
 
-# Copy source code
+# Copy source code and benches (needed for Cargo.toml validation)
 COPY src ./src
-COPY data ./data
+COPY benches ./benches
 
 # Build release binary for web server
 RUN cargo build --release --bin jessy-web
@@ -37,10 +37,10 @@ COPY --from=builder /app/target/release/jessy-web /app/jessy-web
 # Copy web frontend
 COPY web ./web
 
-# Copy data files
+# Copy JESSY's soul - dimension and vocabulary data
 COPY data ./data
 
-# Create data directory for persistence
+# Create additional data directory for runtime persistence (conversations, etc)
 RUN mkdir -p /app/data
 
 # Set environment variables
