@@ -1,6 +1,6 @@
 // JESSY Web Chat - Frontend JavaScript
-// Session management
-let sessionId = null;
+// Session management - persist per user
+let sessionId = localStorage.getItem('jessy_session_id') || null;
 
 // DOM elements
 const chatForm = document.getElementById('chatForm');
@@ -33,6 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check health
     checkHealth();
+
+    // Log session info
+    if (sessionId) {
+        console.log('📝 Resumed session:', sessionId);
+    } else {
+        console.log('🆕 New session will be created on first message');
+    }
 });
 
 // Check API health
@@ -81,8 +88,9 @@ chatForm.addEventListener('submit', async (e) => {
 
         const data = await response.json();
 
-        // Update session ID
+        // Update and persist session ID
         sessionId = data.session_id;
+        localStorage.setItem('jessy_session_id', sessionId);
 
         // Add assistant response
         addMessage('assistant', data.response);
