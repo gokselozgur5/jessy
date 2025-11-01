@@ -12,14 +12,14 @@
 //!
 //! Run with: cargo run --example llm_iterative_demo
 
-use jessy::navigation::DimensionSelector;
+use jessy::navigation::{DimensionSelector, NavigationError};
 use jessy::memory::{MmapManager, ContextCollection};
-use jessy::{DimensionId, LayerId, Frequency, Result};
+use jessy::{DimensionId, LayerId, Frequency};
 use std::sync::Arc;
 use std::env;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize logging
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
@@ -73,7 +73,7 @@ async fn main() -> Result<()> {
 }
 
 /// Initialize LLM selector and memory systems
-async fn initialize_systems(api_key: String) -> Result<(DimensionSelector, Arc<MmapManager>)> {
+async fn initialize_systems(api_key: String) -> Result<(DimensionSelector, Arc<MmapManager>), Box<dyn std::error::Error>> {
     println!("🔧 Initializing Systems...");
 
     // Create LLM dimension selector
@@ -93,7 +93,7 @@ async fn process_query(
     query: &str,
     selector: &DimensionSelector,
     memory_manager: &Arc<MmapManager>,
-) -> Result<String> {
+) -> Result<String, Box<dyn std::error::Error>> {
     use std::time::Instant;
 
     // Step 1: LLM dimension selection (intent-based)
