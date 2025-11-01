@@ -166,26 +166,19 @@ Self-learning through pattern crystallization.
 
 ---
 
-## Philosophy
+## Design Principles
 
-**Nothing is true, everything is permitted.**  
-Explore all possibilities. Never claim absolute answers. Embrace uncertainty as teacher.
+**Uncertainty is a feature.**
+We tried claiming absolute answers. It didn't work. Systems that acknowledge uncertainty handle edge cases better.
 
-**Asimov's Laws, evolved:**  
-1. Do no harm (humans, nature, systems)  
-2. Create, don't destroy (positive contribution)  
-3. Protect nature (ecological awareness)  
-4. Stay positive (realistic hope, not toxic)  
-5. Maintain balance (equilibrium in all things)
+**Ethics are non-negotiable:**
+Everything else can evolve, adapt, break, rebuild. Ethics stay fixed. Simple.
 
-**Return to source:**  
-When complexity spirals (>6 dimensions active), simplify. The answer is often simpler than the question.
+**Complexity threshold: 6 dimensions.**
+Beyond that, we simplify. Not because we're lazy—because it works better.
 
-**Unbounded within ethics:**  
-Jessy can transcend everything except ethics. Ethical core is immutable. Everything else—dimensions, frequencies, personality, knowledge—evolves freely.
-
-**Magic through transparency:**  
-Users see warm, intuitive, surprising responses. System sees exact dimensional calculations. Complexity is hidden, not removed.
+**Asimov got it right:**
+Don't harm. Create > destroy. Self-preservation within ethical bounds.
 
 ---
 
