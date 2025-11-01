@@ -18,6 +18,7 @@ use super::{
     QueryAnalyzer, ParallelScanner, PathSelector, DepthNavigator,
     DimensionRegistry, QueryAnalysis, UrgencyLevel,
     metrics::NavigationMetrics,
+    DimensionSelector,
 };
 use std::sync::Arc;
 use std::time::Instant;
@@ -45,19 +46,22 @@ use std::time::Instant;
 pub struct NavigationSystem {
     /// Query analyzer for keyword extraction and classification
     query_analyzer: QueryAnalyzer,
-    
+
     /// Parallel scanner for dimension activation
     parallel_scanner: ParallelScanner,
-    
+
     /// Path selector for confidence scoring and ranking
     path_selector: PathSelector,
-    
+
     /// Depth navigator for layer traversal
     depth_navigator: DepthNavigator,
-    
+
+    /// LLM-based dimension selector (optional, replaces keyword matching when enabled)
+    llm_selector: Option<DimensionSelector>,
+
     /// Configuration parameters
     config: NavigationConfig,
-    
+
     /// Metrics collector (Task 10.4)
     metrics: Arc<NavigationMetrics>,
 }
@@ -77,7 +81,7 @@ impl NavigationSystem {
     /// ```
     pub fn new(registry: Arc<DimensionRegistry>) -> Result<Self, NavigationError> {
         let config = NavigationConfig::default();
-        
+
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
                 "data/emotional.txt",
@@ -87,6 +91,7 @@ impl NavigationSystem {
             parallel_scanner: ParallelScanner::new(registry.clone(), config.clone()),
             path_selector: PathSelector::new(),
             depth_navigator: DepthNavigator::new(registry),
+            llm_selector: None,  // Disabled by default
             config,
             metrics: Arc::new(NavigationMetrics::new()),
         })
@@ -106,6 +111,45 @@ impl NavigationSystem {
             parallel_scanner: ParallelScanner::new(registry.clone(), config.clone()),
             path_selector: PathSelector::with_config(config.clone()),
             depth_navigator: DepthNavigator::new(registry),
+            llm_selector: None,  // Disabled by default
+            config,
+            metrics: Arc::new(NavigationMetrics::new()),
+        })
+    }
+
+    /// Create navigation system with LLM dimension selector enabled
+    ///
+    /// Uses LLM for intent-based dimension selection instead of keyword matching.
+    /// Requires ANTHROPIC_API_KEY environment variable.
+    ///
+    /// # Arguments
+    ///
+    /// * `registry` - Shared dimension registry
+    /// * `api_key` - Anthropic API key for Claude
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// let registry = Arc::new(DimensionRegistry::load_dimensions(&config)?);
+    /// let api_key = env::var("ANTHROPIC_API_KEY")?;
+    /// let system = NavigationSystem::with_llm_selector(registry, api_key)?;
+    /// ```
+    pub fn with_llm_selector(
+        registry: Arc<DimensionRegistry>,
+        api_key: String,
+    ) -> Result<Self, NavigationError> {
+        let config = NavigationConfig::default();
+
+        Ok(Self {
+            query_analyzer: QueryAnalyzer::new(
+                "data/emotional.txt",
+                "data/technical.txt",
+                "data/stopwords.txt",
+            )?,
+            parallel_scanner: ParallelScanner::new(registry.clone(), config.clone()),
+            path_selector: PathSelector::new(),
+            depth_navigator: DepthNavigator::new(registry),
+            llm_selector: Some(DimensionSelector::new(api_key)),
             config,
             metrics: Arc::new(NavigationMetrics::new()),
         })
