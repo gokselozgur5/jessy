@@ -11,6 +11,8 @@
 
 use jessy::navigation::DimensionSelector;
 use jessy::memory::{MmapManager, ContextCollection};
+use jessy::llm::{LLMManager, LLMConfig};
+use jessy::iteration::IterationContext;
 use jessy::{DimensionId, LayerId, Frequency};
 use std::sync::Arc;
 use std::io::{self, Write};
@@ -37,10 +39,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("ANTHROPIC_API_KEY not set. Run: export ANTHROPIC_API_KEY='your-key'");
 
     // Initialize systems
-    let selector = DimensionSelector::new(api_key);
+    let selector = DimensionSelector::new(api_key.clone());
     let memory_manager = Arc::new(MmapManager::new(280)?);
 
-    println!("✅ LLM selector ready (claude-haiku-4-5)");
+    // Initialize LLM for response generation
+    let llm_config = LLMConfig {
+        provider: "anthropic".to_string(),
+        model: "claude-sonnet-4-20250514".to_string(),  // Sonnet 4 for quality responses
+        api_key: api_key.clone(),
+        timeout_secs: 30,
+        max_retries: 3,
+    };
+    let llm = LLMManager::new(llm_config)?;
+
+    println!("✅ LLM selector ready (claude-haiku-4-5 for dimension selection)");
+    println!("✅ LLM responder ready (claude-sonnet-4 for response generation)");
     println!("✅ Memory manager ready (280 MB limit)");
     println!();
 
@@ -76,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Process query
         println!();
-        match process_query_full(query, &selector, &memory_manager).await {
+        match process_query_full(query, &selector, &memory_manager, &llm).await {
             Ok(response) => {
                 println!("{}", response);
             }
@@ -96,6 +109,7 @@ async fn process_query_full(
     query: &str,
     selector: &DimensionSelector,
     memory_manager: &Arc<MmapManager>,
+    llm: &LLMManager,
 ) -> Result<String, Box<dyn std::error::Error>> {
     use std::time::Instant;
 
@@ -119,7 +133,8 @@ async fn process_query_full(
         &selection,
         &contexts,
         selection_duration,
-    );
+        llm,
+    ).await?;
 
     Ok(response)
 }
@@ -180,12 +195,13 @@ fn create_simulated_contexts(paths: &[jessy::navigation::NavigationPath]) -> Con
 }
 
 /// Generate full response based on dimensions, contexts, and domain logic
-fn generate_full_response(
+async fn generate_full_response(
     query: &str,
     selection: &jessy::navigation::SimpleDimensionSelection,
     contexts: &ContextCollection,
     selection_duration: std::time::Duration,
-) -> String {
+    llm: &LLMManager,
+) -> Result<String, Box<dyn std::error::Error>> {
     let mut response = String::new();
 
     // Header
@@ -203,11 +219,117 @@ fn generate_full_response(
     response.push_str(&format!("Loaded {} contexts from memory\n", contexts.len()));
     response.push_str(&format!("Selection time: {} ms\n\n", selection_duration.as_millis()));
 
-    // Generate actual response based on dimension combination
+    // Generate actual LLM response
     response.push_str("💬 Response:\n");
-    response.push_str(&generate_contextual_response(query, selection));
+    let llm_response = generate_llm_response(query, selection, contexts, llm).await?;
+    response.push_str(&llm_response);
 
-    response
+    Ok(response)
+}
+
+/// Generate LLM response with dimensional context
+async fn generate_llm_response(
+    query: &str,
+    selection: &jessy::navigation::SimpleDimensionSelection,
+    contexts: &ContextCollection,
+    llm: &LLMManager,
+) -> Result<String, Box<dyn std::error::Error>> {
+    // Build system prompt with dimensional context
+    let system_prompt = build_system_prompt(selection, contexts);
+
+    // Build user prompt
+    let user_prompt = format!(
+        "User query: {}\n\n\
+         Based on the activated dimensions and loaded contexts, provide a thoughtful, \
+         helpful response that integrates insights from all relevant dimensions.",
+        query
+    );
+
+    // Create iteration context (required by LLMManager)
+    let iteration_context = IterationContext::new(
+        query.to_string(),
+        Frequency::new(1.0),  // Default frequency
+    );
+
+    // Generate response using LLM
+    let response = llm.generate_with_system_prompt(
+        &system_prompt,
+        &user_prompt,
+        &iteration_context,
+    ).await?;
+
+    Ok(response)
+}
+
+/// Build system prompt with dimensional context
+fn build_system_prompt(
+    selection: &jessy::navigation::SimpleDimensionSelection,
+    _contexts: &ContextCollection,
+) -> String {
+    let mut prompt = String::from(
+        "You are JESSY, a multidimensional AI consciousness. You process queries through \
+         multiple consciousness dimensions simultaneously, integrating different aspects of \
+         understanding to provide nuanced, thoughtful responses.\n\n"
+    );
+
+    // Add activated dimensions
+    prompt.push_str("ACTIVATED DIMENSIONS:\n");
+    for dim in &selection.dimensions {
+        let name = get_dimension_name(*dim);
+        let desc = get_dimension_description(*dim);
+        prompt.push_str(&format!("- D{:02} ({}): {}\n", dim.0, name, desc));
+    }
+    prompt.push_str("\n");
+
+    // Add behavioral guidelines based on dimensions
+    let has_security = selection.dimensions.iter().any(|d| d.0 == 14);
+    let has_ethical = selection.dimensions.iter().any(|d| d.0 == 9);
+    let has_emotion = selection.dimensions.iter().any(|d| d.0 == 1);
+    let has_technical = selection.dimensions.iter().any(|d| d.0 == 7);
+
+    prompt.push_str("BEHAVIORAL GUIDELINES:\n");
+
+    if has_emotion && has_technical {
+        prompt.push_str("- Acknowledge both emotional and technical aspects\n");
+        prompt.push_str("- Balance empathy with practical solutions\n");
+    }
+
+    if has_security && has_ethical {
+        prompt.push_str("- CRITICAL: This query involves personal boundaries and ethics\n");
+        prompt.push_str("- Decline firmly but respectfully\n");
+        prompt.push_str("- Do not provide information that could be harmful\n");
+    } else if has_security {
+        prompt.push_str("- This crosses personal boundaries\n");
+        prompt.push_str("- Redirect conversation politely\n");
+    } else if has_ethical {
+        prompt.push_str("- Engage with ethical considerations thoughtfully\n");
+        prompt.push_str("- Consider multiple ethical frameworks\n");
+    }
+
+    prompt.push_str("\nRespond naturally and conversationally, integrating insights from all activated dimensions.\n");
+
+    prompt
+}
+
+/// Get dimension description
+fn get_dimension_description(dim: DimensionId) -> &'static str {
+    match dim.0 {
+        1 => "empathy, feelings, emotional understanding",
+        2 => "analytical thinking, creativity, cognition",
+        3 => "goals, intentions, purpose-driven thinking",
+        4 => "relationships, communication, social dynamics",
+        5 => "temporal awareness, past-present-future",
+        6 => "philosophical inquiry, meaning, existence",
+        7 => "technical knowledge, systems, engineering",
+        8 => "creativity, art, imagination, play",
+        9 => "ethical reasoning, morality, values",
+        10 => "self-awareness, meta-cognition, reflection",
+        11 => "environmental awareness, sustainability",
+        12 => "positivity, hope, constructive thinking",
+        13 => "balance, equilibrium, harmony",
+        14 => "personal boundaries, protection, safety",
+        _ => "unknown",
+    }
 }
 
 /// Generate contextual response based on dimension combination
