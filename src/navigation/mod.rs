@@ -17,6 +17,7 @@ pub mod metrics;
 pub mod diagnostics;
 pub mod owl_pattern;
 pub mod llm_dimension_selector;
+pub mod dimension_selector;
 
 #[cfg(test)]
 mod concurrency_tests;
@@ -36,6 +37,7 @@ pub use depth_navigator::DepthNavigator;
 pub use orchestrator::NavigationSystem;
 pub use owl_pattern::OwlPattern;
 pub use llm_dimension_selector::{LLMDimensionSelector, DimensionSelection};
+pub use dimension_selector::{DimensionSelector, DimensionSelection as SimpleDimensionSelection};
 
 use crate::{DimensionId, LayerId, Frequency};
 use std::collections::HashMap;
