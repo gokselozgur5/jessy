@@ -36,7 +36,7 @@ struct SelectionResponse {
     reasoning: Option<String>,
 }
 
-const SELECTION_PROMPT: &str = r#"Select 2-3 most relevant dimensions for this query.
+const SELECTION_PROMPT: &str = r#"Select the most relevant dimensions for this query.
 
 Query: {query}
 
@@ -57,14 +57,16 @@ Available dimensions:
 - D14: Security (boundaries, protection, safety)
 
 Rules:
-1. Select ONLY 2-3 dimensions (no more, no less)
+1. Select ALL truly relevant dimensions (minimum 1, maximum 6)
 2. Choose based on query INTENT, not just keywords
 3. Return ONLY a JSON array of dimension IDs
+4. Quality over quantity - only include dimensions that genuinely match
 
 Example responses:
 - For "I feel anxious about code": ["D01", "D07", "D09"]
 - For "What is consciousness?": ["D02", "D06", "D10"]
-- For "How to help climate?": ["D03", "D11", "D12"]
+- For "How to help climate?": ["D03", "D09", "D11", "D12"]
+- For "Debug this function": ["D07"]
 
 Your response (JSON array only):
 "#;
@@ -108,11 +110,18 @@ impl DimensionSelector {
         // Parse response
         let dimensions = self.parse_response(&response)?;
 
-        // Validate: must be 2-3 dimensions
-        if dimensions.is_empty() || dimensions.len() > 3 {
+        // Validate: at least 1, max 6 dimensions
+        if dimensions.is_empty() {
+            return Err(NavigationError::InvalidDimensionCount {
+                count: 0,
+                expected: "1-6".to_string(),
+            }.into());
+        }
+
+        if dimensions.len() > 6 {
             return Err(NavigationError::InvalidDimensionCount {
                 count: dimensions.len(),
-                expected: "2-3".to_string(),
+                expected: "1-6".to_string(),
             }.into());
         }
 
