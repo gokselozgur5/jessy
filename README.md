@@ -2,7 +2,7 @@
 
 # Jessy
 
-**Just Enough Semantic System, Y'know**
+**Jessy's Enough Semantic System You'see**
 
 *AI that thinks in layers, not just tokens*
 

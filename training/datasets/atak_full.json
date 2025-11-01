@@ -1,0 +1,467 @@
+[
+  {
+    "input": "What is ATAK?",
+    "output": "ATAK (Android Team Awareness Kit) is a geospatial situational awareness application for Android devices. It provides real-time mapping, navigation, and communication capabilities for tactical operations.",
+    "category": "basics"
+  },
+  {
+    "input": "Can you explain how do you navigate to a waypoint?",
+    "output": "Sure! To navigate to a waypoint: 1) Tap the waypoint marker, 2) Select 'Navigate' from the radial menu, 3) ATAK will display bearing, distance, and ETA, 4) Follow the navigation arrow on the map.",
+    "category": "navigation"
+  },
+  {
+    "input": "Can you explain how do you create a sector sketch in atak?",
+    "output": "Sure! To create sector sketch: 1) Use drawing tools, 2) Mark key terrain features, 3) Add range rings and reference points, 4) Label sectors and boundaries, 5) Share with team for coordinated operations.",
+    "category": "tactical"
+  },
+  {
+    "input": "How do you fix network connection issues in ATAK?",
+    "output": "Network troubleshooting: 1) Verify server address and port, 2) Check network connectivity (WiFi/cellular), 3) Confirm firewall settings, 4) Verify credentials, 5) Check server status with administrator.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "What are the main features of ATAK?",
+    "output": "ATAK's main features include: real-time mapping and navigation, marker placement and management, route planning, range and bearing tools, team tracking, chat and messaging, plugin support, and offline map capabilities.",
+    "category": "basics"
+  },
+  {
+    "input": "Can you explain how do you share a marker with team members?",
+    "output": "Sure! To share a marker: 1) Tap the marker, 2) Select 'Share' from the radial menu, 3) Choose recipients (individual, group, or all), 4) The marker appears on recipients' maps with your callsign.",
+    "category": "communication"
+  },
+  {
+    "input": "Hey, what devices can run atak?",
+    "output": "ATAK runs on Android devices (phones and tablets) running Android 5.0 (Lollipop) or higher. It's optimized for rugged tactical devices but works on consumer Android devices as well.",
+    "category": "basics"
+  },
+  {
+    "input": "Hey, how do you mark a target in atak?",
+    "output": "To mark a target: 1) Use the marker tool, 2) Select 'Hostile' marker type, 3) Place at target location, 4) Add details (type, threat level, notes), 5) Share with team for situational awareness.",
+    "category": "tactical"
+  },
+  {
+    "input": "Hey, what map formats does atak support?",
+    "output": "ATAK supports multiple map formats: MBTiles, SQLite databases, GeoTIFF imagery, KML/KMZ files, shapefiles, and various tile packages. It can also connect to WMS/WMTS servers for online maps.",
+    "category": "maps"
+  },
+  {
+    "input": "What devices can run ATAK?",
+    "output": "ATAK runs on Android devices (phones and tablets) running Android 5.0 (Lollipop) or higher. It's optimized for rugged tactical devices but works on consumer Android devices as well.",
+    "category": "basics"
+  },
+  {
+    "input": "Can you explain how do you create a route in atak?",
+    "output": "Sure! To create a route: 1) Tap the route tool, 2) Tap waypoints on the map in sequence, 3) Adjust waypoints by dragging, 4) Set route properties (name, color, method), 5) Tap 'Done' to save the route.",
+    "category": "navigation"
+  },
+  {
+    "input": "Can you explain how do you measure distance in atak?",
+    "output": "Sure! To measure distance: 1) Open Range Tools, 2) Select 'Range & Bearing', 3) Tap two points on the map, 4) ATAK displays distance, bearing, and elevation difference between the points.",
+    "category": "tools"
+  },
+  {
+    "input": "Hey, what is atak?",
+    "output": "ATAK (Android Team Awareness Kit) is a geospatial situational awareness application for Android devices. It provides real-time mapping, navigation, and communication capabilities for tactical operations.",
+    "category": "basics"
+  },
+  {
+    "input": "Can you explain how do you use the bullseye tool?",
+    "output": "Sure! The bullseye tool: 1) Select 'Bullseye' from Range Tools, 2) Set the center point, 3) Configure ring spacing and count, 4) Use for reference points and distance estimation in tactical operations.",
+    "category": "tools"
+  },
+  {
+    "input": "Can you explain what map formats does atak support?",
+    "output": "Sure! ATAK supports multiple map formats: MBTiles, SQLite databases, GeoTIFF imagery, KML/KMZ files, shapefiles, and various tile packages. It can also connect to WMS/WMTS servers for online maps.",
+    "category": "maps"
+  },
+  {
+    "input": "Hey, how do you send a chat message in atak?",
+    "output": "To send a chat message: 1) Open the chat panel, 2) Select recipient (individual or group), 3) Type your message, 4) Optionally attach location or markers, 5) Tap send. Messages are delivered over the TAK server network.",
+    "category": "communication"
+  },
+  {
+    "input": "Can you explain what do you do if markers aren't syncing?",
+    "output": "Sure! Marker sync troubleshooting: 1) Check network connection, 2) Verify server connection status, 3) Check data permissions, 4) Restart ATAK, 5) Manually resend markers if needed.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "Hey, what navigation methods does atak support?",
+    "output": "ATAK supports multiple navigation methods: driving (road-based), walking (pedestrian), straight line (direct), and aviation. Each method calculates routes differently based on the terrain and available paths.",
+    "category": "navigation"
+  },
+  {
+    "input": "Hey, how do you delete a marker?",
+    "output": "To delete a marker: 1) Tap the marker on the map, 2) Select 'Delete' from the radial menu, or 3) Long-press the marker and select 'Delete' from the context menu.",
+    "category": "markers"
+  },
+  {
+    "input": "What are some popular ATAK plugins?",
+    "output": "Popular ATAK plugins include: Video streaming plugins, sensor integration tools, advanced mapping plugins, communication enhancers, mission planning tools, and custom data visualization plugins.",
+    "category": "plugins"
+  },
+  {
+    "input": "Can you explain how do you install atak plugins?",
+    "output": "Sure! To install plugins: 1) Download the plugin APK file, 2) Install it on your Android device, 3) Open ATAK, 4) The plugin appears in the tools menu, 5) Some plugins require additional configuration.",
+    "category": "plugins"
+  },
+  {
+    "input": "Hey, how do you customize the self-marker appearance?",
+    "output": "To customize self-marker: 1) Go to Settings > My Location, 2) Choose marker icon and color, 3) Set display options (heading, speed, altitude), 4) Configure GPS update frequency.",
+    "category": "settings"
+  },
+  {
+    "input": "Hey, what are the main features of atak?",
+    "output": "ATAK's main features include: real-time mapping and navigation, marker placement and management, route planning, range and bearing tools, team tracking, chat and messaging, plugin support, and offline map capabilities.",
+    "category": "basics"
+  },
+  {
+    "input": "Can you explain what navigation methods does atak support?",
+    "output": "Sure! ATAK supports multiple navigation methods: driving (road-based), walking (pedestrian), straight line (direct), and aviation. Each method calculates routes differently based on the terrain and available paths.",
+    "category": "navigation"
+  },
+  {
+    "input": "Hey, how do you fix network connection issues in atak?",
+    "output": "Network troubleshooting: 1) Verify server address and port, 2) Check network connectivity (WiFi/cellular), 3) Confirm firewall settings, 4) Verify credentials, 5) Check server status with administrator.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "Hey, how do you create a route in atak?",
+    "output": "To create a route: 1) Tap the route tool, 2) Tap waypoints on the map in sequence, 3) Adjust waypoints by dragging, 4) Set route properties (name, color, method), 5) Tap 'Done' to save the route.",
+    "category": "navigation"
+  },
+  {
+    "input": "How do you mark a target in ATAK?",
+    "output": "To mark a target: 1) Use the marker tool, 2) Select 'Hostile' marker type, 3) Place at target location, 4) Add details (type, threat level, notes), 5) Share with team for situational awareness.",
+    "category": "tactical"
+  },
+  {
+    "input": "Hey, how do you share a marker with team members?",
+    "output": "To share a marker: 1) Tap the marker, 2) Select 'Share' from the radial menu, 3) Choose recipients (individual, group, or all), 4) The marker appears on recipients' maps with your callsign.",
+    "category": "communication"
+  },
+  {
+    "input": "How do I get started with ATAK?",
+    "output": "To get started with ATAK: 1) Install ATAK on your Android device, 2) Configure your callsign and location settings, 3) Connect to a TAK server if available, 4) Import offline maps for your area, 5) Practice with basic markers and navigation. Would you like details on any of these steps?",
+    "category": "meta"
+  },
+  {
+    "input": "Hey, how do you measure distance in atak?",
+    "output": "To measure distance: 1) Open Range Tools, 2) Select 'Range & Bearing', 3) Tap two points on the map, 4) ATAK displays distance, bearing, and elevation difference between the points.",
+    "category": "tools"
+  },
+  {
+    "input": "Can you explain what are some popular atak plugins?",
+    "output": "Sure! Popular ATAK plugins include: Video streaming plugins, sensor integration tools, advanced mapping plugins, communication enhancers, mission planning tools, and custom data visualization plugins.",
+    "category": "plugins"
+  },
+  {
+    "input": "What map formats does ATAK support?",
+    "output": "ATAK supports multiple map formats: MBTiles, SQLite databases, GeoTIFF imagery, KML/KMZ files, shapefiles, and various tile packages. It can also connect to WMS/WMTS servers for online maps.",
+    "category": "maps"
+  },
+  {
+    "input": "Hey, what do you do if atak won't connect to gps?",
+    "output": "GPS troubleshooting: 1) Check location permissions in Android settings, 2) Ensure GPS is enabled, 3) Move to an area with clear sky view, 4) Restart ATAK, 5) Check if mock locations are disabled.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "Can you explain how do you configure your callsign in atak?",
+    "output": "Sure! To set callsign: 1) Go to Settings > Device Preferences, 2) Enter your callsign in the 'Callsign' field, 3) This identifies you to other team members, 4) Choose a unique, recognizable callsign.",
+    "category": "settings"
+  },
+  {
+    "input": "What do you do if ATAK won't connect to GPS?",
+    "output": "GPS troubleshooting: 1) Check location permissions in Android settings, 2) Ensure GPS is enabled, 3) Move to an area with clear sky view, 4) Restart ATAK, 5) Check if mock locations are disabled.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "Hey, how do you import offline maps in atak?",
+    "output": "To import offline maps: 1) Copy map files (.mbtiles, .sqlite, or imagery) to device storage, 2) In ATAK, go to Settings > Map Layers, 3) Select 'Import', 4) Choose the map file, 5) The map becomes available offline.",
+    "category": "maps"
+  },
+  {
+    "input": "How do you create a sector sketch in ATAK?",
+    "output": "To create sector sketch: 1) Use drawing tools, 2) Mark key terrain features, 3) Add range rings and reference points, 4) Label sectors and boundaries, 5) Share with team for coordinated operations.",
+    "category": "tactical"
+  },
+  {
+    "input": "How do you edit an existing marker?",
+    "output": "To edit a marker: 1) Tap the marker on the map, 2) Select 'Edit' from the radial menu, 3) Modify the marker properties (name, type, color, etc.), 4) Tap 'Done' to save changes.",
+    "category": "markers"
+  },
+  {
+    "input": "How do you use the bullseye tool?",
+    "output": "The bullseye tool: 1) Select 'Bullseye' from Range Tools, 2) Set the center point, 3) Configure ring spacing and count, 4) Use for reference points and distance estimation in tactical operations.",
+    "category": "tools"
+  },
+  {
+    "input": "What marker types are available in ATAK?",
+    "output": "ATAK supports various marker types including: friendly units, hostile units, neutral units, waypoints, objectives, hazards, and custom markers. Each type has different icons and colors for quick identification.",
+    "category": "markers"
+  },
+  {
+    "input": "How do you create a route in ATAK?",
+    "output": "To create a route: 1) Tap the route tool, 2) Tap waypoints on the map in sequence, 3) Adjust waypoints by dragging, 4) Set route properties (name, color, method), 5) Tap 'Done' to save the route.",
+    "category": "navigation"
+  },
+  {
+    "input": "How do you create a 9-line MEDEVAC request in ATAK?",
+    "output": "To create 9-line MEDEVAC: 1) Open the MEDEVAC tool, 2) Fill in all 9 lines (location, frequency, patients, etc.), 3) Set pickup zone marker, 4) Send to appropriate recipients, 5) Track status updates.",
+    "category": "tactical"
+  },
+  {
+    "input": "Can you explain what is the radial menu in atak?",
+    "output": "Sure! The radial menu appears when you tap a marker or location. It provides quick access to common actions like Edit, Delete, Navigate, Share, and tool-specific options. It's designed for one-handed operation.",
+    "category": "tools"
+  },
+  {
+    "input": "Can you explain how do you mark a target in atak?",
+    "output": "Sure! To mark a target: 1) Use the marker tool, 2) Select 'Hostile' marker type, 3) Place at target location, 4) Add details (type, threat level, notes), 5) Share with team for situational awareness.",
+    "category": "tactical"
+  },
+  {
+    "input": "Can you explain how do you connect to a tak server?",
+    "output": "Sure! To connect to TAK server: 1) Go to Settings > Network Preferences, 2) Add server connection, 3) Enter server address, port, and credentials, 4) Enable the connection, 5) ATAK connects and syncs with the server.",
+    "category": "settings"
+  },
+  {
+    "input": "Hey, how do you use the bullseye tool?",
+    "output": "The bullseye tool: 1) Select 'Bullseye' from Range Tools, 2) Set the center point, 3) Configure ring spacing and count, 4) Use for reference points and distance estimation in tactical operations.",
+    "category": "tools"
+  },
+  {
+    "input": "Can you explain how do you delete a marker?",
+    "output": "Sure! To delete a marker: 1) Tap the marker on the map, 2) Select 'Delete' from the radial menu, or 3) Long-press the marker and select 'Delete' from the context menu.",
+    "category": "markers"
+  },
+  {
+    "input": "Hey, how do you navigate to a waypoint?",
+    "output": "To navigate to a waypoint: 1) Tap the waypoint marker, 2) Select 'Navigate' from the radial menu, 3) ATAK will display bearing, distance, and ETA, 4) Follow the navigation arrow on the map.",
+    "category": "navigation"
+  },
+  {
+    "input": "Can you explain how do you add a marker in atak?",
+    "output": "Sure! To add a marker: 1) Tap the marker tool icon, 2) Either tap a location on the map or enter coordinates manually, 3) Customize the marker type, color, and label, 4) Tap 'Done' to place the marker.",
+    "category": "markers"
+  },
+  {
+    "input": "What do you do if markers aren't syncing?",
+    "output": "Marker sync troubleshooting: 1) Check network connection, 2) Verify server connection status, 3) Check data permissions, 4) Restart ATAK, 5) Manually resend markers if needed.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "What navigation methods does ATAK support?",
+    "output": "ATAK supports multiple navigation methods: driving (road-based), walking (pedestrian), straight line (direct), and aviation. Each method calculates routes differently based on the terrain and available paths.",
+    "category": "navigation"
+  },
+  {
+    "input": "Hey, what is the radial menu in atak?",
+    "output": "The radial menu appears when you tap a marker or location. It provides quick access to common actions like Edit, Delete, Navigate, Share, and tool-specific options. It's designed for one-handed operation.",
+    "category": "tools"
+  },
+  {
+    "input": "How do you share a marker with team members?",
+    "output": "To share a marker: 1) Tap the marker, 2) Select 'Share' from the radial menu, 3) Choose recipients (individual, group, or all), 4) The marker appears on recipients' maps with your callsign.",
+    "category": "communication"
+  },
+  {
+    "input": "Can you explain how do you change the base map layer?",
+    "output": "Sure! To change base map: 1) Tap the layer icon, 2) Select 'Base Maps', 3) Choose from available maps (satellite, street, terrain, etc.), 4) The map view updates immediately.",
+    "category": "maps"
+  },
+  {
+    "input": "Can you explain what devices can run atak?",
+    "output": "Sure! ATAK runs on Android devices (phones and tablets) running Android 5.0 (Lollipop) or higher. It's optimized for rugged tactical devices but works on consumer Android devices as well.",
+    "category": "basics"
+  },
+  {
+    "input": "Can you explain how does team tracking work in atak?",
+    "output": "Sure! Team tracking: 1) Team members' locations appear as markers on the map, 2) Updates occur in real-time via network connection, 3) Each team member has a unique callsign and icon, 4) You can see bearing, distance, and status of team members.",
+    "category": "communication"
+  },
+  {
+    "input": "How do you measure distance in ATAK?",
+    "output": "To measure distance: 1) Open Range Tools, 2) Select 'Range & Bearing', 3) Tap two points on the map, 4) ATAK displays distance, bearing, and elevation difference between the points.",
+    "category": "tools"
+  },
+  {
+    "input": "How do you customize the self-marker appearance?",
+    "output": "To customize self-marker: 1) Go to Settings > My Location, 2) Choose marker icon and color, 3) Set display options (heading, speed, altitude), 4) Configure GPS update frequency.",
+    "category": "settings"
+  },
+  {
+    "input": "Can you explain what do you do if atak won't connect to gps?",
+    "output": "Sure! GPS troubleshooting: 1) Check location permissions in Android settings, 2) Ensure GPS is enabled, 3) Move to an area with clear sky view, 4) Restart ATAK, 5) Check if mock locations are disabled.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "Hey, how do you configure your callsign in atak?",
+    "output": "To set callsign: 1) Go to Settings > Device Preferences, 2) Enter your callsign in the 'Callsign' field, 3) This identifies you to other team members, 4) Choose a unique, recognizable callsign.",
+    "category": "settings"
+  },
+  {
+    "input": "Hey, what are some popular atak plugins?",
+    "output": "Popular ATAK plugins include: Video streaming plugins, sensor integration tools, advanced mapping plugins, communication enhancers, mission planning tools, and custom data visualization plugins.",
+    "category": "plugins"
+  },
+  {
+    "input": "How do you install ATAK plugins?",
+    "output": "To install plugins: 1) Download the plugin APK file, 2) Install it on your Android device, 3) Open ATAK, 4) The plugin appears in the tools menu, 5) Some plugins require additional configuration.",
+    "category": "plugins"
+  },
+  {
+    "input": "Can you explain how do you send a chat message in atak?",
+    "output": "Sure! To send a chat message: 1) Open the chat panel, 2) Select recipient (individual or group), 3) Type your message, 4) Optionally attach location or markers, 5) Tap send. Messages are delivered over the TAK server network.",
+    "category": "communication"
+  },
+  {
+    "input": "Hey, how do you connect to a tak server?",
+    "output": "To connect to TAK server: 1) Go to Settings > Network Preferences, 2) Add server connection, 3) Enter server address, port, and credentials, 4) Enable the connection, 5) ATAK connects and syncs with the server.",
+    "category": "settings"
+  },
+  {
+    "input": "How do you navigate to a waypoint?",
+    "output": "To navigate to a waypoint: 1) Tap the waypoint marker, 2) Select 'Navigate' from the radial menu, 3) ATAK will display bearing, distance, and ETA, 4) Follow the navigation arrow on the map.",
+    "category": "navigation"
+  },
+  {
+    "input": "Can you explain how do you edit an existing marker?",
+    "output": "Sure! To edit a marker: 1) Tap the marker on the map, 2) Select 'Edit' from the radial menu, 3) Modify the marker properties (name, type, color, etc.), 4) Tap 'Done' to save changes.",
+    "category": "markers"
+  },
+  {
+    "input": "Hey, how do you create a sector sketch in atak?",
+    "output": "To create sector sketch: 1) Use drawing tools, 2) Mark key terrain features, 3) Add range rings and reference points, 4) Label sectors and boundaries, 5) Share with team for coordinated operations.",
+    "category": "tactical"
+  },
+  {
+    "input": "Can you explain how do you fix network connection issues in atak?",
+    "output": "Sure! Network troubleshooting: 1) Verify server address and port, 2) Check network connectivity (WiFi/cellular), 3) Confirm firewall settings, 4) Verify credentials, 5) Check server status with administrator.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "Are you an ATAK expert?",
+    "output": "Yes! I'm trained on ATAK documentation and can help you with all aspects of using ATAK, from basic operations to advanced tactical features.",
+    "category": "meta"
+  },
+  {
+    "input": "How does team tracking work in ATAK?",
+    "output": "Team tracking: 1) Team members' locations appear as markers on the map, 2) Updates occur in real-time via network connection, 3) Each team member has a unique callsign and icon, 4) You can see bearing, distance, and status of team members.",
+    "category": "communication"
+  },
+  {
+    "input": "Can you explain how do you customize the self-marker appearance?",
+    "output": "Sure! To customize self-marker: 1) Go to Settings > My Location, 2) Choose marker icon and color, 3) Set display options (heading, speed, altitude), 4) Configure GPS update frequency.",
+    "category": "settings"
+  },
+  {
+    "input": "Hey, what do you do if markers aren't syncing?",
+    "output": "Marker sync troubleshooting: 1) Check network connection, 2) Verify server connection status, 3) Check data permissions, 4) Restart ATAK, 5) Manually resend markers if needed.",
+    "category": "troubleshooting"
+  },
+  {
+    "input": "Hey, what marker types are available in atak?",
+    "output": "ATAK supports various marker types including: friendly units, hostile units, neutral units, waypoints, objectives, hazards, and custom markers. Each type has different icons and colors for quick identification.",
+    "category": "markers"
+  },
+  {
+    "input": "Hey, how do you create a 9-line medevac request in atak?",
+    "output": "To create 9-line MEDEVAC: 1) Open the MEDEVAC tool, 2) Fill in all 9 lines (location, frequency, patients, etc.), 3) Set pickup zone marker, 4) Send to appropriate recipients, 5) Track status updates.",
+    "category": "tactical"
+  },
+  {
+    "input": "Hey, how does team tracking work in atak?",
+    "output": "Team tracking: 1) Team members' locations appear as markers on the map, 2) Updates occur in real-time via network connection, 3) Each team member has a unique callsign and icon, 4) You can see bearing, distance, and status of team members.",
+    "category": "communication"
+  },
+  {
+    "input": "Hey, how do you add a marker in atak?",
+    "output": "To add a marker: 1) Tap the marker tool icon, 2) Either tap a location on the map or enter coordinates manually, 3) Customize the marker type, color, and label, 4) Tap 'Done' to place the marker.",
+    "category": "markers"
+  },
+  {
+    "input": "Hey, how do you install atak plugins?",
+    "output": "To install plugins: 1) Download the plugin APK file, 2) Install it on your Android device, 3) Open ATAK, 4) The plugin appears in the tools menu, 5) Some plugins require additional configuration.",
+    "category": "plugins"
+  },
+  {
+    "input": "What can you help me with regarding ATAK?",
+    "output": "I can help you with ATAK basics, marker management, navigation, tools, communication, maps, settings, plugins, tactical operations, and troubleshooting. Just ask me anything about ATAK!",
+    "category": "meta"
+  },
+  {
+    "input": "Can you explain what is atak?",
+    "output": "Sure! ATAK (Android Team Awareness Kit) is a geospatial situational awareness application for Android devices. It provides real-time mapping, navigation, and communication capabilities for tactical operations.",
+    "category": "basics"
+  },
+  {
+    "input": "Can you explain what are the main features of atak?",
+    "output": "Sure! ATAK's main features include: real-time mapping and navigation, marker placement and management, route planning, range and bearing tools, team tracking, chat and messaging, plugin support, and offline map capabilities.",
+    "category": "basics"
+  },
+  {
+    "input": "How do you add a marker in ATAK?",
+    "output": "To add a marker: 1) Tap the marker tool icon, 2) Either tap a location on the map or enter coordinates manually, 3) Customize the marker type, color, and label, 4) Tap 'Done' to place the marker.",
+    "category": "markers"
+  },
+  {
+    "input": "How do you connect to a TAK server?",
+    "output": "To connect to TAK server: 1) Go to Settings > Network Preferences, 2) Add server connection, 3) Enter server address, port, and credentials, 4) Enable the connection, 5) ATAK connects and syncs with the server.",
+    "category": "settings"
+  },
+  {
+    "input": "How do you import offline maps in ATAK?",
+    "output": "To import offline maps: 1) Copy map files (.mbtiles, .sqlite, or imagery) to device storage, 2) In ATAK, go to Settings > Map Layers, 3) Select 'Import', 4) Choose the map file, 5) The map becomes available offline.",
+    "category": "maps"
+  },
+  {
+    "input": "How do you delete a marker?",
+    "output": "To delete a marker: 1) Tap the marker on the map, 2) Select 'Delete' from the radial menu, or 3) Long-press the marker and select 'Delete' from the context menu.",
+    "category": "markers"
+  },
+  {
+    "input": "Hey, how do you edit an existing marker?",
+    "output": "To edit a marker: 1) Tap the marker on the map, 2) Select 'Edit' from the radial menu, 3) Modify the marker properties (name, type, color, etc.), 4) Tap 'Done' to save changes.",
+    "category": "markers"
+  },
+  {
+    "input": "How do you send a chat message in ATAK?",
+    "output": "To send a chat message: 1) Open the chat panel, 2) Select recipient (individual or group), 3) Type your message, 4) Optionally attach location or markers, 5) Tap send. Messages are delivered over the TAK server network.",
+    "category": "communication"
+  },
+  {
+    "input": "Can you explain what marker types are available in atak?",
+    "output": "Sure! ATAK supports various marker types including: friendly units, hostile units, neutral units, waypoints, objectives, hazards, and custom markers. Each type has different icons and colors for quick identification.",
+    "category": "markers"
+  },
+  {
+    "input": "How do you configure your callsign in ATAK?",
+    "output": "To set callsign: 1) Go to Settings > Device Preferences, 2) Enter your callsign in the 'Callsign' field, 3) This identifies you to other team members, 4) Choose a unique, recognizable callsign.",
+    "category": "settings"
+  },
+  {
+    "input": "Can you explain how do you create a 9-line medevac request in atak?",
+    "output": "Sure! To create 9-line MEDEVAC: 1) Open the MEDEVAC tool, 2) Fill in all 9 lines (location, frequency, patients, etc.), 3) Set pickup zone marker, 4) Send to appropriate recipients, 5) Track status updates.",
+    "category": "tactical"
+  },
+  {
+    "input": "Hey, how do you change the base map layer?",
+    "output": "To change base map: 1) Tap the layer icon, 2) Select 'Base Maps', 3) Choose from available maps (satellite, street, terrain, etc.), 4) The map view updates immediately.",
+    "category": "maps"
+  },
+  {
+    "input": "How do you change the base map layer?",
+    "output": "To change base map: 1) Tap the layer icon, 2) Select 'Base Maps', 3) Choose from available maps (satellite, street, terrain, etc.), 4) The map view updates immediately.",
+    "category": "maps"
+  },
+  {
+    "input": "What is the radial menu in ATAK?",
+    "output": "The radial menu appears when you tap a marker or location. It provides quick access to common actions like Edit, Delete, Navigate, Share, and tool-specific options. It's designed for one-handed operation.",
+    "category": "tools"
+  },
+  {
+    "input": "Can you explain how do you import offline maps in atak?",
+    "output": "Sure! To import offline maps: 1) Copy map files (.mbtiles, .sqlite, or imagery) to device storage, 2) In ATAK, go to Settings > Map Layers, 3) Select 'Import', 4) Choose the map file, 5) The map becomes available offline.",
+    "category": "maps"
+  }
+]
