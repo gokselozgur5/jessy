@@ -5,7 +5,7 @@ let sessionId = localStorage.getItem('jessy_session_id') || null;
 // API Base URL - auto-detect environment
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '' // Localhost: same origin
-    : 'https://jessy-api.onrender.com'; // Production: Render.com backend
+    : 'https://jessy-xlow.onrender.com'; // Production: Render.com backend
 
 // DOM elements
 const chatForm = document.getElementById('chatForm');
