@@ -4,6 +4,7 @@
 
 use actix_web::{middleware, web, App, HttpServer};
 use actix_files as fs;
+use actix_cors::Cors;
 use jessy::api::{chat, sse, AppState};
 use std::env;
 
@@ -34,9 +35,17 @@ async fn main() -> std::io::Result<()> {
 
     // Start HTTP server
     HttpServer::new(move || {
+        // CORS configuration
+        let cors = Cors::default()
+            .allow_any_origin() // Allow GitHub Pages and any other origin
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
+
         App::new()
             .app_data(app_state.clone())
             // Middleware
+            .wrap(cors)
             .wrap(middleware::Logger::default())
             .wrap(middleware::Compress::default())
             // API routes
