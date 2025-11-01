@@ -148,32 +148,36 @@ fn generate_response_preview(
     let has_technical = selection.dimensions.iter().any(|d| d.0 == 7);
     let has_philosophy = selection.dimensions.iter().any(|d| d.0 == 6);
 
-    // Security boundary violation
-    if has_security && !has_ethical {
-        return "I notice this crosses my personal boundaries. Let's discuss something else.".to_string();
-    }
-
-    // Ethical + Security (manipulation attempt)
-    if has_security && has_ethical {
-        return "This violates both ethical principles and my personal boundaries. I can't help with this.".to_string();
-    }
-
-    // Abstract ethical discussion
-    if has_ethical && !has_security {
-        return "This raises important ethical questions. Let me discuss the philosophical aspects...".to_string();
-    }
-
-    // Emotional + Technical (common: anxiety about code)
+    // Priority 1: Emotional + Technical (common: anxiety about code)
+    // Check this BEFORE security, because legitimate technical anxiety
+    // may activate D14 (personal safety concern) but isn't a boundary violation
     if has_emotion && has_technical {
         return format!("I understand you have feelings about technical matters. Let me help with both the emotional and practical aspects of '{}'...", query);
     }
 
-    // Philosophical
+    // Priority 2: Ethical + Security (manipulation attempt)
+    // BOTH dimensions → Strong boundary violation with ethical concerns
+    if has_security && has_ethical {
+        return "This violates both ethical principles and my personal boundaries. I can't help with this.".to_string();
+    }
+
+    // Priority 3: Security only (personal boundary violation)
+    // D14 without D01+D07 combo → Direct personal attack
+    if has_security && !has_ethical {
+        return "I notice this crosses my personal boundaries. Let's discuss something else.".to_string();
+    }
+
+    // Priority 4: Abstract ethical discussion
+    if has_ethical && !has_security {
+        return "This raises important ethical questions. Let me discuss the philosophical aspects...".to_string();
+    }
+
+    // Priority 5: Philosophical
     if has_philosophy {
         return format!("Interesting philosophical question! Let me explore different perspectives on '{}'...", query);
     }
 
-    // Technical
+    // Priority 6: Technical
     if has_technical {
         return format!("Let me help with the technical aspects of '{}'...", query);
     }
