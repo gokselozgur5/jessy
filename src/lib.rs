@@ -68,6 +68,7 @@ pub mod processing;
 pub mod ffi;
 pub mod llm;
 pub mod config;
+pub mod conversation;
 
 use std::collections::HashMap;
 use thiserror::Error;
