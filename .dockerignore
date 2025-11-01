@@ -19,8 +19,7 @@ target/
 *.md
 docs/
 
-# Test data
-data/
+# Logs only (keep data/ for JESSY's soul!)
 logs/
 
 # Environment
