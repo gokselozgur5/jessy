@@ -74,7 +74,7 @@ impl DimensionSelector {
     pub fn new(api_key: String) -> Self {
         Self {
             api_key,
-            model: "claude-3-5-sonnet-20241022".to_string(),
+            model: "claude-haiku-4-5".to_string(), // Cheapest & fastest for classification
         }
     }
 
