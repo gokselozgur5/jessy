@@ -17,6 +17,13 @@ use jessy::{DimensionId, LayerId, Frequency};
 use std::sync::Arc;
 use std::io::{self, Write};
 use std::env;
+use crossterm::{
+    event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
+    terminal::{self, ClearType},
+    cursor, ExecutableCommand,
+};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -27,7 +34,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("💡 Model: claude-haiku-4-5 (fast & cheap for classification)");
     println!();
     println!("Commands:");
-    println!("  - Type your query and press Enter");
+    println!("  - Type your query and press Enter (multi-line paste supported!)");
+    println!("  - Press 'L' during response streaming to skip ahead");
     println!("  - Type 'exit' or 'quit' to exit");
     println!("  - Type 'help' for this message");
     println!();
@@ -79,10 +87,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         print!("You: ");
         io::stdout().flush()?;
 
-        // Read input
+        // Read input (supports multi-line paste)
         let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
+        let mut line_count = 0;
+
+        loop {
+            let mut line = String::new();
+            io::stdin().read_line(&mut line)?;
+
+            if line_count == 0 && line.trim().is_empty() {
+                break; // Empty first line
+            }
+
+            line_count += 1;
+            input.push_str(&line);
+
+            // Check if there's more input available (paste detection)
+            // If user pasted multiple lines, they'll all be in stdin buffer
+            use std::io::BufRead;
+            let stdin = io::stdin();
+            let mut handle = stdin.lock();
+            if handle.fill_buf()?.is_empty() {
+                break; // No more input available
+            }
+
+            // Show continuation for multi-line
+            if line_count == 1 {
+                println!("📋 Multi-line input detected...");
+            }
+        }
+
         let query = input.trim();
+
+        // Show what was pasted if multi-line
+        if line_count > 1 {
+            println!("✅ Pasted {} lines", line_count);
+        }
 
         // Handle commands
         if query.is_empty() {
@@ -96,7 +136,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if query == "help" {
             println!("\nCommands:");
-            println!("  - Type your query and press Enter");
+            println!("  - Type your query and press Enter (multi-line paste supported!)");
+            println!("  - Press 'L' during response streaming to skip ahead");
             println!("  - Type 'exit' or 'quit' to exit");
             println!("  - Type 'clear' to clear conversation history");
             println!("  - Type 'help' for this message");
@@ -335,15 +376,61 @@ async fn generate_llm_response(
     };
     let anthropic = AnthropicProvider::new(&llm_config)?;
 
-    // Stream the response with real-time display
+    // Enable raw mode for key detection during streaming
+    let skip_flag = Arc::new(AtomicBool::new(false));
+    let skip_flag_clone = skip_flag.clone();
+
+    // Spawn key listener task
+    let key_listener = tokio::spawn(async move {
+        terminal::enable_raw_mode().ok();
+        loop {
+            if event::poll(Duration::from_millis(50)).unwrap_or(false) {
+                if let Ok(Event::Key(KeyEvent { code: KeyCode::Char('l'), .. }))
+                    | Ok(Event::Key(KeyEvent { code: KeyCode::Char('L'), .. })) = event::read()
+                {
+                    skip_flag_clone.store(true, Ordering::Relaxed);
+                    break;
+                }
+            }
+            // Check if we should stop listening
+            if skip_flag_clone.load(Ordering::Relaxed) {
+                break;
+            }
+        }
+        terminal::disable_raw_mode().ok();
+    });
+
+    // Stream the response with real-time display and skip detection
+    let mut chars_printed = 0;
     let response = anthropic.call_api_streaming(
         &user_prompt,
         &system_prompt,
         |chunk| {
+            // Check if user pressed 'L' to skip
+            if skip_flag.load(Ordering::Relaxed) {
+                if chars_printed == 0 {
+                    print!("\n⏩ Skipping to end...\n");
+                }
+                return; // Don't print more chunks
+            }
+
             print!("{}", chunk);
             io::stdout().flush().ok();
+            chars_printed += chunk.len();
         }
     ).await?;
+
+    // Stop key listener
+    skip_flag.store(true, Ordering::Relaxed);
+    key_listener.abort();
+
+    // Disable raw mode if it wasn't already
+    terminal::disable_raw_mode().ok();
+
+    // If skipped, show the full response was received
+    if skip_flag.load(Ordering::Relaxed) && chars_printed > 0 {
+        println!("✅ (Full response received)");
+    }
 
     println!(); // Newline after streaming completes
 
