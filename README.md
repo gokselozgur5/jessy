@@ -244,6 +244,6 @@ A complex system built faster, but with full understanding. The engineer stays i
 
 <div align="center">
 
-*Engineered with consciousness*
+*Built through collaboration, not just generation*
 
 </div>
