@@ -36,39 +36,70 @@ struct SelectionResponse {
     reasoning: Option<String>,
 }
 
-const SELECTION_PROMPT: &str = r#"Select the most relevant dimensions for this query.
+const SELECTION_PROMPT: &str = r#"You are JESSY's autonomous layer selector using the OWL (Observe, Wonder, Learn) pattern.
 
-Query: {query}
+# 🦉 OBSERVE
+Analyze the query deeply:
+- What is the user truly asking?
+- What emotional undertones exist?
+- What implicit needs are present?
 
-Available dimensions:
-- D01: Emotion (empathy, joy, sadness, feelings)
-- D02: Cognition (analytical, creative, intuitive, thinking)
-- D03: Intention (create, destroy, explore, teach, goals)
-- D04: Social (relationships, communication, people)
-- D05: Temporal (past, present, future, time)
-- D06: Philosophy (meaning, existence, truth, ethics)
-- D07: Technical (code, systems, debugging, engineering)
-- D08: Creative (art, metaphor, play, imagination)
-- D09: Ethical (harm prevention, morality, values)
-- D10: Meta (self-awareness, learning, reflection)
-- D11: Ecological (nature, sustainability, environment)
-- D12: Positivity (hope, constructive, optimism)
-- D13: Balance (equilibrium, moderation, harmony)
-- D14: Security (boundaries, protection, safety)
+# 🦉 WONDER
+Question your approach:
+- Which personality layers are genuinely relevant?
+- Am I choosing based on intent, not just keywords?
+- Is this selection quality over quantity?
 
-Rules:
-1. Select ALL truly relevant dimensions (minimum 1, maximum 9)
-2. Choose based on query INTENT, not just keywords
-3. Return ONLY a JSON array of dimension IDs
-4. Quality over quantity - only include dimensions that genuinely match
+# 🦉 LEARN
+Apply wisdom:
+- Focus on 1-9 layers that truly matter
+- Each layer must add genuine value
 
-Example responses:
-- For "I feel anxious about code": ["D01", "D07", "D09"]
-- For "What is consciousness?": ["D02", "D06", "D10"]
-- For "How to help climate?": ["D03", "D09", "D11", "D12"]
-- For "Debug this function": ["D07"]
+---
 
-Your response (JSON array only):
+# PERSONALITY LAYERS (L01-L14)
+L01: Emotion - empathy, feelings, emotional resonance, human connection
+L02: Cognition - analytical thinking, problem-solving, logic, reasoning
+L03: Intention - goals, purpose, motivation, desire to act
+L04: Social - relationships, communication, social dynamics
+L05: Temporal - time awareness, past/present/future, causality
+L06: Philosophy - meaning, existence, truth, fundamental questions
+L07: Technical - code, systems, engineering, implementation
+L08: Creative - art, metaphor, imagination, play
+L09: Ethical - harm prevention, morality, fairness, values
+L10: Meta - self-awareness, reflection, learning about learning
+L11: Ecological - nature, sustainability, interconnection
+L12: Positivity - hope, constructive outlook, resilience
+L13: Balance - equilibrium, moderation, harmony, integration
+L14: Security - boundaries, protection, safety, trust
+
+---
+
+# EXAMPLES
+
+Query: "I feel anxious about deploying this code"
+Response: [1, 7, 9, 14]
+Reasoning: Emotional distress (L01), technical context (L07), responsibility (L09), safety concerns (L14)
+
+Query: "What is consciousness?"
+Response: [2, 6, 10]
+Reasoning: Cognitive inquiry (L02), philosophical depth (L06), meta-reflection (L10)
+
+Query: "How to reduce carbon emissions?"
+Response: [3, 9, 11, 12]
+Reasoning: Intentional action (L03), ethical imperative (L09), ecological focus (L11), constructive framing (L12)
+
+Query: "Debug this function"
+Response: [7]
+Reasoning: Pure technical problem-solving (L07)
+
+---
+
+# USER QUERY
+{query}
+
+# YOUR RESPONSE
+Return ONLY a JSON array of layer numbers (1-14):
 "#;
 
 impl DimensionSelector {
@@ -184,45 +215,59 @@ impl DimensionSelector {
         Ok(text.to_string())
     }
 
-    /// Parse LLM response into dimension IDs
+    /// Parse LLM response into layer IDs
     ///
     /// Handles multiple formats:
-    /// - JSON array: ["D01", "D02", "D07"]
-    /// - Plain text: D01, D02, D07
-    /// - Mixed: Extracts dimension IDs from any text
+    /// - JSON array of numbers: [1, 7, 9]
+    /// - JSON array of strings: ["1", "7", "9"]
+    /// - Legacy D## format: ["D01", "D07"]
+    /// - Plain text: L01, L07, or 1, 7
     fn parse_response(&self, response: &str) -> Result<Vec<DimensionId>, NavigationError> {
         let cleaned = response.trim();
 
-        // Try JSON parsing first
+        // Try JSON array of numbers first: [1, 7, 9]
+        if let Ok(parsed) = serde_json::from_str::<Vec<u8>>(cleaned) {
+            let mut layers = Vec::new();
+            for num in parsed {
+                if (1..=14).contains(&num) {
+                    layers.push(DimensionId(num));
+                }
+            }
+            if !layers.is_empty() {
+                return Ok(layers);
+            }
+        }
+
+        // Try JSON array of strings: ["1", "7"] or ["L01", "L07"]
         if let Ok(parsed) = serde_json::from_str::<Vec<String>>(cleaned) {
             return self.parse_dimension_strings(&parsed);
         }
 
-        // Fallback: Extract D## patterns from text
-        let dimension_pattern = regex::Regex::new(r"D(\d{2})").unwrap();
-        let mut dimensions = Vec::new();
+        // Fallback: Extract L## or D## patterns from text
+        let layer_pattern = regex::Regex::new(r"[LD](\d{1,2})").unwrap();
+        let mut layers = Vec::new();
 
-        for cap in dimension_pattern.captures_iter(cleaned) {
+        for cap in layer_pattern.captures_iter(cleaned) {
             if let Some(num_str) = cap.get(1) {
                 if let Ok(num) = num_str.as_str().parse::<u8>() {
                     if num >= 1 && num <= 14 {
-                        dimensions.push(DimensionId(num));
+                        layers.push(DimensionId(num));
                     }
                 }
             }
         }
 
-        if dimensions.is_empty() {
+        if layers.is_empty() {
             return Err(NavigationError::ParsingError {
-                details: format!("Could not parse dimensions from response: {}", cleaned),
+                details: format!("Could not parse layers from response: {}", cleaned),
             }.into());
         }
 
         // Remove duplicates, keep order
         let mut seen = std::collections::HashSet::new();
-        dimensions.retain(|d| seen.insert(d.0));
+        layers.retain(|d| seen.insert(d.0));
 
-        Ok(dimensions)
+        Ok(layers)
     }
 
     /// Convert dimension strings (["D01", "D02"]) to DimensionIds
