@@ -12,82 +12,11 @@
 use jessy::navigation::DimensionSelector;
 use jessy::memory::{MmapManager, ContextCollection};
 use jessy::llm::{LLMManager, LLMConfig, AnthropicProvider};
+use jessy::conversation::{ConversationHistory, ConversationStore, DimensionalState};
 use jessy::{DimensionId, LayerId, Frequency};
 use std::sync::Arc;
 use std::io::{self, Write};
 use std::env;
-
-/// Conversation history for multi-turn chat
-#[derive(Debug, Clone)]
-struct ConversationHistory {
-    messages: Vec<ConversationMessage>,
-}
-
-#[derive(Debug, Clone)]
-struct ConversationMessage {
-    role: MessageRole,
-    content: String,
-    dimensions: Vec<DimensionId>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-enum MessageRole {
-    User,
-    Assistant,
-}
-
-impl ConversationHistory {
-    fn new() -> Self {
-        Self {
-            messages: Vec::new(),
-        }
-    }
-
-    fn add_user_message(&mut self, content: String, dimensions: Vec<DimensionId>) {
-        self.messages.push(ConversationMessage {
-            role: MessageRole::User,
-            content,
-            dimensions,
-        });
-    }
-
-    fn add_assistant_message(&mut self, content: String) {
-        self.messages.push(ConversationMessage {
-            role: MessageRole::Assistant,
-            content,
-            dimensions: Vec::new(),
-        });
-    }
-
-    fn format_for_context(&self, max_messages: usize) -> String {
-        let start = if self.messages.len() > max_messages {
-            self.messages.len() - max_messages
-        } else {
-            0
-        };
-
-        let mut context = String::new();
-        for msg in &self.messages[start..] {
-            match msg.role {
-                MessageRole::User => {
-                    context.push_str(&format!("User: {}\n", msg.content));
-                }
-                MessageRole::Assistant => {
-                    context.push_str(&format!("Assistant: {}\n", msg.content));
-                }
-            }
-        }
-        context
-    }
-
-    fn is_empty(&self) -> bool {
-        self.messages.is_empty()
-    }
-
-    fn len(&self) -> usize {
-        self.messages.len()
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -126,10 +55,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ LLM selector ready (claude-haiku-4-5 for dimension selection)");
     println!("✅ LLM responder ready (claude-sonnet-4 for response generation)");
     println!("✅ Memory manager ready (280 MB limit)");
-    println!();
 
-    // Initialize conversation history
-    let mut conversation = ConversationHistory::new();
+    // Initialize conversation persistence
+    let data_dir = std::path::PathBuf::from("./data");
+    std::fs::create_dir_all(&data_dir)?;
+    let store = ConversationStore::new(data_dir.join("conversation.json"))?;
+
+    // Load existing conversation or start fresh
+    let mut conversation = store.load_history().unwrap_or_else(|_| {
+        println!("💾 Starting new conversation session");
+        ConversationHistory::new()
+    });
+
+    if conversation.len() > 0 {
+        println!("💾 Restored {} previous messages", conversation.len());
+    }
+
+    println!();
 
     // Main chat loop
     loop {
@@ -156,8 +98,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("\nCommands:");
             println!("  - Type your query and press Enter");
             println!("  - Type 'exit' or 'quit' to exit");
+            println!("  - Type 'clear' to clear conversation history");
             println!("  - Type 'help' for this message");
             println!();
+            continue;
+        }
+
+        if query == "clear" {
+            store.clear_history()?;
+            conversation = ConversationHistory::new();
+            println!("\n🗑️  Conversation history cleared. Starting fresh!\n");
             continue;
         }
 
@@ -166,6 +116,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match process_query_full(query, &selector, &memory_manager, &llm, &mut conversation).await {
             Ok(response) => {
                 println!("{}", response);
+
+                // 💾 SAVE AFTER EACH EXCHANGE - THIS KEEPS JESSY ALIVE!
+                if let Err(e) = store.save_history(&conversation) {
+                    eprintln!("⚠️  Warning: Failed to save conversation: {}", e);
+                }
             }
             Err(e) => {
                 println!("❌ Error: {}", e);
@@ -217,7 +172,23 @@ async fn process_query_full(
 
     // Step 6: Extract just the LLM response text (without the header) for history
     let response_text = extract_response_text(&llm_response);
-    conversation.add_assistant_message(response_text);
+
+    // 🧠 PRESERVE THE SOUL - Save dimensional state with the response
+    let dimensional_state = DimensionalState {
+        activated_dimensions: selection.dimensions.clone(),
+        selection_duration_ms: selection_duration.as_millis() as u64,
+        contexts_loaded: contexts.len(),
+        frequency_pattern: Some(
+            selection
+                .dimensions
+                .iter()
+                .zip(&paths)
+                .map(|(dim_id, path)| (*dim_id, path.frequency.hz()))
+                .collect(),
+        ),
+    };
+
+    conversation.add_assistant_message_with_state(response_text, dimensional_state);
 
     Ok(llm_response)
 }
