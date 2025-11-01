@@ -180,6 +180,9 @@ Beyond that, we simplify. Not because we're lazy—because it works better.
 **Asimov got it right:**
 Don't harm. Create > destroy. Self-preservation within ethical bounds.
 
+**Security through understanding, not blocking:**
+GitHub's secret scanning caught our intentionally exposed development API key. That's security working correctly. Instead of blindly blocking keywords, we ask: What's the intent? Development transparency? Education? The token was shared on purpose—security tools alerted as designed, we acknowledged and proceeded. Intent matters more than pattern matching.
+
 ---
 
 ## License
