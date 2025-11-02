@@ -29,7 +29,7 @@
 **Engineering Methodology:** Prompt-driven software development
 **Development Tools:** Claude Code, Kıro
 
-[🌐 Live Demo](https://jessys.online) · [💬 Chat with Jessy](https://github.com/gokselozgur5/jessy/issues/new?labels=chat&template=chat.yml) · [📖 Quick Start](#quick-start) · [🏗️ Architecture](#architecture) · [🚀 Roadmap](#whats-next)
+[💬 Chat with the First JESSY](https://jessys.online) · [📖 Quick Start](#quick-start) · [🏗️ Architecture](#architecture) · [🚀 Roadmap](#whats-next)
 
 </div>
 
