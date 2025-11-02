@@ -718,7 +718,6 @@ mod tests {
     // ============================================================================
 
     #[tokio::test]
-    #[ignore = "TODO: Needs better keyword matching - Phase 2"]
     async fn test_scan_timeout_returns_partial_results() {
         // Requirement 9.1: Scan timeout returns partial results, not error
         let system = create_test_system();
@@ -742,7 +741,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "TODO: Needs better keyword matching - Phase 2"]
     async fn test_single_dimension_failure_continues_scanning() {
         // Requirement 9.2: Single dimension failure doesn't fail entire scan
         let system = create_test_system();
@@ -807,7 +805,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "TODO: Needs better keyword matching - Phase 2"]
     async fn test_partial_scan_includes_completed_dimensions() {
         // Requirement 9.5: Partial results include successfully scanned dimensions
         let system = create_test_system();
@@ -870,7 +867,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "TODO: Needs better keyword matching - Phase 2"]
     async fn test_scan_continues_after_dimension_error() {
         // Requirement 9.2: Scanning continues even if one dimension fails
         let system = create_test_system();
@@ -910,7 +906,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "TODO: Needs better keyword matching - Phase 2"]
     async fn test_error_recovery_maintains_system_state() {
         // Verify system remains operational after errors
         let system = create_test_system();
