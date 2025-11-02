@@ -99,8 +99,12 @@ Reasoning: Analytical thinking (L02), technical problem-solving (L07), meta-awar
 # USER QUERY
 {query}
 
-# YOUR RESPONSE
-Return ONLY a JSON array of layer numbers (1-14):
+# YOUR RESPONSE FORMAT
+You MUST respond with ONLY a valid JSON array. No explanations, no text, just the array.
+
+Example: [1, 2, 7]
+
+Your response:
 "#;
 
 impl DimensionSelector {
