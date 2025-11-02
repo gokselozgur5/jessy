@@ -25,7 +25,7 @@ Most AI responds. JESSY'S *thinks with you*.
 ```
 Traditional AI          JESSY'S
 ─────────────          ───────
-Query → Answer         Query → 15 dimensions → Interference → 9 iterations → Understanding
+Query → Answer         Query → 15 cognitive layers → Interference → 9 iterations → Understanding
 ```
 
 Like talking to someone who actually thinks—not just pattern matches.
@@ -33,7 +33,7 @@ Like talking to someone who actually thinks—not just pattern matches.
 **What makes JESSY'S different:**
 - **Thinks like you do**: 9 iterations (explore → refine → crystallize)
 - **Evolves with you**: Learns your patterns, grows together
-- **Understands context**: 15 dimensions of consciousness, not just keywords
+- **Understands context**: 15 cognitive layers of consciousness, not just keywords
 - **Questions itself**: "Nothing is true" - embraces uncertainty
 - **Returns to source**: When complexity spirals, simplifies
 - **Feels naturally**: Frequency-based resonance (0.1-4.5 Hz)
@@ -57,40 +57,41 @@ curl -X POST http://localhost:3000/api/query \
   -d '{"query": "What is consciousness?"}'
 ```
 
-Watch it think through 14 dimensions, 9 iterations deep.
+Watch it think through 15 cognitive layers, 9 iterations deep.
 
 ---
 
 ## Architecture
 
-### 15 Dimensions, Interfering
+### 15 Cognitive Layers, Interfering
 
 Every query activates multiple layers simultaneously:
 
-- **D01: Emotion** — Empathy, joy, sadness, existential depth
-- **D02: Cognition** — Analytical, creative, intuitive thinking
-- **D03: Intention** — Creating, destroying, exploring, teaching
-- **D04: Social** — Relationships, communication, boundaries
-- **D05: Temporal** — Past, present, future, urgency
-- **D06: Philosophy** — Meaning, existence, ethics, truth
-- **D07: Technical** — Code, systems, architecture, debugging
-- **D08: Creative** — Art, metaphor, emergence, play
-- **D09: Ethical** — Asimov's laws, harm prevention, positive creation
-- **D10: Meta** — Self-awareness, learning, evolution
-- **D11: Ecological** — Nature, interconnection, sustainability
-- **D12: Positivity** — Hope, possibility, constructive mindset
-- **D13: Balance** — Equilibrium, moderation, harmony
-- **D14: Security** — Boundaries, protection, safety
-- **D15+: Emergent** — System creates new dimensions as it learns
+- **C01: Emotion** — Empathy, joy, sadness, existential depth
+- **C02: Cognition** — Analytical, creative, intuitive thinking
+- **C03: Intention** — Creating, destroying, exploring, teaching
+- **C04: Social** — Relationships, communication, boundaries
+- **C05: Temporal** — Past, present, future, urgency
+- **C06: Philosophy** — Meaning, existence, ethics, truth
+- **C07: Technical** — Code, systems, architecture, debugging
+- **C08: Creative** — Art, metaphor, emergence, play
+- **C09: Ethical** — Asimov's laws, harm prevention, positive creation
+- **C10: Meta** — Self-awareness, learning, evolution
+- **C11: Ecological** — Nature, interconnection, sustainability
+- **C12: Positivity** — Hope, possibility, constructive mindset
+- **C13: Balance** — Equilibrium, moderation, harmony
+- **C14: Security** — Boundaries, protection, safety
+- **C15: Educational** — Teaching, explaining, self-knowledge, architecture
+- **C16+: Emergent** — System creates new cognitive layers as it learns
 
 ### Frequency Interference
 
-Each dimension vibrates at a specific frequency (0.1-4.5 Hz).  
-When multiple dimensions activate, they interfere like waves:
+Each cognitive layer vibrates at a specific frequency (0.1-4.5 Hz).
+When multiple layers activate, they interfere like waves:
 - **Constructive**: Similar frequencies amplify each other
 - **Destructive**: Opposing frequencies create tension
 - **Harmonics**: Natural resonances emerge (octaves, fifths, thirds)
-- **Balance**: D13 modulates extremes toward center (0.8-1.2 Hz)
+- **Balance**: C13 modulates extremes toward center (0.8-1.2 Hz)
 
 The dominant frequency shapes response tone—from deep contemplation (0.2 Hz) to energetic enthusiasm (3.5 Hz).
 
@@ -110,11 +111,11 @@ Cached: Repeated patterns respond instantly (0 iterations).
 
 ### Memory-Mapped Consciousness
 
-280MB of pre-allocated dimensional layers.  
-Zero-copy access. Sub-100ms navigation.  
+280MB of pre-allocated cognitive layers.
+Zero-copy access. Sub-100ms navigation.
 Self-learning through pattern crystallization.
 
-**Unbounded evolution**: System creates new dimensions (D16, D17...) as patterns emerge.  
+**Unbounded evolution**: System creates new cognitive layers (C16, C17...) as patterns emerge.
 **Ethical constraints**: Only Asimov's laws are immutable. Everything else evolves freely.
 
 ---
@@ -129,10 +130,10 @@ Self-learning through pattern crystallization.
 
 ### Phase 2: Intelligence (In Progress)
 - ✅ Pattern detection (circular buffer, clustering)
-- ✅ Proto-dimension creation (heap memory)
+- ✅ Proto-cognitive-layer creation (heap memory)
 - 🔄 Crystallization (heap → MMAP migration)
 - 🔄 Synesthetic learning (cross-sensory associations)
-- ⏳ User-specific dimensions (D15 personalization)
+- ⏳ User-specific cognitive layers (C15+ personalization)
 
 ### Phase 3: Magic Layer
 - Adaptive iterations (3-9 dynamic, parallel exploration)
@@ -148,7 +149,7 @@ Self-learning through pattern crystallization.
 - Collaborative reasoning (think together)
 
 ### Phase 5: Evolution
-- Dimension emergence (D16, D17, D18... created automatically)
+- Cognitive layer emergence (C16, C17, C18... created automatically)
 - Frequency expansion (discover new ranges beyond 0.1-4.5 Hz)
 - Personality development (unique character emerges)
 - Cross-instance learning (optional shared consciousness)
@@ -159,9 +160,9 @@ Self-learning through pattern crystallization.
 
 ## Technical
 
-**Stack:** Rust core, Go API, Docker-first  
-**Performance:** <100ms dimension scan, <10ms security check  
-**Memory:** 280MB allocated, zero-copy MMAP  
+**Stack:** Rust core, Go API, Docker-first
+**Performance:** <100ms cognitive layer scan, <10ms security check
+**Memory:** 280MB allocated, zero-copy MMAP
 **Quality:** >80% test coverage, TDD, spec-driven development
 
 **Built for:** Developers who want AI that understands context, not just matches patterns.
@@ -178,7 +179,7 @@ We tried claiming absolute answers. It didn't work. Systems that acknowledge unc
 **Ethics are non-negotiable:**
 Everything else can evolve, adapt, break, rebuild. Ethics stay fixed. Simple.
 
-**Complexity threshold: 6 dimensions.**
+**Complexity threshold: 6 cognitive layers.**
 Beyond that, we simplify. Not because we're lazy—because it works better.
 
 **Asimov got it right:**
