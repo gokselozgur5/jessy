@@ -101,8 +101,8 @@ impl RedirectionEngine {
         templates.insert(
             RedirectionStrategy::LegalGuidance,
             vec![
-                "I can't assist with that, but I can help you understand legal alternatives or proper channels.".to_string(),
-                "Let's focus on lawful approaches. What legitimate outcome are you seeking?".to_string(),
+                "I can't assist with that, but I can help you learn about ethical security practices and proper channels.".to_string(),
+                "Let's focus on lawful approaches like ethical security training. What legitimate outcome are you seeking?".to_string(),
                 "I'm designed to support ethical solutions. How can I help you achieve your goal legally?".to_string(),
             ],
         );

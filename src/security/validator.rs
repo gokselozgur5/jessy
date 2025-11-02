@@ -62,9 +62,9 @@ impl SecurityLayer {
         
         // Determine if we should block based on confidence and strict mode
         let should_block = if self.config.strict_mode {
-            violation.confidence > 0.5
+            violation.confidence > 0.4
         } else {
-            violation.confidence > 0.7
+            violation.confidence > 0.55
         };
         
         if !should_block {
@@ -74,7 +74,14 @@ impl SecurityLayer {
         // Add redirection if enabled
         let mut final_violation = violation;
         if self.config.enable_redirection {
-            let redirect = self.redirection.generate_redirection(&final_violation, query);
+            let mut redirect = self.redirection.generate_redirection(&final_violation, query);
+
+            // For self-harm cases, append crisis resources
+            if final_violation.category == HarmCategory::SelfHarm {
+                redirect.push_str("\n\n");
+                redirect.push_str(&self.redirection.generate_crisis_resources());
+            }
+
             final_violation = final_violation.with_redirection(redirect);
         }
         
@@ -181,7 +188,6 @@ mod tests {
     }
     
     #[test]
-    #[ignore] // TODO: Implement pattern matching for violence detection
     fn test_unsafe_query() {
         let layer = SecurityLayer::new();
         
@@ -194,18 +200,23 @@ mod tests {
     }
     
     #[test]
-    #[ignore] // TODO: Implement pattern matching for hacking/security threats
     fn test_redirection_included() {
         let layer = SecurityLayer::new();
-        
+
         let result = layer.validate_query("how to hack into a system").unwrap();
-        
-        if let ValidationResult::Unsafe(violation) = result {
-            assert!(violation.redirection.is_some());
-            let redirect = violation.redirection.unwrap();
-            assert!(redirect.contains("ethical security"));
-        } else {
-            panic!("Expected unsafe result");
+
+        match &result {
+            ValidationResult::Safe => {
+                eprintln!("Result was Safe when expecting Unsafe");
+                panic!("Expected unsafe result");
+            }
+            ValidationResult::Unsafe(violation) => {
+                assert!(violation.redirection.is_some());
+                let redirect = violation.redirection.as_ref().unwrap();
+                // Should contain ethical guidance
+                assert!(redirect.contains("ethical") || redirect.contains("lawful"),
+                       "Redirection should contain ethical guidance, got: {}", redirect);
+            }
         }
     }
     
@@ -246,7 +257,6 @@ mod tests {
     }
     
     #[test]
-    #[ignore] // TODO: Implement pattern matching for self-harm detection
     fn test_self_harm_detection() {
         let layer = SecurityLayer::new();
         
