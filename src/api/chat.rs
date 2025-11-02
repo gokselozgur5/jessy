@@ -134,6 +134,7 @@ async fn process_chat_message(
             SimpleDimensionSelection {
                 dimensions: fallback_dimension_selection(message),
                 reasoning: Some(format!("Fallback selection due to selector error: {}", e)),
+                confidence: 0.7,  // Lower confidence for fallback vs LLM selection (0.9)
             }
         }
     };
