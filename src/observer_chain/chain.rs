@@ -86,9 +86,12 @@ impl ObserverChain {
         // Create a dummy IterationContext for LLM call
         // TODO: Refactor LLMManager to not require IterationContext
         let iter_context = crate::iteration::IterationContext {
-            iteration: stage,
-            cumulative_context: context.build_summary(),
-            convergence_score: 0.0,
+            query: context.query.clone(),
+            dimensional_contexts: vec![context.build_summary()],
+            accumulated_insights: context.observations.iter()
+                .map(|obs| obs.content.clone())
+                .collect(),
+            dominant_frequency: crate::Frequency::new(1.0), // Default 1.0 Hz
         };
 
         let response = self
