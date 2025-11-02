@@ -10,10 +10,10 @@
 
 ### Test Results Summary
 ```
-✅ 413 tests PASSED
-⚠️  16 tests IGNORED (intentionally)
-❌ 0 tests FAILED
-📊 Success Rate: 100% (of non-ignored tests)
+PASSED: 413 tests
+IGNORED: 16 tests (intentionally)
+FAILED: 0 tests
+Success Rate: 100% (of non-ignored tests)
 ```
 
 ### Build Status
