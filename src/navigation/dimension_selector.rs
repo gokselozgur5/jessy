@@ -166,11 +166,17 @@ impl DimensionSelector {
 
     /// Call Claude API directly (prototype implementation)
     async fn call_claude_api(&self, prompt: &str) -> Result<String, NavigationError> {
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(3))  // 3s timeout for fast fallback
+            .build()
+            .map_err(|e| NavigationError::ExternalServiceError {
+                service: "Claude API".to_string(),
+                details: format!("Client build failed: {}", e),
+            })?;
 
         let body = serde_json::json!({
             "model": self.model,
-            "max_tokens": 100,
+            "max_tokens": 30,  // Reduced: JSON array like [1,2,7] is ~10-20 tokens
             "messages": [{
                 "role": "user",
                 "content": prompt
