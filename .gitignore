@@ -69,4 +69,6 @@ training/venv*/
 *.safetensors
 *.pt
 *.pth
-*.bin
+*.bintraining/datasets/
+training/atak_guides_clean/
+training/atak_source_data/
