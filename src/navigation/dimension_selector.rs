@@ -282,21 +282,24 @@ impl DimensionSelector {
             // Handle "D01" format
             if s.starts_with('D') && s.len() == 3 {
                 if let Ok(num) = s[1..].parse::<u8>() {
+                    // Filter out-of-range dimensions (1-14 only)
                     if num >= 1 && num <= 14 {
                         dimensions.push(DimensionId(num));
-                        continue;
                     }
+                    continue;  // Valid format, just out of range
                 }
             }
 
             // Handle "1" or "01" format
             if let Ok(num) = s.parse::<u8>() {
+                // Filter out-of-range dimensions (1-14 only)
                 if num >= 1 && num <= 14 {
                     dimensions.push(DimensionId(num));
-                    continue;
                 }
+                continue;  // Valid format, just out of range
             }
 
+            // If we get here, format is invalid (not "D##" or a number)
             return Err(NavigationError::ParsingError {
                 details: format!("Invalid dimension format: {}", s),
             }.into());
