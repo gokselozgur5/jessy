@@ -54,6 +54,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/health", web::get().to(chat::health))
                     .route("/chat", web::post().to(chat::chat))
                     .route("/chat/stream", web::get().to(sse::chat_stream))
+                    .route("/admin/reset", web::post().to(chat::reset_conversations))
             )
             // Static files (web UI)
             .service(fs::Files::new("/", "./web").index_file("index.html"))

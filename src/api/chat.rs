@@ -344,3 +344,41 @@ pub async fn health() -> impl Responder {
         "version": env!("CARGO_PKG_VERSION"),
     }))
 }
+
+/// POST /api/admin/reset - Reset all conversations (emergency cleanup)
+pub async fn reset_conversations(data: web::Data<AppState>) -> impl Responder {
+    // Clear in-memory conversations
+    {
+        let mut conversations = data.conversations.lock().await;
+        conversations.clear();
+    }
+
+    // Delete conversation file
+    let data_dir = std::path::PathBuf::from("./data");
+    let conversation_file = data_dir.join("web_conversations.json");
+
+    if conversation_file.exists() {
+        match std::fs::remove_file(&conversation_file) {
+            Ok(_) => {
+                eprintln!("✅ Reset: Deleted conversation file");
+                HttpResponse::Ok().json(serde_json::json!({
+                    "status": "ok",
+                    "message": "All conversations cleared successfully",
+                    "file_deleted": true,
+                }))
+            }
+            Err(e) => {
+                eprintln!("⚠️ Reset: Failed to delete file: {}", e);
+                HttpResponse::InternalServerError().json(ErrorResponse {
+                    error: format!("Failed to delete conversation file: {}", e),
+                })
+            }
+        }
+    } else {
+        HttpResponse::Ok().json(serde_json::json!({
+            "status": "ok",
+            "message": "No conversation file found, memory cleared",
+            "file_deleted": false,
+        }))
+    }
+}
