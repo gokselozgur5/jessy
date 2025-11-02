@@ -228,6 +228,13 @@ fn fallback_dimension_selection(message: &str) -> Vec<DimensionId> {
         dims.push(DimensionId(10));
     }
 
+    // Educational keywords (C15)
+    if lower.contains("explain") || lower.contains("teach") || lower.contains("how does")
+        || lower.contains("what is") || lower.contains("why") || lower.contains("architecture")
+        || lower.contains("design") || lower.contains("show me") || lower.contains("demonstrate") {
+        dims.push(DimensionId(15));
+    }
+
     // Intention keywords
     if lower.contains("want") || lower.contains("need") || lower.contains("goal")
         || lower.contains("trying") || lower.contains("should") {
@@ -271,6 +278,7 @@ fn create_paths_from_dimensions(dimensions: &[DimensionId]) -> Vec<crate::naviga
             12 => Frequency::new(2.8),
             13 => Frequency::new(1.0),
             14 => Frequency::new(2.0),
+            15 => Frequency::new(2.2),  // C15: Educational (mid-range, balanced teaching frequency)
             _ => Frequency::new(1.0),
         };
 
@@ -312,26 +320,45 @@ fn create_simulated_contexts(paths: &[crate::navigation::NavigationPath]) -> cra
     collection
 }
 
-/// Load dimensions.json configuration
+/// Load cognitive layers configuration (backward compatible)
+/// Tries cognitive_layers.json first, falls back to dimensions.json
 fn load_dimensions_config() -> Option<serde_json::Value> {
-    let path = std::path::Path::new("data/dimensions.json");
-    if !path.exists() {
-        return None;
+    // Try new file first
+    let new_path = std::path::Path::new("data/cognitive_layers.json");
+    if new_path.exists() {
+        if let Ok(content) = std::fs::read_to_string(new_path) {
+            if let Ok(data) = serde_json::from_str(&content) {
+                return Some(data);
+            }
+        }
     }
 
-    std::fs::read_to_string(path)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
+    // Fallback to old file (backward compatibility)
+    let old_path = std::path::Path::new("data/dimensions.json");
+    if old_path.exists() {
+        return std::fs::read_to_string(old_path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok());
+    }
+
+    None
 }
 
-/// Get keywords for a specific layer from dimensions.json
+/// Get keywords for a specific layer (supports both old and new schema)
 fn get_layer_keywords(data: &serde_json::Value, dimension: DimensionId, layer: u16) -> Option<Vec<String>> {
     data.get("layers")?
         .as_array()?
         .iter()
         .find(|l| {
-            l.get("dimension_id").and_then(|d| d.as_u64()) == Some(dimension.0 as u64)
-                && l.get("layer_num").and_then(|ln| ln.as_u64()) == Some(layer as u64)
+            // Support both old (dimension_id) and new (cognitive_layer_id) schema
+            let dim_match = l.get("cognitive_layer_id")
+                .or_else(|| l.get("dimension_id"))
+                .and_then(|d| d.as_u64()) == Some(dimension.0 as u64);
+
+            let layer_match = l.get("layer_num")
+                .and_then(|ln| ln.as_u64()) == Some(layer as u64);
+
+            dim_match && layer_match
         })?
         .get("keywords")?
         .as_array()
@@ -425,6 +452,7 @@ fn get_dimension_name(dim: DimensionId) -> &'static str {
         12 => "Positivity",
         13 => "Balance",
         14 => "Security",
+        15 => "Educational",
         _ => "Unknown",
     }
 }
@@ -445,6 +473,7 @@ fn get_dimension_description(dim: DimensionId) -> &'static str {
         12 => "positivity, hope, constructive thinking",
         13 => "balance, equilibrium, harmony",
         14 => "personal boundaries, protection, safety",
+        15 => "teaching, explaining architecture, system design, technical concepts",
         _ => "unknown",
     }
 }
