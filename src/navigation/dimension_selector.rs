@@ -1,6 +1,6 @@
 //! LLM-based dimension selection
 //!
-//! Single-purpose micro-service: Analyze query → Select 2-3 dimensions
+//! Single-purpose micro-service: Analyze query → Select 3-8 dimensions
 //!
 //! This replaces keyword-based activation with intent-based selection.
 //! Uses a small, fast LLM to understand query intent and pick optimal dimensions.
@@ -18,7 +18,7 @@ pub struct DimensionSelector {
 /// Selection result with chosen dimensions
 #[derive(Debug, Clone)]
 pub struct DimensionSelection {
-    /// Selected dimension IDs (2-3 dimensions)
+    /// Selected dimension IDs (3-8 dimensions for rich multidimensional analysis)
     pub dimensions: Vec<DimensionId>,
 
     /// LLM reasoning (optional, for debugging)
@@ -52,7 +52,8 @@ Question your approach:
 
 # 🦉 LEARN
 Apply wisdom:
-- Focus on 1-9 layers that truly matter
+- Select 3-8 layers for rich multidimensional analysis
+- More layers = richer interference patterns
 - Each layer must add genuine value
 
 ---
@@ -78,20 +79,20 @@ L14: Security - boundaries, protection, safety, trust
 # EXAMPLES
 
 Query: "I feel anxious about deploying this code"
-Response: [1, 7, 9, 14]
-Reasoning: Emotional distress (L01), technical context (L07), responsibility (L09), safety concerns (L14)
+Response: [1, 2, 3, 7, 9, 12, 14]
+Reasoning: Emotional distress (L01), analytical thinking needed (L02), intention to act (L03), technical context (L07), ethical responsibility (L09), constructive mindset (L12), safety concerns (L14)
 
 Query: "What is consciousness?"
-Response: [2, 6, 10]
-Reasoning: Cognitive inquiry (L02), philosophical depth (L06), meta-reflection (L10)
+Response: [2, 5, 6, 10, 13]
+Reasoning: Cognitive inquiry (L02), temporal causality (L05), philosophical depth (L06), meta-reflection (L10), integrative balance (L13)
 
 Query: "How to reduce carbon emissions?"
-Response: [3, 9, 11, 12]
-Reasoning: Intentional action (L03), ethical imperative (L09), ecological focus (L11), constructive framing (L12)
+Response: [2, 3, 7, 9, 11, 12]
+Reasoning: Analytical problem-solving (L02), intentional action (L03), technical solutions (L07), ethical imperative (L09), ecological focus (L11), constructive framing (L12)
 
 Query: "Debug this function"
-Response: [7]
-Reasoning: Pure technical problem-solving (L07)
+Response: [2, 7, 10]
+Reasoning: Analytical thinking (L02), technical problem-solving (L07), meta-awareness of debugging process (L10)
 
 ---
 
@@ -118,7 +119,7 @@ impl DimensionSelector {
 
     /// Select dimensions for a query
     ///
-    /// Returns 2-3 dimension IDs based on LLM analysis of query intent.
+    /// Returns 3-8 dimension IDs based on LLM analysis of query intent.
     ///
     /// # Arguments
     ///
@@ -126,7 +127,7 @@ impl DimensionSelector {
     ///
     /// # Returns
     ///
-    /// DimensionSelection with 2-3 dimension IDs
+    /// DimensionSelection with 3-8 dimension IDs
     ///
     /// # Errors
     ///
