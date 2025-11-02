@@ -14,8 +14,8 @@ const sendButton = document.getElementById('sendButton');
 const chatMessages = document.getElementById('chatMessages');
 const dimensionList = document.getElementById('dimensionList');
 
-// Dimension names mapping
-const dimensionNames = {
+// Cognitive Layer names mapping
+const cognitiveLayerNames = {
     1: 'Emotion',
     2: 'Cognition',
     3: 'Intention',
@@ -145,14 +145,14 @@ function addMessage(role, content) {
     scrollToBottom();
 }
 
-// Update dimensional state display
+// Update cognitive layer state display
 function updateDimensionalState(dimensions, durationMs, contextsLoaded) {
     dimensionList.innerHTML = '';
 
     dimensions.forEach(dimId => {
         const badge = document.createElement('span');
         badge.className = 'px-2 py-1 bg-purple-600 bg-opacity-30 border border-purple-500/50 rounded text-xs text-purple-300';
-        badge.textContent = `D${String(dimId).padStart(2, '0')} ${dimensionNames[dimId] || 'Unknown'}`;
+        badge.textContent = `L${String(dimId).padStart(2, '0')} ${cognitiveLayerNames[dimId] || 'Unknown'}`;
         dimensionList.appendChild(badge);
     });
 
