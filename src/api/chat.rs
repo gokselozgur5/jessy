@@ -325,7 +325,7 @@ fn load_dimensions_config() -> Option<serde_json::Value> {
 }
 
 /// Get keywords for a specific layer from dimensions.json
-fn get_layer_keywords(data: &serde_json::Value, dimension: DimensionId, layer: u8) -> Option<Vec<String>> {
+fn get_layer_keywords(data: &serde_json::Value, dimension: DimensionId, layer: u16) -> Option<Vec<String>> {
     data.get("layers")?
         .as_array()?
         .iter()
@@ -343,7 +343,7 @@ fn get_layer_keywords(data: &serde_json::Value, dimension: DimensionId, layer: u
 }
 
 /// Generate rich context content for a layer
-fn generate_rich_context(dimension: DimensionId, layer: u8, keywords: &[String], frequency: crate::Frequency) -> String {
+fn generate_rich_context(dimension: DimensionId, layer: u16, keywords: &[String], frequency: crate::Frequency) -> String {
     let mut content = String::new();
 
     let dim_name = get_dimension_name(dimension);
