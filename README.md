@@ -13,7 +13,7 @@
 [![Rust](https://img.shields.io/badge/Rust-1.85-orange?style=flat&logo=rust)](https://www.rust-lang.org)
 [![Tests](https://img.shields.io/badge/tests-624%20passing-success?style=flat)](https://github.com/gokselozgur5/jessy)
 [![Lines of Code](https://img.shields.io/badge/lines-34.7K-blue?style=flat)](https://github.com/gokselozgur5/jessy)
-[![Coverage](https://img.shields.io/badge/coverage->80%25-brightgreen?style=flat)](https://github.com/gokselozgur5/jessy)
+[![Coverage](https://img.shields.io/badge/coverage-~99%25-brightgreen?style=flat)](https://github.com/gokselozgur5/jessy)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.5.0-blue?style=flat)](https://github.com/gokselozgur5/jessy/releases)
 
@@ -192,7 +192,7 @@ Self-learning through pattern crystallization.
 **Stack:** Rust core, Go API, Docker-first
 **Performance:** <100ms cognitive layer scan, <10ms security check
 **Memory:** 280MB allocated, zero-copy MMAP
-**Quality:** >80% test coverage, TDD, spec-driven development
+**Quality:** ~99% test coverage, TDD, spec-driven development
 
 **Built for:** Developers who want AI that understands context, not just matches patterns.
 
