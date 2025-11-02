@@ -6,7 +6,7 @@
 
 ---
 
-## 🎯 Overall Status: HEALTHY ✅
+## Overall Status: HEALTHY
 
 ### Test Results Summary
 ```
