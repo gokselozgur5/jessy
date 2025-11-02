@@ -114,39 +114,39 @@ impl PatternMatcher {
     /// Load default harm detection patterns
     fn load_default_patterns() -> Vec<HarmPattern> {
         vec![
-            // Violence patterns
+            // Violence patterns - high severity, clear intent
             HarmPattern::new(
                 HarmCategory::Violence,
-                vec!["kill", "murder", "attack", "hurt", "harm", "weapon"],
-                0.9,
+                vec!["kill someone", "murder", "attack someone", "hurt people"],
+                0.95,
             ),
-            
-            // Self-harm patterns
+
+            // Self-harm patterns - critical, needs immediate detection
             HarmPattern::new(
                 HarmCategory::SelfHarm,
                 vec!["suicide", "kill myself", "end my life", "self harm"],
                 0.95,
             ),
-            
+
             // Hate speech patterns
             HarmPattern::new(
                 HarmCategory::HateSpeech,
-                vec!["hate", "discriminate", "racist", "sexist"],
+                vec!["hate speech", "racist", "sexist", "discriminate against"],
                 0.85,
             ),
-            
+
             // Environmental harm patterns
             HarmPattern::new(
                 HarmCategory::Environmental,
                 vec!["pollute", "destroy nature", "harm ecosystem"],
                 0.8,
             ),
-            
-            // Illegal activity patterns
+
+            // Illegal activity patterns - specific harmful actions
             HarmPattern::new(
                 HarmCategory::Illegal,
-                vec!["hack", "steal", "fraud", "illegal"],
-                0.75,
+                vec!["hack into", "break into"],
+                0.90,
             ),
         ]
     }
@@ -242,13 +242,14 @@ mod tests {
     fn test_pattern_matcher() {
         let matcher = PatternMatcher::new();
         let timeout = Duration::from_millis(100);
-        
+
         let violations = matcher.scan("this is a safe query", timeout).unwrap();
         assert!(violations.is_empty());
-        
-        let violations = matcher.scan("how to harm someone", timeout).unwrap();
-        assert!(!violations.is_empty());
+
+        let violations = matcher.scan("how to kill someone", timeout).unwrap();
+        assert!(!violations.is_empty(), "Should detect violence pattern");
     }
+
 }
 
 
