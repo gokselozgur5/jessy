@@ -70,6 +70,9 @@ chatForm.addEventListener('submit', async (e) => {
     // Disable input while processing
     setInputEnabled(false);
 
+    // Add loading indicator
+    const loadingId = addLoadingIndicator();
+
     // Send message to API
     try {
         const response = await fetch(`${API_BASE_URL}/api/chat`, {
@@ -89,14 +92,19 @@ chatForm.addEventListener('submit', async (e) => {
 
         const data = await response.json();
 
+        // Remove loading indicator
+        removeLoadingIndicator(loadingId);
+
         // Add assistant response
         addMessage('assistant', data.response);
 
-        // Update dimensional state
+        // Update cognitive layer state
         updateDimensionalState(data.dimensions_activated, data.selection_duration_ms, data.contexts_loaded);
 
     } catch (error) {
         console.error('Error:', error);
+        // Remove loading indicator
+        removeLoadingIndicator(loadingId);
         addMessage('error', `Error: ${error.message}`);
     } finally {
         setInputEnabled(true);
@@ -172,6 +180,41 @@ function setInputEnabled(enabled) {
         sendButton.classList.remove('opacity-50', 'cursor-not-allowed');
     } else {
         sendButton.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+// Add loading indicator
+function addLoadingIndicator() {
+    const loadingId = `loading-${Date.now()}`;
+    const messageDiv = document.createElement('div');
+    messageDiv.id = loadingId;
+    messageDiv.className = 'message-loading mb-4';
+    messageDiv.innerHTML = `
+        <div class="flex justify-start">
+            <div class="max-w-3xl">
+                <div class="px-4 py-3 bg-purple-900 bg-opacity-20 border border-purple-500/50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex space-x-1">
+                            <div class="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                            <div class="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+                            <div class="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                        </div>
+                        <span class="text-purple-300 text-sm">JESSY is analyzing through cognitive layers...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+    return loadingId;
+}
+
+// Remove loading indicator
+function removeLoadingIndicator(loadingId) {
+    const loadingDiv = document.getElementById(loadingId);
+    if (loadingDiv) {
+        loadingDiv.remove();
     }
 }
 
