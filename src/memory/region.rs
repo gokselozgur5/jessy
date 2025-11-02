@@ -485,13 +485,12 @@ impl RegionBuilder {
 mod tests {
     use super::*;
     use tempfile::NamedTempFile;
-    
-    #[test]
-    fn test_region_builder() {
+
+    fn create_test_region() -> (MmapRegion, NamedTempFile) {
         let temp_file = NamedTempFile::new().unwrap();
         let dimension_id = crate::DimensionId(1);
         let layer_id = LayerId { dimension: dimension_id, layer: 0 };
-        
+
         let mut builder = RegionBuilder::new(dimension_id, "test_dimension".to_string());
         builder.add_layer(
             layer_id,
@@ -501,19 +500,335 @@ mod tests {
             b"test content".to_vec(),
             vec!["test".to_string(), "layer".to_string()],
         );
-        
+
         let region = builder.build_to_file(temp_file.path(), 0).unwrap();
-        
+        (region, temp_file)
+    }
+
+    #[test]
+    fn test_region_builder_basic() {
+        let (region, _temp_file) = create_test_region();
+        let dimension_id = crate::DimensionId(1);
+        let layer_id = LayerId { dimension: dimension_id, layer: 0 };
+
         assert_eq!(region.dimension_id, dimension_id);
         assert_eq!(region.metadata.dimension_name, "test_dimension");
         assert_eq!(region.metadata.layers.len(), 1);
-        
+
         let layer_info = region.get_layer_info(layer_id).unwrap();
         assert_eq!(layer_info.name, "test_layer");
         assert_eq!(layer_info.frequency, 1.0);
         assert_eq!(layer_info.keywords, vec!["test", "layer"]);
-        
+
         let content = region.read_string(layer_info.offset, layer_info.size).unwrap();
         assert_eq!(content, "test content");
+    }
+
+    #[test]
+    fn test_region_read_content_success() {
+        let (region, _temp_file) = create_test_region();
+        let dimension_id = crate::DimensionId(1);
+        let layer_id = LayerId { dimension: dimension_id, layer: 0 };
+
+        let layer_info = region.get_layer_info(layer_id).unwrap();
+        let content = region.read_content(layer_info.offset, layer_info.size).unwrap();
+
+        assert_eq!(content, b"test content");
+    }
+
+    #[test]
+    fn test_region_read_content_out_of_bounds() {
+        let (region, _temp_file) = create_test_region();
+
+        // Try to read beyond region size
+        let result = region.read_content(region.size(), 100);
+        assert!(result.is_err());
+
+        match result {
+            Err(ConsciousnessError::OutOfBounds { offset, size, region_size }) => {
+                assert_eq!(offset, region.size());
+                assert_eq!(size, 100);
+                assert_eq!(region_size, region.size());
+            }
+            _ => panic!("Expected OutOfBounds error"),
+        }
+    }
+
+    #[test]
+    fn test_region_read_string_invalid_utf8() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let dimension_id = crate::DimensionId(2);
+        let layer_id = LayerId { dimension: dimension_id, layer: 0 };
+
+        // Create region with invalid UTF-8 content
+        let mut builder = RegionBuilder::new(dimension_id, "test_dimension".to_string());
+        builder.add_layer(
+            layer_id,
+            "invalid_utf8".to_string(),
+            Frequency::new(1.0),
+            0,
+            vec![0xFF, 0xFE, 0xFD], // Invalid UTF-8 bytes
+            vec![],
+        );
+
+        let region = builder.build_to_file(temp_file.path(), 1).unwrap();
+        let layer_info = region.get_layer_info(layer_id).unwrap();
+
+        let result = region.read_string(layer_info.offset, layer_info.size);
+        assert!(result.is_err());
+
+        match result {
+            Err(ConsciousnessError::MemoryError(msg)) => {
+                assert!(msg.contains("Invalid UTF-8"));
+            }
+            _ => panic!("Expected MemoryError for invalid UTF-8"),
+        }
+    }
+
+    #[test]
+    fn test_region_multiple_layers() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let dimension_id = crate::DimensionId(3);
+
+        let mut builder = RegionBuilder::new(dimension_id, "multi_layer_dimension".to_string());
+
+        // Add multiple layers
+        for i in 0..4 {
+            let layer_id = LayerId { dimension: dimension_id, layer: i };
+            builder.add_layer(
+                layer_id,
+                format!("layer_{}", i),
+                Frequency::new(1.0 + i as f32 * 0.5),
+                i as u8,
+                format!("content for layer {}", i).into_bytes(),
+                vec![format!("keyword{}", i)],
+            );
+        }
+
+        let region = builder.build_to_file(temp_file.path(), 2).unwrap();
+
+        assert_eq!(region.metadata.layers.len(), 4);
+
+        // Verify all layers
+        for i in 0..4 {
+            let layer_id = LayerId { dimension: dimension_id, layer: i };
+            let layer_info = region.get_layer_info(layer_id).unwrap();
+
+            assert_eq!(layer_info.name, format!("layer_{}", i));
+            assert_eq!(layer_info.frequency, 1.0 + i as f32 * 0.5);
+            assert_eq!(layer_info.depth, i as u8);
+
+            let content = region.read_string(layer_info.offset, layer_info.size).unwrap();
+            assert_eq!(content, format!("content for layer {}", i));
+        }
+    }
+
+    #[test]
+    fn test_region_list_layers() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let dimension_id = crate::DimensionId(4);
+
+        let mut builder = RegionBuilder::new(dimension_id, "test_dimension".to_string());
+
+        let layer_ids: Vec<LayerId> = (0..3)
+            .map(|i| LayerId { dimension: dimension_id, layer: i })
+            .collect();
+
+        for (i, &layer_id) in layer_ids.iter().enumerate() {
+            builder.add_layer(
+                layer_id,
+                format!("layer_{}", i),
+                Frequency::new(1.0),
+                i as u8,
+                b"content".to_vec(),
+                vec![],
+            );
+        }
+
+        let region = builder.build_to_file(temp_file.path(), 3).unwrap();
+        let listed_layers = region.list_layers();
+
+        assert_eq!(listed_layers.len(), 3);
+        assert_eq!(listed_layers, layer_ids);
+    }
+
+    #[test]
+    fn test_region_verify_integrity_success() {
+        let (region, _temp_file) = create_test_region();
+
+        // Should pass integrity check
+        assert!(region.verify_integrity().is_ok());
+    }
+
+    #[test]
+    fn test_region_size() {
+        let (region, _temp_file) = create_test_region();
+
+        // Size should be at least 1KB (metadata) + content
+        assert!(region.size() >= 1024);
+        assert_eq!(region.size(), region.mmap.len());
+    }
+
+    #[test]
+    fn test_region_id_and_dimension() {
+        let (region, _temp_file) = create_test_region();
+
+        assert_eq!(region.id(), 0);
+        assert_eq!(region.dimension(), crate::DimensionId(1));
+    }
+
+    #[test]
+    fn test_region_as_ptr() {
+        let (region, _temp_file) = create_test_region();
+
+        let ptr = region.as_ptr();
+        assert!(!ptr.is_null());
+    }
+
+    #[test]
+    fn test_region_path() {
+        let (region, temp_file) = create_test_region();
+
+        assert_eq!(region.path(), temp_file.path());
+    }
+
+    #[test]
+    fn test_content_location_size() {
+        let mmap_loc = ContentLocation::Mmap {
+            offset: 0,
+            size: 100,
+            region_id: 0,
+        };
+        assert_eq!(mmap_loc.size(), 100);
+
+        let heap_loc = ContentLocation::Heap {
+            data: vec![1, 2, 3, 4, 5],
+            created_at: std::time::SystemTime::now(),
+        };
+        assert_eq!(heap_loc.size(), 5);
+
+        let hybrid_loc = ContentLocation::Hybrid {
+            mmap_base: 0,
+            mmap_size: 50,
+            heap_overlay: vec![1, 2, 3],
+            region_id: 0,
+        };
+        assert_eq!(hybrid_loc.size(), 53);
+    }
+
+    #[test]
+    fn test_content_location_is_permanent() {
+        let mmap_loc = ContentLocation::Mmap {
+            offset: 0,
+            size: 100,
+            region_id: 0,
+        };
+        assert!(mmap_loc.is_permanent());
+
+        let heap_loc = ContentLocation::Heap {
+            data: vec![],
+            created_at: std::time::SystemTime::now(),
+        };
+        assert!(!heap_loc.is_permanent());
+
+        let hybrid_loc = ContentLocation::Hybrid {
+            mmap_base: 0,
+            mmap_size: 50,
+            heap_overlay: vec![],
+            region_id: 0,
+        };
+        assert!(hybrid_loc.is_permanent());
+    }
+
+    #[test]
+    fn test_content_location_is_temporary() {
+        let mmap_loc = ContentLocation::Mmap {
+            offset: 0,
+            size: 100,
+            region_id: 0,
+        };
+        assert!(!mmap_loc.is_temporary());
+
+        let heap_loc = ContentLocation::Heap {
+            data: vec![],
+            created_at: std::time::SystemTime::now(),
+        };
+        assert!(heap_loc.is_temporary());
+
+        let hybrid_loc = ContentLocation::Hybrid {
+            mmap_base: 0,
+            mmap_size: 50,
+            heap_overlay: vec![],
+            region_id: 0,
+        };
+        assert!(!hybrid_loc.is_temporary());
+    }
+
+    #[test]
+    fn test_layer_info_access_tracking() {
+        let dimension_id = crate::DimensionId(1);
+        let layer_id = LayerId { dimension: dimension_id, layer: 0 };
+
+        let mut layer_info = LayerInfo::new(
+            layer_id,
+            "test".to_string(),
+            Frequency::new(1.0),
+            0,
+            0,
+            100,
+        );
+
+        assert_eq!(layer_info.access_count, 0);
+        assert_eq!(layer_info.last_accessed, 0);
+
+        layer_info.record_access();
+
+        assert_eq!(layer_info.access_count, 1);
+        assert!(layer_info.last_accessed > 0);
+
+        let first_access_time = layer_info.last_accessed;
+
+        // Small delay
+        std::thread::sleep(std::time::Duration::from_millis(10));
+
+        layer_info.record_access();
+
+        assert_eq!(layer_info.access_count, 2);
+        assert!(layer_info.last_accessed >= first_access_time);
+    }
+
+    #[test]
+    fn test_layer_info_frequency_conversion() {
+        let dimension_id = crate::DimensionId(1);
+        let layer_id = LayerId { dimension: dimension_id, layer: 0 };
+
+        let layer_info = LayerInfo::new(
+            layer_id,
+            "test".to_string(),
+            Frequency::new(2.5),
+            0,
+            0,
+            100,
+        );
+
+        assert_eq!(layer_info.frequency(), Frequency::new(2.5));
+        assert_eq!(layer_info.frequency().hz(), 2.5);
+    }
+
+    #[test]
+    fn test_region_file_not_found() {
+        let result = MmapRegion::from_file(
+            0,
+            crate::DimensionId(1),
+            "/nonexistent/path/to/file.mmap",
+        );
+
+        assert!(result.is_err());
+        match result {
+            Err(ConsciousnessError::MemoryError(msg)) => {
+                assert!(msg.contains("Failed to open file"));
+            }
+            _ => panic!("Expected MemoryError for missing file"),
+        }
     }
 }

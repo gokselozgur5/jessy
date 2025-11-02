@@ -52,6 +52,35 @@ test-unit: ## Run unit tests only
 		exit 1; \
 	fi
 
+test-memory: ## Run memory module tests
+	@echo "$(BLUE)🧪 Running memory module tests...$(NC)"
+	@docker-compose run --rm $(RUST_SERVICE) cargo test --lib memory
+	@if [ $$? -eq 0 ]; then \
+		echo "$(GREEN)✅ Memory tests complete$(NC)"; \
+	else \
+		echo "$(RED)❌ Memory tests failed$(NC)"; \
+		exit 1; \
+	fi
+
+test-memory-region: ## Run MmapRegion tests
+	@echo "$(BLUE)🧪 Running MmapRegion tests...$(NC)"
+	@docker-compose run --rm $(RUST_SERVICE) cargo test --lib memory::region
+	@echo "$(GREEN)✅ Region tests complete$(NC)"
+
+test-memory-pool: ## Run PoolAllocator tests
+	@echo "$(BLUE)🧪 Running PoolAllocator tests...$(NC)"
+	@docker-compose run --rm $(RUST_SERVICE) cargo test --lib memory::pool
+	@echo "$(GREEN)✅ Pool tests complete$(NC)"
+
+test-memory-manager: ## Run MmapManager tests
+	@echo "$(BLUE)🧪 Running MmapManager tests...$(NC)"
+	@docker-compose run --rm $(RUST_SERVICE) cargo test --lib memory::manager
+	@echo "$(GREEN)✅ Manager tests complete$(NC)"
+
+test-memory-verbose: ## Run memory tests with output
+	@echo "$(BLUE)🧪 Running memory tests (verbose)...$(NC)"
+	@docker-compose run --rm $(RUST_SERVICE) cargo test --lib memory -- --nocapture
+
 test-integration: ## Run integration tests
 	@echo "$(BLUE)🧪 Running integration tests...$(NC)"
 	@echo "$(YELLOW)⚠️  Starting required services...$(NC)"

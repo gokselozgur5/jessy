@@ -23,6 +23,9 @@ pub mod optimization;
 pub mod diagnostics;
 
 #[cfg(test)]
+pub mod test_helpers;
+
+#[cfg(test)]
 mod error_tests;
 
 #[cfg(test)]
