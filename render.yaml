@@ -10,7 +10,7 @@ services:
     autoDeploy: true
     disk:
       name: jessy-data
-      mountPath: /data
+      mountPath: /app/data
       sizeGB: 1
     envVars:
       - key: ANTHROPIC_API_KEY
