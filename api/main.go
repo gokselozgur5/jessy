@@ -80,12 +80,12 @@ func main() {
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
 
-	// Initialize consciousness system
-	consciousness, err := NewConsciousnessService()
+	// Initialize jessy_core system
+	jessy_core, err := NewJessyCoreService()
 	if err != nil {
-		log.Fatal("Failed to initialize consciousness system:", err)
+		log.Fatal("Failed to initialize jessy_core system:", err)
 	}
-	defer consciousness.Close()
+	defer jessy_core.Close()
 
 	// Health check (at root /api/health for docker healthcheck)
 	app.Get("/api/health", func(c *fiber.Ctx) error {
@@ -109,13 +109,13 @@ func main() {
 	})
 
 	// Process query endpoint
-	api.Post("/query", consciousness.ProcessQuery)
+	api.Post("/query", jessy_core.ProcessQuery)
 	
 	// Get system status
-	api.Get("/status", consciousness.GetStatus)
+	api.Get("/status", jessy_core.GetStatus)
 	
 	// WebSocket for real-time iteration streaming
-	api.Get("/stream", websocket.New(consciousness.StreamIterations))
+	api.Get("/stream", websocket.New(jessy_core.StreamIterations))
 
 	// Static files for web interface
 	app.Static("/", "./web/dist")
@@ -151,12 +151,12 @@ func main() {
 		zlog.Info().Msg("HTTP server stopped gracefully")
 	}
 
-	// Close consciousness service
-	zlog.Info().Msg("Closing consciousness service...")
-	if err := consciousness.Close(); err != nil {
-		zlog.Error().Err(err).Msg("Error closing consciousness service")
+	// Close jessy_core service
+	zlog.Info().Msg("Closing jessy_core service...")
+	if err := jessy_core.Close(); err != nil {
+		zlog.Error().Err(err).Msg("Error closing jessy_core service")
 	} else {
-		zlog.Info().Msg("Consciousness service closed successfully")
+		zlog.Info().Msg("JessyCore service closed successfully")
 	}
 
 	zlog.Info().Msg("Graceful shutdown complete")

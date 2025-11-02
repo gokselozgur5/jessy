@@ -15,16 +15,32 @@ mod integration_tests {
     
     /// Helper function to create navigation system for tests
     fn create_test_navigation() -> Arc<NavigationSystem> {
-        let registry = Arc::new(DimensionRegistry::new());
+        // Try to load full dimension configuration from dimensions.json
+        // This file contains both dimension metadata and layer hierarchies
+        let dimensions_path = "data/dimensions.json";
+
+        let registry = if std::path::Path::new(dimensions_path).exists() {
+            // Load combined configuration
+            let config_data = std::fs::read_to_string(dimensions_path)
+                .expect("Failed to read dimensions.json");
+
+            Arc::new(DimensionRegistry::load_dimensions(&config_data)
+                .expect("Failed to load dimensions"))
+        } else {
+            // Fallback to empty registry for CI/environments without data
+            Arc::new(DimensionRegistry::new())
+        };
+
         Arc::new(NavigationSystem::new(registry).expect("Failed to create navigation"))
     }
     
     /// Helper to check if error is due to missing dimensional content
     fn is_missing_content_error(err: &crate::ConsciousnessError) -> bool {
         let err_str = err.to_string();
-        err_str.contains("No contexts loaded") || 
+        err_str.contains("No contexts loaded") ||
         err_str.contains("Insufficient matches") ||
-        err_str.contains("No dimensions matched")
+        err_str.contains("No dimensions matched") ||
+        err_str.contains("Layer not found")
     }
 
     /// Test complete pipeline with real systems

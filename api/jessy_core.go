@@ -1,4 +1,4 @@
-// Jessy Consciousness Service
+// Jessy Core Service
 //
 // Copyright (C) 2024 Göksel Özgür
 //
@@ -28,10 +28,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ConsciousnessService manages the interface between Go API and Rust core
-type ConsciousnessService struct {
+// JessyCoreService manages the interface between Go API and Rust core
+type JessyCoreService struct {
 	// In a real implementation, this would interface with the Rust library via CGO
-	// For now, we'll simulate the consciousness system
+	// For now, we'll simulate the JessyCore system
 	sessions map[string]*QuerySession
 	mutex    sync.RWMutex
 }
@@ -91,27 +91,27 @@ type IterationUpdate struct {
 	IsComplete  bool    `json:"is_complete"`
 }
 
-// NewConsciousnessService creates a new consciousness service
-func NewConsciousnessService() (*ConsciousnessService, error) {
-	service := &ConsciousnessService{
+// NewJessyCoreService creates a new consciousness service
+func NewJessyCoreService() (*JessyCoreService, error) {
+	service := &JessyCoreService{
 		sessions: make(map[string]*QuerySession),
 	}
 	
-	// Initialize the Rust consciousness system via CGO
-	log.Info().Msg("Initializing consciousness system")
+	// Initialize the Rust JessyCore system via CGO
+	log.Info().Msg("Initializing JessyCore system")
 	
-	if err := InitConsciousness(500); err != nil {
-		log.Error().Err(err).Msg("Failed to initialize Rust consciousness system")
+	if err := InitJessyCore(500); err != nil {
+		log.Error().Err(err).Msg("Failed to initialize Rust JessyCore system")
 		return nil, err
 	}
 	
-	log.Info().Msg("Rust consciousness system initialized successfully")
+	log.Info().Msg("Rust JessyCore system initialized successfully")
 	
 	return service, nil
 }
 
 // Close shuts down the consciousness service
-func (cs *ConsciousnessService) Close() error {
+func (cs *JessyCoreService) Close() error {
 	cs.mutex.Lock()
 	defer cs.mutex.Unlock()
 	
@@ -130,8 +130,8 @@ func (cs *ConsciousnessService) Close() error {
 	cs.sessions = make(map[string]*QuerySession)
 	
 	// Cleanup Rust resources via CGO
-	if err := CleanupConsciousness(); err != nil {
-		log.Error().Err(err).Msg("Failed to cleanup Rust consciousness system")
+	if err := CleanupJessyCore(); err != nil {
+		log.Error().Err(err).Msg("Failed to cleanup Rust JessyCore system")
 		return err
 	}
 	
@@ -141,7 +141,7 @@ func (cs *ConsciousnessService) Close() error {
 }
 
 // ProcessQuery handles query processing with 9-iteration deep thinking
-func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
+func (cs *JessyCoreService) ProcessQuery(c *fiber.Ctx) error {
 	var req QueryRequest
 	if err := c.BodyParser(&req); err != nil {
 		log.Warn().Err(err).Msg("Invalid request format")
@@ -180,7 +180,7 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 	cs.sessions[sessionID] = session
 	cs.mutex.Unlock()
 	
-	// Process query through Rust consciousness system via CGO
+	// Process query through Rust JessyCore system via CGO
 	response, err := ProcessQueryNative(req.Query, sessionID, 9)
 	if err != nil {
 		cs.mutex.Lock()
@@ -214,7 +214,7 @@ func (cs *ConsciousnessService) ProcessQuery(c *fiber.Ctx) error {
 }
 
 // GetStatus returns current system status
-func (cs *ConsciousnessService) GetStatus(c *fiber.Ctx) error {
+func (cs *JessyCoreService) GetStatus(c *fiber.Ctx) error {
 	cs.mutex.RLock()
 	activeSessions := len(cs.sessions)
 	cs.mutex.RUnlock()
@@ -253,7 +253,7 @@ func (cs *ConsciousnessService) GetStatus(c *fiber.Ctx) error {
 }
 
 // StreamIterations handles WebSocket connections for real-time iteration updates
-func (cs *ConsciousnessService) StreamIterations(c *websocket.Conn) {
+func (cs *JessyCoreService) StreamIterations(c *websocket.Conn) {
 	defer c.Close()
 	
 	log.Info().Str("remote_addr", c.RemoteAddr().String()).Msg("WebSocket connection established")
@@ -309,9 +309,9 @@ func (cs *ConsciousnessService) StreamIterations(c *websocket.Conn) {
 	}
 }
 
-// simulateConsciousnessProcessing simulates the Rust consciousness system
+// simulateConsciousnessProcessing simulates the Rust JessyCore system
 // In real implementation, this would call the Rust library via CGO
-func (cs *ConsciousnessService) simulateConsciousnessProcessing(session *QuerySession) (*QueryResponse, error) {
+func (cs *JessyCoreService) simulateConsciousnessProcessing(session *QuerySession) (*QueryResponse, error) {
 	// Simulate security check (10ms)
 	time.Sleep(10 * time.Millisecond)
 	
@@ -354,7 +354,7 @@ func (cs *ConsciousnessService) simulateConsciousnessProcessing(session *QuerySe
 }
 
 // streamQueryProcessing handles real-time streaming of query processing
-func (cs *ConsciousnessService) streamQueryProcessing(conn *websocket.Conn, query string) error {
+func (cs *JessyCoreService) streamQueryProcessing(conn *websocket.Conn, query string) error {
 	sessionID := uuid.New().String()
 	
 	// Send processing start
@@ -424,7 +424,7 @@ func (cs *ConsciousnessService) streamQueryProcessing(conn *websocket.Conn, quer
 
 // Helper functions for simulation (would be replaced by Rust CGO calls)
 
-func (cs *ConsciousnessService) simulateDimensionActivation(query string) []string {
+func (cs *JessyCoreService) simulateDimensionActivation(query string) []string {
 	dimensions := []string{}
 	
 	// Simple keyword-based simulation
@@ -447,7 +447,7 @@ func (cs *ConsciousnessService) simulateDimensionActivation(query string) []stri
 	return dimensions
 }
 
-func (cs *ConsciousnessService) simulateFrequencyCalculation(dimensions []string) float32 {
+func (cs *JessyCoreService) simulateFrequencyCalculation(dimensions []string) float32 {
 	// Simulate frequency interference calculation
 	baseFreq := 1.5
 	for _, dim := range dimensions {
@@ -471,7 +471,7 @@ func (cs *ConsciousnessService) simulateFrequencyCalculation(dimensions []string
 	return float32(baseFreq)
 }
 
-func (cs *ConsciousnessService) simulateIterationThought(iteration int, query string) string {
+func (cs *JessyCoreService) simulateIterationThought(iteration int, query string) string {
 	thoughts := []string{
 		fmt.Sprintf("Iteration %d: Exploring the question '%s'...", iteration, truncate(query, 30)),
 		fmt.Sprintf("Iteration %d: Considering multiple perspectives and dimensions...", iteration),
@@ -491,14 +491,14 @@ func (cs *ConsciousnessService) simulateIterationThought(iteration int, query st
 	return fmt.Sprintf("Iteration %d: Continuing deep processing...", iteration)
 }
 
-func (cs *ConsciousnessService) simulateConvergenceCheck(iterations []string) bool {
+func (cs *JessyCoreService) simulateConvergenceCheck(iterations []string) bool {
 	// Simple simulation: converge early for short queries
 	return len(iterations) >= 6 && len(iterations[len(iterations)-1]) < 100
 }
 
-func (cs *ConsciousnessService) generateFinalAnswer(session *QuerySession) string {
+func (cs *JessyCoreService) generateFinalAnswer(session *QuerySession) string {
 	// Simulate final answer generation based on session data
-	return fmt.Sprintf("After %d iterations of deep thinking across %d dimensional layers (dominant frequency: %.1f Hz), here is the synthesized response to your query about '%s'...\n\n[This is a simulated response. In the real implementation, this would be generated by the Rust consciousness system with full 9-iteration processing, frequency-based resonance, and dimensional layer integration.]",
+	return fmt.Sprintf("After %d iterations of deep thinking across %d dimensional layers (dominant frequency: %.1f Hz), here is the synthesized response to your query about '%s'...\n\n[This is a simulated response. In the real implementation, this would be generated by the Rust JessyCore system with full 9-iteration processing, frequency-based resonance, and dimensional layer integration.]",
 		session.CurrentIter,
 		len(session.Dimensions),
 		session.Frequency,

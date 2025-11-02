@@ -345,11 +345,11 @@ impl DimensionRegistry {
         
         // Validate each dimension
         for (id, dim) in &self.dimensions {
-            // Check ID is in valid range (1-14 for core dimensions)
-            if dim.id.0 < 1 || dim.id.0 > 14 {
+            // Check ID is in valid range (1-15 for core dimensions)
+            if dim.id.0 < 1 || dim.id.0 > 15 {
                 return Err(NavigationError::RegistryValidationFailed {
                     reason: format!(
-                        "Dimension ID {} out of range (must be 1-14)",
+                        "Dimension ID {} out of range (must be 1-15)",
                         dim.id.0
                     ),
                 });
@@ -1006,11 +1006,11 @@ mod tests {
         let registry = DimensionRegistry::load_dimensions(&config_data)
             .expect("Failed to load dimensions");
         
-        // Verify we have all 14 core dimensions
-        assert_eq!(registry.dimension_count(), 14, "Should have 14 dimensions");
-        
+        // Verify we have all 15 core dimensions (14 original + C15 Educational)
+        assert_eq!(registry.dimension_count(), 15, "Should have 15 dimensions");
+
         // Verify each dimension has 4 layers (L0-L3)
-        for dim_id in 1..=14 {
+        for dim_id in 1..=15 {
             let dimension = registry.get_dimension(DimensionId(dim_id))
                 .expect(&format!("Dimension {} should exist", dim_id));
             
@@ -1128,7 +1128,7 @@ mod tests {
         let registry = DimensionRegistry::load_dimensions(&config_data).unwrap();
         
         // Test child layer queries for each dimension
-        for dim_id in 1..=14 {
+        for dim_id in 1..=15 {
             let root = registry.get_root_layer(DimensionId(dim_id)).unwrap();
             let children = registry.get_child_layers(root.id);
             
@@ -1164,7 +1164,7 @@ mod tests {
         let registry = DimensionRegistry::load_dimensions(&config_data).unwrap();
         
         // Every layer should have at least one keyword for matching
-        for dim_id in 1..=14 {
+        for dim_id in 1..=15 {
             for layer_num in 0..=3 {
                 let layer_id = LayerId {
                     dimension: DimensionId(dim_id),

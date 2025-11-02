@@ -97,6 +97,13 @@
       "frequency_min": 1.8,
       "frequency_max": 3.5,
       "size_bytes": 20971520
+    },
+    {
+      "id": 15,
+      "name": "Educational",
+      "frequency_min": 1.7,
+      "frequency_max": 2.7,
+      "size_bytes": 20971520
     }
   ],
   "layers": [
@@ -1139,6 +1146,78 @@
       ],
       "frequency": 3.2,
       "mmap_offset": 275775488
+    },
+    {
+      "dimension_id": 15,
+      "layer_num": 0,
+      "depth": 0,
+      "parent_layer": null,
+      "keywords": [
+        "explain",
+        "teach",
+        "learn",
+        "understand",
+        "why",
+        "how",
+        "demonstrate",
+        "clarify",
+        "architecture",
+        "design",
+        "principle",
+        "concept"
+      ],
+      "frequency": 2.0,
+      "mmap_offset": 293601280
+    },
+    {
+      "dimension_id": 15,
+      "layer_num": 1,
+      "depth": 1,
+      "parent_layer": 0,
+      "keywords": [
+        "architecture",
+        "system-design",
+        "tradeoffs",
+        "decisions"
+      ],
+      "frequency": 2.2,
+      "mmap_offset": 294649856
+    },
+    {
+      "dimension_id": 15,
+      "layer_num": 2,
+      "depth": 2,
+      "parent_layer": 1,
+      "keywords": [
+        "rust",
+        "mmap",
+        "performance",
+        "memory-safety",
+        "zero-copy",
+        "concurrency",
+        "benchmarking",
+        "optimization"
+      ],
+      "frequency": 2.5,
+      "mmap_offset": 295698432
+    },
+    {
+      "dimension_id": 15,
+      "layer_num": 3,
+      "depth": 3,
+      "parent_layer": 2,
+      "keywords": [
+        "dimensional-system",
+        "interference-engine",
+        "frequency-based",
+        "cognitive-layers",
+        "iteration-depth",
+        "pattern-crystallization",
+        "learning-system",
+        "ethical-constraints"
+      ],
+      "frequency": 2.8,
+      "mmap_offset": 296747008
     }
   ]
 }

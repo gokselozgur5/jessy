@@ -11,9 +11,9 @@
 </p>
 
 [![Rust](https://img.shields.io/badge/Rust-1.85-orange?style=flat&logo=rust)](https://www.rust-lang.org)
-[![Tests](https://img.shields.io/badge/tests-624%20passing-success?style=flat)](https://github.com/gokselozgur5/jessy)
-[![Lines of Code](https://img.shields.io/badge/lines-34.7K-blue?style=flat)](https://github.com/gokselozgur5/jessy)
-[![Coverage](https://img.shields.io/badge/coverage-~99%25-brightgreen?style=flat)](https://github.com/gokselozgur5/jessy)
+[![Tests](https://img.shields.io/badge/tests-641%20passing-success?style=flat)](https://github.com/gokselozgur5/jessy)
+[![Lines of Code](https://img.shields.io/badge/lines-32K-blue?style=flat)](https://github.com/gokselozgur5/jessy)
+[![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen?style=flat)](COVERAGE_REPORT.md)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.5.0-blue?style=flat)](https://github.com/gokselozgur5/jessy/releases)
 
@@ -151,9 +151,9 @@ Self-learning through pattern crystallization.
 
 ### Phase 1: Foundation ✅
 - Core architecture complete
-- Memory management production-ready (280MB MMAP, 97.6% test coverage)
+- Memory management production-ready (280MB MMAP, 90% test coverage)
 - Interference engine operational (<10μs, spec was <10ms)
-- 624 tests passing (16 ignored)
+- 641 tests passing (8 ignored)
 
 ### Phase 2: Intelligence ✅
 - ✅ Observer Chain (4-stage thinking with natural crystallization)
@@ -193,7 +193,7 @@ Self-learning through pattern crystallization.
 **Stack:** Rust core, Go API, Docker-first
 **Performance:** <100ms cognitive layer scan, <10ms security check
 **Memory:** 280MB allocated, zero-copy MMAP
-**Quality:** ~99% test coverage, TDD, spec-driven development
+**Quality:** 97% test coverage (641 tests, 0 failures), TDD, spec-driven development
 
 **Built for:** Developers who want AI that understands context, not just matches patterns.
 
@@ -244,6 +244,8 @@ No closed-source forks. Community benefits from all enhancements.
 - [🚀 Deployment Guide](docs/deployment/DEPLOYMENT.md)
 - [⚙️ Engineering Principles](docs/development/ENGINEERING.md)
 - [📊 Project Status](docs/progress/STATUS.md)
+- [📈 Test Coverage Report](COVERAGE_REPORT.md)
+- [🎯 Critical Paths Analysis](CRITICAL_PATHS.md)
 - [🤖 Claude Code Instructions](CLAUDE.md)
 
 **Specs:** [/docs/specifications](/docs/specifications)

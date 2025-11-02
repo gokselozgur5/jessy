@@ -1,7 +1,7 @@
 //go:build cgo
 // +build cgo
 
-// Jessy CGO Bridge
+// Jessy Core CGO Bridge
 //
 // Copyright (C) 2024 Göksel Özgür
 //
@@ -60,12 +60,12 @@ typedef struct {
 } CMetrics;
 
 // FFI functions
-extern int consciousness_init(unsigned int memory_limit_mb);
-extern int consciousness_process_query(const CQueryRequest* request, CQueryResponse* response);
-extern int consciousness_get_metrics(CMetrics* metrics);
-extern int consciousness_cleanup();
-extern void consciousness_free_string(char* ptr);
-extern void consciousness_free_response(CQueryResponse* response);
+extern int jessy_core_init(unsigned int memory_limit_mb);
+extern int jessy_core_process_query(const CQueryRequest* request, CQueryResponse* response);
+extern int jessy_core_get_metrics(CMetrics* metrics);
+extern int jessy_core_cleanup();
+extern void jessy_core_free_string(char* ptr);
+extern void jessy_core_free_response(CQueryResponse* response);
 */
 import "C"
 import (
@@ -74,7 +74,7 @@ import (
 	"unsafe"
 )
 
-// InitConsciousness initializes the Rust consciousness system
+// InitJessyCore initializes the Rust JessyCore system
 //
 // Must be called once before any other operations.
 // Thread-safe - multiple calls are safe but only first takes effect.
@@ -83,15 +83,15 @@ import (
 //   - memoryLimitMB: Memory limit in megabytes (e.g., 500 for 500MB)
 //
 // Returns error if initialization fails.
-func InitConsciousness(memoryLimitMB uint32) error {
-	result := C.consciousness_init(C.uint(memoryLimitMB))
+func InitJessyCore(memoryLimitMB uint32) error {
+	result := C.jessy_core_init(C.uint(memoryLimitMB))
 	if result != C.SUCCESS {
-		return fmt.Errorf("failed to initialize consciousness system (error code: %d)", result)
+		return fmt.Errorf("failed to initialize JessyCore system (error code: %d)", result)
 	}
 	return nil
 }
 
-// ProcessQueryNative processes a query through the Rust consciousness system
+// ProcessQueryNative processes a query through the Rust JessyCore system
 //
 // This is the native CGO implementation that calls Rust directly.
 //
@@ -120,8 +120,8 @@ func ProcessQueryNative(query string, sessionID string, maxIterations uint32) (*
 	var response C.CQueryResponse
 	
 	// Call Rust
-	result := C.consciousness_process_query(&request, &response)
-	defer C.consciousness_free_response(&response)
+	result := C.jessy_core_process_query(&request, &response)
+	defer C.jessy_core_free_response(&response)
 	
 	// Check for errors
 	if result != C.SUCCESS {
@@ -153,7 +153,7 @@ func ProcessQueryNative(query string, sessionID string, maxIterations uint32) (*
 func GetLearningMetrics() (*LearningMetrics, error) {
 	var metrics C.CMetrics
 	
-	result := C.consciousness_get_metrics(&metrics)
+	result := C.jessy_core_get_metrics(&metrics)
 	if result != C.SUCCESS {
 		return nil, fmt.Errorf("failed to get metrics (error code: %d)", result)
 	}
@@ -168,14 +168,14 @@ func GetLearningMetrics() (*LearningMetrics, error) {
 	}, nil
 }
 
-// CleanupConsciousness cleans up the Rust consciousness system
+// CleanupJessyCore cleans up the Rust JessyCore system
 //
-// Frees all resources. After calling this, InitConsciousness must be called again.
+// Frees all resources. After calling this, InitJessyCore must be called again.
 // Not thread-safe during cleanup - ensure no other operations are in progress.
-func CleanupConsciousness() error {
-	result := C.consciousness_cleanup()
+func CleanupJessyCore() error {
+	result := C.jessy_core_cleanup()
 	if result != C.SUCCESS {
-		return fmt.Errorf("failed to cleanup consciousness system (error code: %d)", result)
+		return fmt.Errorf("failed to cleanup JessyCore system (error code: %d)", result)
 	}
 	return nil
 }
