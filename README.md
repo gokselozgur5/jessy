@@ -1,18 +1,35 @@
 <div align="center">
 
-# JESSY'S
+# 🧠 JESSY'S
 
-**JESSY'S Enough Semantic System You See**
+### **JESSY'S Enough Semantic System You See**
 
-*(A recursive acronym, like GNU: JESSY'S → JESSY'S Enough Semantic System You See)*
+*A recursive acronym, like GNU: JESSY'S → JESSY'S Enough Semantic System You See*
 
-*AI that thinks in layers, not just tokens*
+<p align="center">
+  <strong>AI that thinks in layers, not just tokens</strong>
+</p>
+
+[![Rust](https://img.shields.io/badge/Rust-1.85-orange?style=flat&logo=rust)](https://www.rust-lang.org)
+[![Tests](https://img.shields.io/badge/tests-624%20passing-success?style=flat)](https://github.com/gokselozgur5/jessy)
+[![Lines of Code](https://img.shields.io/badge/lines-34.7K-blue?style=flat)](https://github.com/gokselozgur5/jessy)
+[![Coverage](https://img.shields.io/badge/coverage->80%25-brightgreen?style=flat)](https://github.com/gokselozgur5/jessy)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue?style=flat)](https://github.com/gokselozgur5/jessy/releases)
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Cognitive_Layers-15-purple?style=for-the-badge" alt="15 Cognitive Layers">
+  <img src="https://img.shields.io/badge/Observer_Chain-4_Stages-teal?style=for-the-badge" alt="4-Stage Observer Chain">
+  <img src="https://img.shields.io/badge/Interference-<10μs-green?style=for-the-badge" alt="<10μs Interference">
+</p>
+
+---
 
 **Creator & Architect:** [gokselozgur5](https://github.com/gokselozgur5)
 **Engineering Methodology:** Prompt-driven software development
 **Development Tools:** Claude Code, Kıro
 
-[🌐 Live Demo](https://jessy-xlow.onrender.com/) · [💬 Chat with Jessy](https://github.com/gokselozgur5/jessy/issues/new?labels=chat&template=chat.yml) · [Try It](#quick-start) · [How It Works](#architecture) · [Roadmap](#whats-next)
+[🌐 Live Demo](https://jessys.online) · [💬 Chat with Jessy](https://github.com/gokselozgur5/jessy/issues/new?labels=chat&template=chat.yml) · [📖 Quick Start](#quick-start) · [🏗️ Architecture](#architecture) · [🚀 Roadmap](#whats-next)
 
 </div>
 
