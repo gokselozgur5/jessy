@@ -173,6 +173,9 @@ impl From<ConsciousnessError> for FFIError {
             ConsciousnessError::LearningError(msg) => {
                 FFIError::Unknown(format!("Learning error: {}", msg))
             }
+            ConsciousnessError::ObserverChainError(msg) => {
+                FFIError::IterationFailed(format!("Observer chain error: {}", msg))
+            }
         }
     }
 }
