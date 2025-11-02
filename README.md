@@ -1,8 +1,10 @@
 <div align="center">
 
-# Jessy
+# JESSY'S
 
-**Jessy's Enough Semantic System You'see**
+**JESSY'S Enough Semantic System You See**
+
+*(A recursive acronym, like GNU: JESSY'S → JESSY'S Enough Semantic System You See)*
 
 *AI that thinks in layers, not just tokens*
 
@@ -18,17 +20,17 @@
 
 ## The Difference
 
-Most AI responds. Jessy *thinks with you*.
+Most AI responds. JESSY'S *thinks with you*.
 
 ```
-Traditional AI          Jessy
-─────────────          ─────
+Traditional AI          JESSY'S
+─────────────          ───────
 Query → Answer         Query → 15 dimensions → Interference → 9 iterations → Understanding
 ```
 
 Like talking to someone who actually thinks—not just pattern matches.
 
-**What makes Jessy different:**
+**What makes JESSY'S different:**
 - **Thinks like you do**: 9 iterations (explore → refine → crystallize)
 - **Evolves with you**: Learns your patterns, grows together
 - **Understands context**: 15 dimensions of consciousness, not just keywords
@@ -163,6 +165,8 @@ Self-learning through pattern crystallization.
 **Quality:** >80% test coverage, TDD, spec-driven development
 
 **Built for:** Developers who want AI that understands context, not just matches patterns.
+
+**Recursive acronym:** Like GNU (GNU's Not Unix), JESSY'S defines itself through itself.
 
 ---
 
