@@ -123,9 +123,20 @@ async fn process_chat_message(
 ) -> Result<(String, DimensionalState), Box<dyn std::error::Error>> {
     use std::time::Instant;
 
-    // Step 1: Select dimensions
+    // Step 1: Select dimensions (with fallback)
     let start = Instant::now();
-    let selection = data.selector.select(message).await?;
+    let selection = match data.selector.select(message).await {
+        Ok(sel) => sel,
+        Err(e) => {
+            eprintln!("⚠️ Dimension selector failed: {}. Using fallback.", e);
+            // Fallback: use intelligent defaults based on simple keyword analysis
+            use crate::navigation::SimpleDimensionSelection;
+            SimpleDimensionSelection {
+                dimensions: fallback_dimension_selection(message),
+                reasoning: Some(format!("Fallback selection due to selector error: {}", e)),
+            }
+        }
+    };
     let selection_duration = start.elapsed();
 
     // Step 2: Create paths
@@ -175,6 +186,69 @@ async fn process_chat_message(
     conversation.add_assistant_message_with_state(response.clone(), dimensional_state.clone());
 
     Ok((response, dimensional_state))
+}
+
+/// Fallback dimension selection using simple keyword matching
+/// Used when LLM-based selector fails
+fn fallback_dimension_selection(message: &str) -> Vec<DimensionId> {
+    let lower = message.to_lowercase();
+    let mut dims = Vec::new();
+
+    // Always include Cognition (L02) for analytical baseline
+    dims.push(DimensionId(2));
+
+    // Emotion keywords
+    if lower.contains("feel") || lower.contains("emotion") || lower.contains("anxious")
+        || lower.contains("happy") || lower.contains("sad") || lower.contains("worried") {
+        dims.push(DimensionId(1));
+    }
+
+    // Technical keywords
+    if lower.contains("code") || lower.contains("debug") || lower.contains("api")
+        || lower.contains("system") || lower.contains("technical") || lower.contains("app") {
+        dims.push(DimensionId(7));
+    }
+
+    // Philosophy keywords
+    if lower.contains("why") || lower.contains("meaning") || lower.contains("consciousness")
+        || lower.contains("existence") || lower.contains("truth") {
+        dims.push(DimensionId(6));
+    }
+
+    // Ethics keywords
+    if lower.contains("ethical") || lower.contains("moral") || lower.contains("harm")
+        || lower.contains("safety") || lower.contains("malicious") {
+        dims.push(DimensionId(9));
+    }
+
+    // Meta keywords
+    if lower.contains("learn") || lower.contains("improve") || lower.contains("think")
+        || lower.contains("understand") || lower.contains("aware") {
+        dims.push(DimensionId(10));
+    }
+
+    // Intention keywords
+    if lower.contains("want") || lower.contains("need") || lower.contains("goal")
+        || lower.contains("trying") || lower.contains("should") {
+        dims.push(DimensionId(3));
+    }
+
+    // If we have less than 3 dimensions, add some sensible defaults
+    if dims.len() < 3 {
+        if !dims.contains(&DimensionId(12)) {
+            dims.push(DimensionId(12)); // Positivity
+        }
+    }
+    if dims.len() < 3 {
+        if !dims.contains(&DimensionId(10)) {
+            dims.push(DimensionId(10)); // Meta
+        }
+    }
+
+    // Cap at 8 dimensions
+    dims.truncate(8);
+
+    dims
 }
 
 fn create_paths_from_dimensions(dimensions: &[DimensionId]) -> Vec<crate::navigation::NavigationPath> {
