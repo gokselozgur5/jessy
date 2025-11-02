@@ -7,7 +7,7 @@ use crate::processing::{
     ConsciousnessConfig, ConsciousnessResponse, ResponseMetadata,
 };
 use crate::interference::{InterferenceEngine, FrequencyState};
-use crate::iteration::ParallelIterationProcessor;
+use crate::observer_chain::ObserverChain;
 use crate::learning::LearningSystem;
 use crate::llm::{LLMManager, LLMConfig};
 use crate::memory::MmapManager;
@@ -23,7 +23,7 @@ use std::time::Instant;
 /// - Navigation system for dimensional path selection
 /// - Memory manager for context loading
 /// - Interference calculator for frequency analysis
-/// - Iteration processor for deep thinking
+/// - Observer chain for deep thinking (4-stage: Explore → Refine → Integrate → Crystallize)
 ///
 /// # Thread Safety
 ///
@@ -50,11 +50,11 @@ use std::time::Instant;
 pub struct ConsciousnessOrchestrator {
     navigation: Arc<NavigationSystem>,
     memory: Arc<MmapManager>,
-    iteration: ParallelIterationProcessor,
+    observer_chain: Option<ObserverChain>,  // Observer chain (only with LLM)
     interference_engine: InterferenceEngine,
     learning: LearningSystem,
     security: SecurityLayer,  // D14 Security dimension (immutable)
-    llm_manager: Option<LLMManager>,  // Optional for testing without API keys
+    llm_manager: Option<Arc<LLMManager>>,  // Optional for testing without API keys (Arc for sharing with observer chain)
     config: ConsciousnessConfig,
     query_count: usize,
     pattern_detection_interval: usize,
@@ -99,18 +99,22 @@ impl ConsciousnessOrchestrator {
     ) -> Result<Self> {
         let mut learning = LearningSystem::new();
         learning.init_crystallizer(memory.clone());
-        
-        let llm_manager = LLMManager::new(llm_config)?;
-        
+
+        let llm_manager = Arc::new(LLMManager::new(llm_config)?);
+
+        // Create observer chain with 4 stages (max)
+        let observer_chain = ObserverChain::new(llm_manager.clone(), 4);
+
         let mut orchestrator = Self::with_config(
             navigation,
             memory,
             ConsciousnessConfig::default(),
             learning,
         );
-        
+
         orchestrator.llm_manager = Some(llm_manager);
-        
+        orchestrator.observer_chain = Some(observer_chain);
+
         Ok(orchestrator)
     }
     
@@ -131,19 +135,13 @@ impl ConsciousnessOrchestrator {
         config: ConsciousnessConfig,
         learning: LearningSystem,
     ) -> Self {
-        let iteration = ParallelIterationProcessor::new(
-            config.max_iterations,
-            config.convergence_threshold,
-            6, // complexity_threshold for return-to-source
-        );
-
         let interference_engine = InterferenceEngine::new();
         let security = SecurityLayer::new();  // D14 Security always active
 
         Self {
             navigation,
             memory,
-            iteration,
+            observer_chain: None,  // No observer chain without LLM
             interference_engine,
             learning,
             security,
@@ -300,35 +298,47 @@ impl ConsciousnessOrchestrator {
                 e
             })?;
         
-        // Phase 4: Parallel Iteration Processing (8 concurrent + 1 synthesis)
-        let iter_start = Instant::now();
-        let iter_result = if self.llm_manager.is_some() {
-            eprintln!("[Consciousness] Using PARALLEL iteration (8 concurrent + 1 synthesis)");
-            self.iteration.process_parallel(
-                query,
-                &contexts,
-                &interference,
-                self.llm_manager.as_ref(),
-            ).await
+        // Phase 4: Observer Chain (4-stage: Explore → Refine → Integrate → Crystallize)
+        let observer_start = Instant::now();
+
+        let (final_answer, chain_length, converged) = if let Some(ref observer_chain) = self.observer_chain {
+            eprintln!("[Consciousness] Using OBSERVER CHAIN (4-stage max, crystallizes early)");
+
+            let result = observer_chain.process(query).await
+                .map_err(|e| {
+                    eprintln!("[Consciousness] Observer chain failed: {}", e);
+                    eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}",
+                             contexts.len(), nav_result.dimensions.len());
+                    e
+                })?;
+
+            eprintln!(
+                "[Consciousness] Observer chain crystallized at stage {}/{} (reason: {:?})",
+                result.chain_length, 4, result.crystallization_reason
+            );
+
+            (
+                result.final_observation.content,
+                result.chain_length,
+                result.chain_length < 4, // Converged early if < 4 stages
+            )
         } else {
-            // No LLM - use simple processing
-            eprintln!("[Consciousness] No LLM available - using simple processing");
-            self.iteration.process_parallel(
+            // No observer chain - simple fallback
+            eprintln!("[Consciousness] No observer chain available - using simple fallback");
+
+            let simple_answer = format!(
+                "Query: {}\nContexts loaded: {}\nDimensions: {:?}\n\nNo observer chain available for deep thinking.",
                 query,
-                &contexts,
-                &interference,
-                self.llm_manager.as_ref(),  // Pass LLM manager if available
-            ).await
-        }.map_err(|e| {
-            // Log iteration error
-            eprintln!("[Consciousness] Iteration processing failed: {}", e);
-            eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}", 
-                     contexts.len(), nav_result.dimensions.len());
-            e // Propagate original error
-            })?;
-        metadata.iteration_duration_ms = iter_start.elapsed().as_millis() as u64;
-        metadata.iterations_completed = iter_result.iterations_completed;
-        metadata.converged = iter_result.convergence_achieved;
+                contexts.len(),
+                nav_result.dimensions
+            );
+
+            (simple_answer, 1, false)
+        };
+
+        metadata.iteration_duration_ms = observer_start.elapsed().as_millis() as u64;
+        metadata.iterations_completed = chain_length;
+        metadata.converged = converged;
         
         // Calculate total duration
         metadata.total_duration_ms = pipeline_start.elapsed().as_millis() as u64;
@@ -341,7 +351,17 @@ impl ConsciousnessOrchestrator {
         
         // Phase 5: Learning - Record observation for pattern detection
         // This happens after successful processing to learn from interactions
-        if let Err(e) = self.learning.observe_interaction(query, &nav_result, &iter_result) {
+        // Note: observe_interaction doesn't actually use iteration_result (underscore parameter)
+        // We create a dummy IterationResult for now - TODO: refactor learning API
+        let dummy_iter_result = crate::iteration::IterationResult {
+            final_answer: final_answer.clone(),
+            iterations_completed: chain_length,
+            convergence_achieved: converged,
+            return_to_source_triggered: false,
+            steps: vec![],
+        };
+
+        if let Err(e) = self.learning.observe_interaction(query, &nav_result, &dummy_iter_result) {
             // Log but don't fail the query - learning is non-critical
             eprintln!("[Consciousness] Learning observation failed: {}", e);
         }
@@ -406,14 +426,11 @@ impl ConsciousnessOrchestrator {
         }
         
         // Assemble response
-        let iterations = if self.config.include_iteration_history {
-            iter_result.steps
-        } else {
-            vec![]
-        };
-        
+        // Observer chain doesn't have iteration steps - it's a 4-stage chain
+        let iterations = vec![];  // No iteration history in observer chain model
+
         Ok(ConsciousnessResponse::new(
-            iter_result.final_answer,
+            final_answer,
             metadata,
             iterations,
         ))
