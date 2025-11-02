@@ -403,7 +403,7 @@ mod tests {
     #[test]
     fn test_path_selector_creation() {
         let selector = PathSelector::new();
-        assert_eq!(selector.config().confidence_threshold, 0.3);
+        assert_eq!(selector.config().confidence_threshold, 0.0);
         assert_eq!(selector.config().max_dimensions, 8);
         assert_eq!(selector.config().complexity_threshold, 6);
     }
@@ -1544,25 +1544,26 @@ mod tests {
     #[test]
     fn test_path_selection() {
         let selector = PathSelector::new();
-        
+
         let mut path1 = NavigationPath::new(DimensionId(1), Frequency::new(1.0));
         path1.confidence = 0.9;
         path1.add_layer(LayerId { dimension: DimensionId(1), layer: 0 }, 0.0);
-        
+
         let mut path2 = NavigationPath::new(DimensionId(2), Frequency::new(1.5));
         path2.confidence = 0.5;
         path2.add_layer(LayerId { dimension: DimensionId(2), layer: 0 }, 0.0);
-        
+
         let mut path3 = NavigationPath::new(DimensionId(3), Frequency::new(2.0));
-        path3.confidence = 0.2; // Below threshold
+        path3.confidence = 0.2; // Now passes with threshold 0.0
         path3.add_layer(LayerId { dimension: DimensionId(3), layer: 0 }, 0.0);
-        
+
         let paths = vec![path1, path2, path3];
         let selected = selector.select_paths(paths);
-        
-        assert_eq!(selected.len(), 2); // Only viable paths (above 0.3 threshold)
+
+        assert_eq!(selected.len(), 3); // All paths pass with threshold 0.0
         assert_eq!(selected[0].dimension_id, DimensionId(1)); // Highest confidence first
         assert_eq!(selected[1].dimension_id, DimensionId(2));
+        assert_eq!(selected[2].dimension_id, DimensionId(3));
     }
     
     #[test]

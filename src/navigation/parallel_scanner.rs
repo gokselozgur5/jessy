@@ -758,20 +758,20 @@ mod tests {
     
     #[tokio::test]
     async fn test_scan_all_filters_by_confidence_threshold() {
-        // Test that results are filtered by confidence threshold (>= 0.3)
+        // Test that results are filtered by confidence threshold (>= 0.0 now)
         let scanner = create_test_scanner_with_data();
         let query_keywords = vec!["emotion".to_string()];
-        
+
         let result = scanner.scan_all(&query_keywords).await;
-        
+
         assert!(result.is_ok());
         let activations = result.unwrap();
-        
-        // All returned activations should meet confidence threshold
+
+        // All returned activations should meet confidence threshold (0.0)
         for activation in &activations {
             assert!(
-                activation.confidence >= 0.3,
-                "Activation for dimension {} has confidence {} < 0.3",
+                activation.confidence >= 0.0,
+                "Activation for dimension {} has confidence {} < 0.0",
                 activation.dimension_id.0,
                 activation.confidence
             );
@@ -847,12 +847,12 @@ mod tests {
         let result = scanner.scan_all(&mixed_keywords).await;
         assert!(result.is_ok());
         
-        // Empty query
+        // Empty query - with threshold 0.0, now returns all dimensions with low confidence
         let empty_keywords: Vec<String> = vec![];
         let result = scanner.scan_all(&empty_keywords).await;
         assert!(result.is_ok());
         let activations = result.unwrap();
-        assert!(activations.is_empty(), "Empty query should have no activations");
+        assert_eq!(activations.len(), 14, "Empty query now activates all dimensions with low confidence");
     }
     
     #[tokio::test]
@@ -952,16 +952,16 @@ mod tests {
         // Test that completed scans are included in results even on timeout
         let scanner = create_test_scanner_with_data();
         let query_keywords = vec!["emotion".to_string(), "cognition".to_string()];
-        
-        let result: Result<Vec<DimensionActivation>, NavigationError> = 
+
+        let result: Result<Vec<DimensionActivation>, NavigationError> =
             scanner.scan_all_with_timeout(&query_keywords).await;
-        
+
         assert!(result.is_ok());
         let activations = result.unwrap();
-        
+
         // All returned activations should be valid
         for activation in &activations {
-            assert!(activation.confidence >= 0.3);
+            assert!(activation.confidence >= 0.0);  // Changed from 0.3 to 0.0
             assert!(activation.dimension_id.0 >= 1 && activation.dimension_id.0 <= 14);
         }
     }
