@@ -4,7 +4,7 @@
 //! Loads configuration from environment variables and provides interactive chat.
 
 use jessy::config::SystemConfig;
-use jessy::consciousness::ConsciousnessOrchestrator;
+use jessy::processing::ConsciousnessOrchestrator;
 use jessy::navigation::NavigationSystem;
 use jessy::memory::MmapManager;
 use jessy::llm::LLMConfig;
