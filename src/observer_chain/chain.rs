@@ -83,9 +83,17 @@ impl ObserverChain {
     async fn observe(&self, stage: usize, context: &ChainContext) -> Result<Observation> {
         let prompt = build_observer_prompt(stage, context);
 
+        // Create a dummy IterationContext for LLM call
+        // TODO: Refactor LLMManager to not require IterationContext
+        let iter_context = crate::iteration::IterationContext {
+            iteration: stage,
+            cumulative_context: context.build_summary(),
+            convergence_score: 0.0,
+        };
+
         let response = self
             .llm
-            .generate(&prompt)
+            .generate(&prompt, &iter_context)
             .await
             .map_err(|e| {
                 ConsciousnessError::ObserverChainError(format!(
