@@ -285,19 +285,99 @@ fn create_paths_from_dimensions(dimensions: &[DimensionId]) -> Vec<crate::naviga
 fn create_simulated_contexts(paths: &[crate::navigation::NavigationPath]) -> crate::memory::ContextCollection {
     let mut collection = crate::memory::ContextCollection::new();
 
+    // Load dimensions.json for rich context
+    let dimensions_data = load_dimensions_config();
+
     for path in paths {
         for layer_id in &path.layer_sequence {
+            // Get keywords from dimensions.json
+            let keywords = dimensions_data
+                .as_ref()
+                .and_then(|d| get_layer_keywords(d, layer_id.dimension, layer_id.layer))
+                .unwrap_or_else(|| path.keywords_matched.clone());
+
+            // Generate rich content based on dimension and layer
+            let content = generate_rich_context(layer_id.dimension, layer_id.layer, &keywords, path.frequency);
+
             let context = crate::memory::LoadedContext {
                 layer_id: *layer_id,
-                content: format!("Context for {} layer {}", get_dimension_name(layer_id.dimension), layer_id.layer),
+                content,
                 frequency: path.frequency,
-                keywords: path.keywords_matched.clone(),
+                keywords,
             };
             collection.add_context(context);
         }
     }
 
     collection
+}
+
+/// Load dimensions.json configuration
+fn load_dimensions_config() -> Option<serde_json::Value> {
+    let path = std::path::Path::new("data/dimensions.json");
+    if !path.exists() {
+        return None;
+    }
+
+    std::fs::read_to_string(path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+}
+
+/// Get keywords for a specific layer from dimensions.json
+fn get_layer_keywords(data: &serde_json::Value, dimension: DimensionId, layer: u8) -> Option<Vec<String>> {
+    data.get("layers")?
+        .as_array()?
+        .iter()
+        .find(|l| {
+            l.get("dimension_id").and_then(|d| d.as_u64()) == Some(dimension.0 as u64)
+                && l.get("layer_num").and_then(|ln| ln.as_u64()) == Some(layer as u64)
+        })?
+        .get("keywords")?
+        .as_array()
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|k| k.as_str().map(String::from))
+                .collect()
+        })
+}
+
+/// Generate rich context content for a layer
+fn generate_rich_context(dimension: DimensionId, layer: u8, keywords: &[String], frequency: crate::Frequency) -> String {
+    let mut content = String::new();
+
+    let dim_name = get_dimension_name(dimension);
+    let dim_desc = get_dimension_description(dimension);
+
+    content.push_str(&format!("# {} - Layer {}\n\n", dim_name, layer));
+    content.push_str(&format!("{}\n\n", dim_desc));
+
+    // Add frequency context
+    let freq_hz = frequency.hz();
+    if freq_hz < 1.0 {
+        content.push_str("Operating at LOW frequency - deep, contemplative processing.\n");
+    } else if freq_hz < 2.5 {
+        content.push_str("Operating at MEDIUM frequency - balanced analytical processing.\n");
+    } else {
+        content.push_str("Operating at HIGH frequency - rapid, reactive processing.\n");
+    }
+
+    // Add keywords as processing focus
+    if !keywords.is_empty() {
+        content.push_str("\n## Processing Focus:\n");
+        content.push_str(&format!("This layer responds to: {}\n", keywords.join(", ")));
+    }
+
+    // Add layer-specific guidance
+    match layer {
+        0 => content.push_str("\n**Surface Layer**: Direct, explicit processing of query terms.\n"),
+        1 => content.push_str("\n**Intermediate Layer**: Categorical and structural analysis.\n"),
+        2 => content.push_str("\n**Deep Layer**: Nuanced interpretation and contextual understanding.\n"),
+        3 => content.push_str("\n**Core Layer**: Fundamental principles and abstract reasoning.\n"),
+        _ => content.push_str("\n**Extended Layer**: Specialized processing.\n"),
+    }
+
+    content
 }
 
 pub fn build_system_prompt(selection: &crate::navigation::SimpleDimensionSelection) -> String {

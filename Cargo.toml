@@ -86,6 +86,10 @@ path = "src/bin/jessy-cli.rs"
 name = "jessy-web"
 path = "src/bin/jessy-web.rs"
 
+[[bin]]
+name = "initialize_mmap"
+path = "scripts/initialize_mmap.rs"
+
 [[example]]
 name = "interference_demo"
 path = "examples/interference_demo.rs"
