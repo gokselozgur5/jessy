@@ -28,6 +28,7 @@
 **Creator & Architect:** [gokselozgur5](https://github.com/gokselozgur5)
 **Engineering Methodology:** Prompt-driven software development
 **Development Tools:** Claude Code, Kıro
+**Production:** [jessys.online](https://jessys.online) (auto-deployed from `main` branch)
 
 [💬 Chat with Jessy](https://jessys.online) · [📖 Quick Start](#quick-start) · [🏗️ Architecture](#architecture) · [🚀 Roadmap](#whats-next)
 
