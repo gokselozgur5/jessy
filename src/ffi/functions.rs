@@ -108,7 +108,7 @@ pub unsafe fn from_c_string(ptr: *const c_char) -> Option<String> {
 /// - ptr is not used after this call
 /// - ptr is not freed twice
 #[no_mangle]
-pub unsafe extern "C" fn consciousness_free_string(ptr: *mut c_char) {
+pub unsafe extern "C" fn jessy_core_free_string(ptr: *mut c_char) {
     if !ptr.is_null() {
         // Reconstruct CString and let it drop
         let _ = CString::from_raw(ptr);
@@ -121,7 +121,7 @@ pub unsafe extern "C" fn consciousness_free_string(ptr: *mut c_char) {
 ///
 /// Caller must ensure response was allocated by Rust
 #[no_mangle]
-pub unsafe extern "C" fn consciousness_free_response(response: *mut CQueryResponse) {
+pub unsafe extern "C" fn jessy_core_free_response(response: *mut CQueryResponse) {
     if response.is_null() {
         return;
     }
@@ -130,13 +130,13 @@ pub unsafe extern "C" fn consciousness_free_response(response: *mut CQueryRespon
     
     // Free session_id
     if !resp.session_id.is_null() {
-        consciousness_free_string(resp.session_id);
+        jessy_core_free_string(resp.session_id);
         resp.session_id = ptr::null_mut();
     }
     
     // Free answer
     if !resp.answer.is_null() {
-        consciousness_free_string(resp.answer);
+        jessy_core_free_string(resp.answer);
         resp.answer = ptr::null_mut();
     }
     
@@ -145,7 +145,7 @@ pub unsafe extern "C" fn consciousness_free_response(response: *mut CQueryRespon
         for i in 0..resp.dimensions_count {
             let dim_ptr = *resp.dimensions_activated.add(i);
             if !dim_ptr.is_null() {
-                consciousness_free_string(dim_ptr);
+                jessy_core_free_string(dim_ptr);
             }
         }
         // Free the array itself
@@ -160,7 +160,7 @@ pub unsafe extern "C" fn consciousness_free_response(response: *mut CQueryRespon
     
     // Free error message
     if !resp.error_message.is_null() {
-        consciousness_free_string(resp.error_message);
+        jessy_core_free_string(resp.error_message);
         resp.error_message = ptr::null_mut();
     }
 }
@@ -184,7 +184,7 @@ pub fn strings_to_c_array(strings: Vec<String>) -> (*mut *mut c_char, usize) {
     (ptr, count)
 }
 
-/// Initialize consciousness system
+/// Initialize JessyCore system
 ///
 /// Must be called once before any other functions.
 /// Thread-safe - multiple calls are safe but only first takes effect.
@@ -203,7 +203,7 @@ pub fn strings_to_c_array(strings: Vec<String>) -> (*mut *mut c_char, usize) {
 ///
 /// Safe to call from multiple threads. Uses Once for synchronization.
 #[no_mangle]
-pub extern "C" fn consciousness_init(memory_limit_mb: u32) -> i32 {
+pub extern "C" fn jessy_core_init(memory_limit_mb: u32) -> i32 {
     // Validate input
     if memory_limit_mb == 0 || memory_limit_mb > 10000 {
         eprintln!("[FFI] Invalid memory limit: {}MB", memory_limit_mb);
@@ -213,17 +213,17 @@ pub extern "C" fn consciousness_init(memory_limit_mb: u32) -> i32 {
     let mut result = SUCCESS;
     
     INIT.call_once(|| {
-        eprintln!("[FFI] Initializing consciousness system with {}MB memory limit", memory_limit_mb);
+        eprintln!("[FFI] Initializing JessyCore system with {}MB memory limit", memory_limit_mb);
         
         match initialize_orchestrator(memory_limit_mb) {
             Ok(orchestrator) => {
                 unsafe {
                     ORCHESTRATOR = Some(Arc::new(Mutex::new(orchestrator)));
                 }
-                eprintln!("[FFI] Consciousness system initialized successfully");
+                eprintln!("[FFI] JessyCore system initialized successfully");
             }
             Err(e) => {
-                eprintln!("[FFI] Failed to initialize consciousness system: {}", e);
+                eprintln!("[FFI] Failed to initialize JessyCore system: {}", e);
                 result = ERROR_UNKNOWN;
             }
         }
@@ -266,12 +266,12 @@ fn initialize_orchestrator(memory_limit_mb: u32) -> Result<ConsciousnessOrchestr
 ///
 /// # Safety
 ///
-/// Must call consciousness_init() first
+/// Must call jessy_core_init() first
 fn get_orchestrator() -> Option<Arc<Mutex<ConsciousnessOrchestrator>>> {
     unsafe { ORCHESTRATOR.clone() }
 }
 
-/// Process query through consciousness system with comprehensive error handling
+/// Process query through JessyCore system with comprehensive error handling
 ///
 /// This function includes:
 /// - Input validation
@@ -283,12 +283,12 @@ fn get_orchestrator() -> Option<Arc<Mutex<ConsciousnessOrchestrator>>> {
 /// # Arguments
 ///
 /// * `request` - Query request with query string, session_id, max_iterations
-/// * `response` - Output response structure (caller must free with consciousness_free_response)
+/// * `response` - Output response structure (caller must free with jessy_core_free_response)
 ///
 /// # Returns
 ///
 /// * `SUCCESS` (0) on success
-/// * `ERROR_NOT_INITIALIZED` if consciousness_init() not called
+/// * `ERROR_NOT_INITIALIZED` if jessy_core_init() not called
 /// * `ERROR_INVALID_INPUT` if request is invalid
 /// * `ERROR_SECURITY_VIOLATION` if query violates security rules
 /// * `ERROR_TIMEOUT` if processing exceeds 30s timeout
@@ -299,9 +299,9 @@ fn get_orchestrator() -> Option<Arc<Mutex<ConsciousnessOrchestrator>>> {
 ///
 /// - request must be valid pointer with valid C strings
 /// - response must be valid pointer
-/// - Caller must free response with consciousness_free_response()
+/// - Caller must free response with jessy_core_free_response()
 #[no_mangle]
-pub unsafe extern "C" fn consciousness_process_query(
+pub unsafe extern "C" fn jessy_core_process_query(
     request: *const CQueryRequest,
     response: *mut CQueryResponse,
 ) -> i32 {
@@ -322,7 +322,7 @@ pub unsafe extern "C" fn consciousness_process_query(
             Some(orch) => orch,
             None => {
                 let error = FFIError::NotInitialized(
-                    "Consciousness system not initialized - call consciousness_init() first".to_string()
+                    "JessyCore system not initialized - call jessy_core_init() first".to_string()
                 );
                 log_error(&error, "process_query");
                 return Err(error);
@@ -521,7 +521,7 @@ fn process_query_internal(
 ///
 /// metrics must be valid pointer
 #[no_mangle]
-pub unsafe extern "C" fn consciousness_get_metrics(metrics: *mut CMetrics) -> i32 {
+pub unsafe extern "C" fn jessy_core_get_metrics(metrics: *mut CMetrics) -> i32 {
     if metrics.is_null() {
         return ERROR_INVALID_INPUT;
     }
@@ -529,7 +529,7 @@ pub unsafe extern "C" fn consciousness_get_metrics(metrics: *mut CMetrics) -> i3
     let orchestrator = match get_orchestrator() {
         Some(orch) => orch,
         None => {
-            eprintln!("[FFI] Consciousness system not initialized");
+            eprintln!("[FFI] JessyCore system not initialized");
             return ERROR_NOT_INITIALIZED;
         }
     };
@@ -555,9 +555,9 @@ pub unsafe extern "C" fn consciousness_get_metrics(metrics: *mut CMetrics) -> i3
     SUCCESS
 }
 
-/// Cleanup consciousness system
+/// Cleanup JessyCore system
 ///
-/// Frees all resources. After calling this, consciousness_init() must be called again.
+/// Frees all resources. After calling this, jessy_core_init() must be called again.
 ///
 /// # Returns
 ///
@@ -568,19 +568,19 @@ pub unsafe extern "C" fn consciousness_get_metrics(metrics: *mut CMetrics) -> i3
 ///
 /// Not thread-safe during cleanup. Ensure no other threads are using the system.
 #[no_mangle]
-pub extern "C" fn consciousness_cleanup() -> i32 {
-    eprintln!("[FFI] Cleaning up consciousness system");
+pub extern "C" fn jessy_core_cleanup() -> i32 {
+    eprintln!("[FFI] Cleaning up JessyCore system");
     
     unsafe {
         if ORCHESTRATOR.is_none() {
-            eprintln!("[FFI] Consciousness system not initialized");
+            eprintln!("[FFI] JessyCore system not initialized");
             return ERROR_NOT_INITIALIZED;
         }
         
         ORCHESTRATOR = None;
     }
     
-    eprintln!("[FFI] Consciousness system cleaned up successfully");
+    eprintln!("[FFI] JessyCore system cleaned up successfully");
     SUCCESS
 }
 
@@ -598,7 +598,7 @@ mod tests {
         unsafe {
             let back = from_c_string(c_str);
             assert_eq!(back, Some(rust_str));
-            consciousness_free_string(c_str);
+            jessy_core_free_string(c_str);
         }
     }
     
@@ -629,7 +629,7 @@ mod tests {
                 assert!(!c_str.is_null());
                 let rust_str = from_c_string(c_str);
                 assert_eq!(rust_str, Some(strings[i].clone()));
-                consciousness_free_string(c_str);
+                jessy_core_free_string(c_str);
             }
             
             // Free the array
