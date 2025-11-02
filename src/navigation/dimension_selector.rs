@@ -264,16 +264,11 @@ impl DimensionSelector {
             }
         }
 
-        if layers.is_empty() {
-            return Err(NavigationError::ParsingError {
-                details: format!("Could not parse layers from response: {}", cleaned),
-            }.into());
-        }
-
         // Remove duplicates, keep order
         let mut seen = std::collections::HashSet::new();
         layers.retain(|d| seen.insert(d.0));
 
+        // Empty is OK - means all dimensions were out of range and filtered
         Ok(layers)
     }
 
