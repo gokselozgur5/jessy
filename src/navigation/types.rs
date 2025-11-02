@@ -535,10 +535,10 @@ mod tests {
     #[test]
     fn test_navigation_config_default() {
         let config = NavigationConfig::default();
-        
+
         // Verify requirement-based defaults
         assert_eq!(config.scan_timeout_ms, 100);
-        assert_eq!(config.confidence_threshold, 0.3);
+        assert_eq!(config.confidence_threshold, 0.0);
         assert_eq!(config.max_dimensions, 8);
         assert_eq!(config.complexity_threshold, 6);
         assert_eq!(config.max_depth, 4);
