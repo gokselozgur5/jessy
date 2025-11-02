@@ -62,6 +62,7 @@ pub mod dimensions;
 pub mod navigation;
 pub mod interference;
 pub mod iteration;
+pub mod observer_chain;
 pub mod learning;
 pub mod security;
 pub mod processing;
@@ -136,6 +137,9 @@ pub enum ConsciousnessError {
     
     #[error("Operation timeout: {0}")]
     Timeout(String),
+
+    #[error("Observer chain error: {0}")]
+    ObserverChainError(String),
 }
 
 impl From<crate::learning::LearningError> for ConsciousnessError {
