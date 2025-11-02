@@ -190,6 +190,80 @@ impl MmapRegion {
         self.metadata.layers.iter().map(|info| info.layer_id).collect()
     }
     
+    /// Get the total size of the mapped region
+    pub fn size(&self) -> usize {
+        self.mmap.len()
+    }
+    
+    /// Get the region ID
+    pub fn id(&self) -> u32 {
+        self.region_id
+    }
+    
+    /// Get the dimension ID
+    pub fn dimension(&self) -> crate::DimensionId {
+        self.dimension_id
+    }
+    
+    /// Get raw pointer to mapped memory (for zero-copy access)
+    ///
+    /// # Safety
+    /// Returns a raw pointer to the mapped memory. Caller must ensure:
+    /// - Pointer is not used after the region is dropped
+    /// - No writes are performed (region is read-only)
+    /// - Bounds checking is performed before dereferencing
+    pub fn as_ptr(&self) -> *const u8 {
+        self.mmap.as_ptr()
+    }
+    
+    /// Get the file path of this region
+    pub fn path(&self) -> &std::path::Path {
+        &self.file_path
+    }
+    
+    /// Verify region integrity
+    ///
+    /// Checks that:
+    /// - All layer offsets are within bounds
+    /// - Layer sizes don't exceed region size
+    /// - No overlapping layers
+    pub fn verify_integrity(&self) -> Result<()> {
+        let region_size = self.mmap.len();
+        
+        for layer in &self.metadata.layers {
+            // Check bounds
+            if layer.offset + layer.size > region_size {
+                return Err(ConsciousnessError::MemoryError(
+                    format!(
+                        "Layer {:?} extends beyond region bounds: offset={}, size={}, region_size={}",
+                        layer.layer_id, layer.offset, layer.size, region_size
+                    )
+                ));
+            }
+        }
+        
+        // Check for overlaps (sort by offset first)
+        let mut sorted_layers: Vec<_> = self.metadata.layers.iter().collect();
+        sorted_layers.sort_by_key(|l| l.offset);
+        
+        for window in sorted_layers.windows(2) {
+            let current = window[0];
+            let next = window[1];
+            
+            if current.offset + current.size > next.offset {
+                return Err(ConsciousnessError::MemoryError(
+                    format!(
+                        "Overlapping layers detected: {:?} (offset={}, size={}) overlaps with {:?} (offset={})",
+                        current.layer_id, current.offset, current.size,
+                        next.layer_id, next.offset
+                    )
+                ));
+            }
+        }
+        
+        Ok(())
+    }
+    
     /// Parse metadata from MMAP content
     fn parse_metadata(mmap: &Mmap) -> Result<RegionMetadata> {
         // Look for metadata header (first 1KB)
