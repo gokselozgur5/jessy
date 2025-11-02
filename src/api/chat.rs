@@ -289,18 +289,18 @@ fn create_simulated_contexts(paths: &[crate::navigation::NavigationPath]) -> cra
     let dimensions_data = load_dimensions_config();
 
     for path in paths {
-        for layer_id in &path.layer_sequence {
+        for &layer_id in &path.layer_sequence {
             // Get keywords from dimensions.json
             let keywords = dimensions_data
                 .as_ref()
                 .and_then(|d| get_layer_keywords(d, layer_id.dimension, layer_id.layer))
-                .unwrap_or_else(|| path.keywords_matched.clone());
+                .unwrap_or_else(|| vec![]);
 
             // Generate rich content based on dimension and layer
             let content = generate_rich_context(layer_id.dimension, layer_id.layer, &keywords, path.frequency);
 
             let context = crate::memory::LoadedContext {
-                layer_id: *layer_id,
+                layer_id,
                 content,
                 frequency: path.frequency,
                 keywords,
