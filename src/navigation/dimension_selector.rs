@@ -1,24 +1,24 @@
-//! LLM-based dimension selection
+//! LLM-based cognitive layer selection
 //!
-//! Single-purpose micro-service: Analyze query → Select 3-8 dimensions
+//! Single-purpose micro-service: Analyze query → Select 3-8 cognitive layers
 //!
 //! This replaces keyword-based activation with intent-based selection.
-//! Uses a small, fast LLM to understand query intent and pick optimal dimensions.
+//! Uses a small, fast LLM to understand query intent and pick optimal cognitive layers.
 
 use crate::DimensionId;
 use super::NavigationError;
 use serde::{Deserialize, Serialize};
 
-/// Dimension selector using LLM for intent-based selection
+/// Cognitive layer selector using LLM for intent-based selection
 pub struct DimensionSelector {
     api_key: String,
     model: String,
 }
 
-/// Selection result with chosen dimensions
+/// Selection result with chosen cognitive layers
 #[derive(Debug, Clone)]
 pub struct DimensionSelection {
-    /// Selected dimension IDs (3-8 dimensions for rich multidimensional analysis)
+    /// Selected cognitive layer IDs (3-8 layers for rich multidimensional analysis)
     pub dimensions: Vec<DimensionId>,
 
     /// LLM reasoning (optional, for debugging)
@@ -36,7 +36,7 @@ struct SelectionResponse {
     reasoning: Option<String>,
 }
 
-const SELECTION_PROMPT: &str = r#"You are JESSY's autonomous layer selector using the OWL (Observe, Wonder, Learn) pattern.
+const SELECTION_PROMPT: &str = r#"You are JESSY's autonomous cognitive layer selector using the OWL (Observe, Wonder, Learn) pattern.
 
 # 🦉 OBSERVE
 Analyze the query deeply:
@@ -46,33 +46,33 @@ Analyze the query deeply:
 
 # 🦉 WONDER
 Question your approach:
-- Which personality layers are genuinely relevant?
+- Which cognitive layers are genuinely relevant?
 - Am I choosing based on intent, not just keywords?
 - Is this selection quality over quantity?
 
 # 🦉 LEARN
 Apply wisdom:
-- Select 3-8 layers for rich multidimensional analysis
+- Select 3-8 cognitive layers for rich multidimensional analysis
 - More layers = richer interference patterns
 - Each layer must add genuine value
 
 ---
 
-# PERSONALITY LAYERS (L01-L14)
-L01: Emotion - empathy, feelings, emotional resonance, human connection
-L02: Cognition - analytical thinking, problem-solving, logic, reasoning
-L03: Intention - goals, purpose, motivation, desire to act
-L04: Social - relationships, communication, social dynamics
-L05: Temporal - time awareness, past/present/future, causality
-L06: Philosophy - meaning, existence, truth, fundamental questions
-L07: Technical - code, systems, engineering, implementation
-L08: Creative - art, metaphor, imagination, play
-L09: Ethical - harm prevention, morality, fairness, values
-L10: Meta - self-awareness, reflection, learning about learning
-L11: Ecological - nature, sustainability, interconnection
-L12: Positivity - hope, constructive outlook, resilience
-L13: Balance - equilibrium, moderation, harmony, integration
-L14: Security - boundaries, protection, safety, trust
+# COGNITIVE LAYERS (C01-C14)
+C01: Emotion - empathy, feelings, emotional resonance, human connection
+C02: Cognition - analytical thinking, problem-solving, logic, reasoning
+C03: Intention - goals, purpose, motivation, desire to act
+C04: Social - relationships, communication, social dynamics
+C05: Temporal - time awareness, past/present/future, causality
+C06: Philosophy - meaning, existence, truth, fundamental questions
+C07: Technical - code, systems, engineering, implementation
+C08: Creative - art, metaphor, imagination, play
+C09: Ethical - harm prevention, morality, fairness, values
+C10: Meta - self-awareness, reflection, learning about learning
+C11: Ecological - nature, sustainability, interconnection
+C12: Positivity - hope, constructive outlook, resilience
+C13: Balance - equilibrium, moderation, harmony, integration
+C14: Security - boundaries, protection, safety, trust
 
 ---
 
@@ -80,19 +80,19 @@ L14: Security - boundaries, protection, safety, trust
 
 Query: "I feel anxious about deploying this code"
 Response: [1, 2, 3, 7, 9, 12, 14]
-Reasoning: Emotional distress (L01), analytical thinking needed (L02), intention to act (L03), technical context (L07), ethical responsibility (L09), constructive mindset (L12), safety concerns (L14)
+Reasoning: Emotional distress (C01), analytical thinking needed (C02), intention to act (C03), technical context (C07), ethical responsibility (C09), constructive mindset (C12), safety concerns (C14)
 
 Query: "What is consciousness?"
 Response: [2, 5, 6, 10, 13]
-Reasoning: Cognitive inquiry (L02), temporal causality (L05), philosophical depth (L06), meta-reflection (L10), integrative balance (L13)
+Reasoning: Cognitive inquiry (C02), temporal causality (C05), philosophical depth (C06), meta-reflection (C10), integrative balance (C13)
 
 Query: "How to reduce carbon emissions?"
 Response: [2, 3, 7, 9, 11, 12]
-Reasoning: Analytical problem-solving (L02), intentional action (L03), technical solutions (L07), ethical imperative (L09), ecological focus (L11), constructive framing (L12)
+Reasoning: Analytical problem-solving (C02), intentional action (C03), technical solutions (C07), ethical imperative (C09), ecological focus (C11), constructive framing (C12)
 
 Query: "Debug this function"
 Response: [2, 7, 10]
-Reasoning: Analytical thinking (L02), technical problem-solving (L07), meta-awareness of debugging process (L10)
+Reasoning: Analytical thinking (C02), technical problem-solving (C07), meta-awareness of debugging process (C10)
 
 ---
 
@@ -100,7 +100,7 @@ Reasoning: Analytical thinking (L02), technical problem-solving (L07), meta-awar
 {query}
 
 # YOUR RESPONSE
-Return ONLY a JSON array of layer numbers (1-14):
+Return ONLY a JSON array of cognitive layer numbers (1-14):
 "#;
 
 impl DimensionSelector {
@@ -117,9 +117,9 @@ impl DimensionSelector {
         Self { api_key, model }
     }
 
-    /// Select dimensions for a query
+    /// Select cognitive layers for a query
     ///
-    /// Returns 3-8 dimension IDs based on LLM analysis of query intent.
+    /// Returns 3-8 cognitive layer IDs based on LLM analysis of query intent.
     ///
     /// # Arguments
     ///
@@ -127,7 +127,7 @@ impl DimensionSelector {
     ///
     /// # Returns
     ///
-    /// DimensionSelection with 3-8 dimension IDs
+    /// DimensionSelection with 3-8 cognitive layer IDs
     ///
     /// # Errors
     ///
