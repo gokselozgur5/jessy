@@ -207,7 +207,8 @@ mod tests {
         ctx.add_observation(obs1);
         ctx.add_observation(obs2);
 
-        assert_eq!(ctx.average_confidence(), 0.8);
+        let avg = ctx.average_confidence();
+        assert!((avg - 0.8).abs() < 0.001, "Expected ~0.8, got {}", avg);
     }
 
     #[test]
