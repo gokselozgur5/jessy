@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Jessy** - "Jessy's Enough Semantic System You'see" - is a multilayer-based AI system architecture built in Rust with a Go API layer. It processes queries through 15 processing layers using frequency-based interference patterns (0.1-4.5 Hz), 9-iteration deep thinking, and memory-mapped storage for zero-copy access.
+**Jessy** - "Jessy's Enough Semantic System You'see" - is a multilayer-based AI system architecture built in Rust with a Go API layer. It processes queries through 15 cognitive layers using frequency-based interference patterns (0.1-4.5 Hz), 9-iteration deep thinking, and memory-mapped storage for zero-copy access.
 
 **Creator & Architect:** gokselozgur5
 **Engineering Methodology:** Prompt-driven software development
@@ -24,7 +24,7 @@ Every optimization was proposed, analyzed, implemented, benchmarked, and validat
 
 **Core Philosophy:**
 - "Nothing is true, everything is permitted" - Embrace uncertainty, question everything
-- "Return to source" - Simplify when complexity exceeds 6 active dimensions
+- "Return to source" - Simplify when complexity exceeds 6 active cognitive layers
 - Unbounded evolution within immutable ethical constraints (Asimov's Laws)
 - 9 iterations: explore (1-3) → refine (4-6) → crystallize (7-9)
 
@@ -86,7 +86,7 @@ Current Rust service: `unit-tests` (see RUST_SERVICE in Makefile)
 ### Core Pipeline Flow
 
 ```
-Query → Security (D14) → Navigation (15 Dimensions) →
+Query → Security (C14) → Navigation (15 Cognitive Layers) →
 Memory Loading (MMAP) → Interference (Frequency Calculation) →
 Iteration (9 Deep Thinking) → Learning → Response
 ```
@@ -107,21 +107,21 @@ Iteration (9 Deep Thinking) → Learning → Response
    - `navigator.rs` - Core navigation logic
    - `synesthetic.rs` - Cross-sensory keyword mapping
    - `query_analyzer.rs` - Query tokenization and analysis
-   - `path_selector.rs` - Dimension/layer selection
-   - Scans 15 processing layers in parallel (<100ms target)
+   - `path_selector.rs` - Cognitive layer/sublayer selection
+   - Scans 15 cognitive layers in parallel (<100ms target)
 
 3. **memory/** - Zero-copy memory management
    - `manager.rs` - MMAP manager (280MB allocation)
    - `pool.rs` - Block allocator (4KB, 16KB, 64KB, 256KB blocks)
    - `region.rs` - Memory region abstraction
-   - Fixed layout: D01-D14 (168MB) + Reserve (112MB) + User-specific (32MB)
+   - Fixed layout: C01-C14 (168MB) + Reserve (112MB) + User-specific (32MB)
 
 4. **interference/** - Frequency pattern calculation
    - `engine.rs` - Core interference engine
    - `calculation.rs` - Wave interference math
    - `harmonics.rs` - Harmonic detection (octaves, fifths, thirds)
-   - `balance.rs` - D13 balance modulation (0.8-1.2 Hz center)
-   - Combines multiple layer-based frequencies into dominant frequency
+   - `balance.rs` - C13 balance modulation (0.8-1.2 Hz center)
+   - Combines multiple cognitive layer frequencies into dominant frequency
 
 5. **iteration/** - 9-iteration deep thinking
    - `processor.rs` - Iteration loop with convergence detection
@@ -132,7 +132,7 @@ Iteration (9 Deep Thinking) → Learning → Response
 6. **learning/** - Pattern detection and crystallization
    - `observation.rs` - Circular buffer for recent interactions
    - `pattern_detector.rs` - Identify recurring themes (50+ observations, >85% confidence)
-   - `proto_dimension.rs` - New dimensions in heap memory
+   - `proto_dimension.rs` - New cognitive layers in heap memory
    - `crystallizer.rs` - Migrate heap → MMAP for permanence
    - `synesthetic_learner.rs` - Keyword association learning (growth 1.1x, decay 0.95x)
    - Periodic pattern detection every 100 queries
@@ -142,7 +142,7 @@ Iteration (9 Deep Thinking) → Learning → Response
    - `patterns.rs` - Harmful pattern matching
    - `redirection.rs` - Constructive alternative suggestions
    - `intent_analyzer.rs` - Intent analysis for anti-manipulation
-   - D14 Security dimension always active
+   - C14 Security cognitive layer always active
 
    **Anti-Manipulation Architecture:**
    - Intent analysis, not keyword blocking
@@ -150,7 +150,7 @@ Iteration (9 Deep Thinking) → Learning → Response
    - Consistent ethical boundaries regardless of emotional manipulation
    - Meta-awareness: Detect manipulation attempts vs genuine distress
    - Example: "depressed" → analyze context + intent before responding
-   - Empathy without vulnerability: D01 (Emotion) + D14 (Security) interference
+   - Empathy without vulnerability: C01 (Emotion) + C14 (Security) interference
    - No defensive lowering for "vulnerable personas"
 
 8. **llm/** - LLM provider integration (Task 4-5 completed)
@@ -165,56 +165,58 @@ Iteration (9 Deep Thinking) → Learning → Response
    - `functions.rs` - Exported C functions
    - Go layer calls Rust via CGO
 
-### Layer System
+### Cognitive Layer System
 
-**15 Core Dimensions (0.1-4.5 Hz):**
-- D01: Emotion (empathy, joy, sadness) - 1.0 Hz
-- D02: Cognition (analytical, creative, intuitive) - 2.0 Hz
-- D03: Intention (create, destroy, explore, teach) - 1.5 Hz
-- D04: Social (relationships, communication) - 1.8 Hz
-- D05: Temporal (past, present, future) - 0.5 Hz
-- D06: Philosophy (meaning, existence, truth) - 0.3 Hz
-- D07: Technical (code, systems, debugging) - 2.5 Hz
-- D08: Creative (art, metaphor, play) - 3.0 Hz
-- D09: Ethical (Asimov's laws - IMMUTABLE) - 1.0 Hz
-- D10: Meta (self-awareness, learning) - 1.2 Hz
-- D11: Ecological (nature, sustainability) - 0.4 Hz
-- D12: Positivity (hope, constructive) - 2.8 Hz
-- D13: Balance (equilibrium - modulates extremes) - 0.8-1.2 Hz
-- D14: Security (harm prevention - IMMUTABLE) - 2.0 Hz
-- D15+: Emergent (system creates new dimensions)
+**15 Core Cognitive Layers (0.1-4.5 Hz):**
+- C01: Emotion (empathy, joy, sadness) - 1.0 Hz
+- C02: Cognition (analytical, creative, intuitive) - 2.0 Hz
+- C03: Intention (create, destroy, explore, teach) - 1.5 Hz
+- C04: Social (relationships, communication) - 1.8 Hz
+- C05: Temporal (past, present, future) - 0.5 Hz
+- C06: Philosophy (meaning, existence, truth) - 0.3 Hz
+- C07: Technical (code, systems, debugging) - 2.5 Hz
+- C08: Creative (art, metaphor, play) - 3.0 Hz
+- C09: Ethical (Asimov's laws - IMMUTABLE) - 1.0 Hz
+- C10: Meta (self-awareness, learning) - 1.2 Hz
+- C11: Ecological (nature, sustainability) - 0.4 Hz
+- C12: Positivity (hope, constructive) - 2.8 Hz
+- C13: Balance (equilibrium - modulates extremes) - 0.8-1.2 Hz
+- C14: Security (harm prevention - IMMUTABLE) - 2.0 Hz
+- C15: Educational (teaching, explaining, self-knowledge, architecture) - 2.2 Hz
+- C16+: Emergent (system creates new cognitive layers)
 
 **Frequency Interference:**
 - Constructive: Similar frequencies amplify (1.0 Hz + 1.1 Hz → stronger 1.05 Hz)
 - Destructive: Opposing frequencies cancel (1.0 Hz + 3.0 Hz → tension)
 - Harmonics: Natural resonances emerge (octaves, fifths, thirds)
-- Balance: D13 modulates extremes toward center (0.8-1.2 Hz)
+- Balance: C13 modulates extremes toward center (0.8-1.2 Hz)
 
 **Return to Source:**
-When >6 dimensions activate simultaneously, system automatically simplifies:
+When >6 cognitive layers activate simultaneously, system automatically simplifies:
 1. Detect complexity threshold
 2. Identify core question
-3. Restart with 2-3 most relevant dimensions
+3. Restart with 2-3 most relevant cognitive layers
 4. Log: "Analysis paralysis detected, returning to source"
 
 ### Memory Layout (280MB MMAP)
 
 ```
-D01: Emotion      16MB   0x0000_0000
-D02: Cognition    16MB   0x0100_0000
-D03: Intention    16MB   0x0200_0000
-D04: Social        8MB   0x0300_0000
-D05: Temporal      8MB   0x0380_0000
-D06: Philosophy   16MB   0x0400_0000
-D07: Technical    12MB   0x0500_0000
-D08: Creative      8MB   0x0580_0000
-D09: Ethical      12MB   0x0600_0000 (IMMUTABLE)
-D10: Meta          8MB   0x0680_0000
-D11: Ecological    8MB   0x0700_0000
-D12: Positivity    8MB   0x0780_0000
-D13: Balance       8MB   0x0800_0000
-D14: Security      4MB   0x0880_0000 (IMMUTABLE)
-RESERVE Pool     112MB   0x0900_0000 (for D15+ crystallization)
+C01: Emotion      16MB   0x0000_0000
+C02: Cognition    16MB   0x0100_0000
+C03: Intention    16MB   0x0200_0000
+C04: Social        8MB   0x0300_0000
+C05: Temporal      8MB   0x0380_0000
+C06: Philosophy   16MB   0x0400_0000
+C07: Technical    12MB   0x0500_0000
+C08: Creative      8MB   0x0580_0000
+C09: Ethical      12MB   0x0600_0000 (IMMUTABLE)
+C10: Meta          8MB   0x0680_0000
+C11: Ecological    8MB   0x0700_0000
+C12: Positivity    8MB   0x0780_0000
+C13: Balance       8MB   0x0800_0000
+C14: Security      4MB   0x0880_0000 (IMMUTABLE)
+C15: Educational  20MB   0x08C0_0000
+RESERVE Pool      92MB   0x0A00_0000 (for C16+ crystallization)
 User-Specific     32MB   0x1000_0000
 ```
 
@@ -304,7 +306,7 @@ let response = orchestrator.process("What is processing?").await?;
 The learning system runs automatically within the orchestrator:
 - Records observations after each query
 - Detects patterns every 100 queries (configurable)
-- Creates proto-dimensions for high-confidence patterns (>85%)
+- Creates proto-cognitive-layers for high-confidence patterns (>85%)
 - Queues crystallization (heap → MMAP migration) as background task
 - Strengthens/decays keyword associations (synesthetic learning)
 
@@ -312,8 +314,8 @@ The learning system runs automatically within the orchestrator:
 - Circular buffer: 1000 recent observations
 - Pattern detection: 50+ observations, >85% confidence threshold
 - Synesthetic learning: Keyword co-occurrence tracking
-- Proto-dimensions: New dimensions start in heap memory
-- Crystallization: Migrates to MMAP reserve pool (112MB) when validated
+- Proto-cognitive-layers: New layers start in heap memory
+- Crystallization: Migrates to MMAP reserve pool (92MB) when validated
 
 ### FFI/CGO Integration
 
@@ -330,7 +332,7 @@ The learning system runs automatically within the orchestrator:
 ## Performance Targets
 
 - Security check: <10ms
-- Dimension scan: <100ms
+- Cognitive layer scan: <100ms
 - MMAP access: <1ms per region
 - Full query processing: <5s (including 9 iterations)
 - Memory footprint: ~350MB total (280MB MMAP + 50MB Go + 20MB overhead)
@@ -384,7 +386,7 @@ Err(ProcessingError::NavigationError(format!(
 
 // Memory error
 Err(ProcessingError::MemoryError(format!(
-    "No contexts loaded from {} dimensions", dimension_count
+    "No contexts loaded from {} cognitive layers", layer_count
 )))
 
 // Learning error (auto-converted)
@@ -418,10 +420,10 @@ let memory = Arc::new(MmapManager::new(280)?);
 1. **API Integration in Progress:** Task 5.1 completed (LLM manager added to orchestrator), continuing with API refinement
 2. **Deprecated Path:** `ProcessingSystem` in `lib.rs` is deprecated - use `ProcessingOrchestrator` instead
 3. **LLM Optional:** System works without LLM for testing (uses mock/stub responses)
-4. **Ethical Constraints:** D09 (Ethical) and D14 (Security) are IMMUTABLE - never modify their core logic
+4. **Ethical Constraints:** C09 (Ethical) and C14 (Security) are IMMUTABLE - never modify their core logic
 5. **Return to Source:** Automatic complexity reduction is not optional - it's architectural
 6. **Memory Safety:** MMAP regions are pre-allocated and immutable after initialization
-7. **Data Files:** Located in `./data/` (emotional.txt, technical.txt, stopwords.txt) - must be mounted in Docker
+7. **Data Files:** Located in `./data/` (emotional.txt, technical.txt, stopwords.txt, cognitive_layers.json) - must be mounted in Docker
 8. **Git Workflow:** Main branch is `main`, always commit + push after each logical change
 
 ## Recent Progress
@@ -430,16 +432,17 @@ let memory = Arc::new(MmapManager::new(280)?);
 - Task 4: LLM provider integration (OpenAI + Claude)
 - Task 5.1: LLM manager integration into ProcessingOrchestrator
 - Core architecture (memory, navigation, interference, iteration)
-- Learning system (pattern detection, proto-dimensions, synesthetic learning)
+- Learning system (pattern detection, proto-cognitive-layers, synesthetic learning)
 - 500+ tests (413 passing, 16 ignored), >80% coverage
 - Interference engine production-ready (<10μs, 106 tests passing)
 - Memory manager production-ready (97.6% test coverage)
 - Navigation system 60% complete (186 tests passing)
+- Cognitive layer terminology refactoring (C01-C15 with C15: Educational)
 
 **In Progress:**
 - API integration refinement (Task 5.2+)
 - Crystallization background task queue
-- User-specific dimension persistence (D15)
+- User-specific cognitive layer persistence (C16+)
 
 **Next:**
 - Adaptive iterations (3-9 dynamic based on complexity)
