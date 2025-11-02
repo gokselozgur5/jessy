@@ -81,6 +81,7 @@ pub use self::config::*;
 pub use self::circular_buffer::CircularBuffer;
 pub use self::memory_tracker::MemoryTracker;
 pub use self::crystallizer::Crystallizer;
+pub use self::crystallization_queue::{CrystallizationQueue, CrystallizationPriority, QueueMetrics};
 pub use self::synesthetic_learner::{SynestheticLearner, KeywordAssociation};
 pub use self::pattern_detector::PatternDetector;
 pub use self::proto_dimension_manager::ProtoDimensionManager;
@@ -95,6 +96,7 @@ mod memory_tracker;
 mod pattern_detector;
 mod proto_dimension_manager;
 mod crystallizer;
+mod crystallization_queue;
 mod synesthetic_learner;
 
 #[cfg(test)]
@@ -245,6 +247,7 @@ pub struct LearningSystem {
     proto_dimension_manager: proto_dimension_manager::ProtoDimensionManager,
     memory_tracker: memory_tracker::MemoryTracker,
     crystallizer: Option<crystallizer::Crystallizer>,
+    crystallization_queue: Option<crystallization_queue::CrystallizationQueue>,
     synesthetic_learner: synesthetic_learner::SynestheticLearner,
     metrics: LearningMetrics,
 }
@@ -283,6 +286,7 @@ impl LearningSystem {
             proto_dimension_manager,
             memory_tracker,
             crystallizer: None, // Will be initialized when memory manager is available
+            crystallization_queue: None, // Will be initialized with crystallizer
             synesthetic_learner,
             metrics: LearningMetrics::default(),
         }
@@ -291,8 +295,72 @@ impl LearningSystem {
     /// Initialize crystallizer with memory manager
     ///
     /// This must be called before crystallization can be performed.
+    /// Also initializes the background crystallization queue.
     pub fn init_crystallizer(&mut self, memory_manager: std::sync::Arc<crate::memory::MmapManager>) {
-        self.crystallizer = Some(crystallizer::Crystallizer::new(memory_manager));
+        // Create crystallizer for direct use
+        let crystallizer = crystallizer::Crystallizer::new(memory_manager.clone());
+
+        // Create separate crystallizer for background queue
+        let queue_crystallizer = crystallizer::Crystallizer::new(memory_manager);
+        let queue = crystallization_queue::CrystallizationQueue::new(queue_crystallizer);
+
+        self.crystallizer = Some(crystallizer);
+        self.crystallization_queue = Some(queue);
+
+        eprintln!("[Learning] Crystallizer and background queue initialized");
+    }
+
+    /// Enqueue proto-dimension for background crystallization
+    ///
+    /// This is the recommended way to crystallize proto-dimensions as it doesn't block.
+    ///
+    /// # Arguments
+    ///
+    /// * `dimension_id` - ID of proto-dimension to crystallize
+    /// * `priority` - Crystallization priority (default: Normal)
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if successfully enqueued
+    pub async fn enqueue_crystallization(
+        &mut self,
+        dimension_id: DimensionId,
+        priority: CrystallizationPriority,
+    ) -> Result<()> {
+        // Check if queue is initialized
+        let queue = self.crystallization_queue.as_ref()
+            .ok_or_else(|| ConsciousnessError::LearningError(
+                "Crystallization queue not initialized - call init_crystallizer() first".to_string()
+            ))?;
+
+        // Get proto-dimension
+        let proto = self.proto_dimension_manager.get(dimension_id)
+            .ok_or_else(|| ConsciousnessError::LearningError(
+                format!("Proto-dimension {:?} not found", dimension_id)
+            ))?
+            .clone();
+
+        // Enqueue for background processing
+        queue.enqueue(proto, priority).await?;
+
+        eprintln!(
+            "[Learning] Proto-dimension {:?} enqueued for background crystallization (priority: {:?})",
+            dimension_id,
+            priority
+        );
+
+        Ok(())
+    }
+
+    /// Get crystallization queue metrics
+    ///
+    /// Returns metrics about the background crystallization queue.
+    pub async fn queue_metrics(&self) -> Option<QueueMetrics> {
+        if let Some(queue) = &self.crystallization_queue {
+            Some(queue.metrics().await)
+        } else {
+            None
+        }
     }
     
     /// Crystallize a proto-dimension to MMAP

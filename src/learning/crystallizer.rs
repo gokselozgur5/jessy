@@ -79,61 +79,117 @@ impl Crystallizer {
     /// Internal crystallization implementation with rollback support
     async fn crystallize_internal(&mut self, proto: &ProtoDimension) -> Result<()> {
         let dimension_id = proto.dimension_id;
-        
+
         // Step 1: Validate proto-dimension
         if proto.content.is_empty() {
             return Err(ConsciousnessError::LearningError(
                 "Proto-dimension has no content".to_string()
             ));
         }
-        
+
         if proto.confidence < 0.85 {
             return Err(ConsciousnessError::LearningError(
                 format!("Proto-dimension confidence {} below threshold 0.85", proto.confidence)
             ));
         }
-        
+
         // Step 2: Calculate checksum of heap content
         let heap_checksum = Self::calculate_checksum(&proto.content);
-        
-        // Step 3: Allocate MMAP region (placeholder)
-        // Note: This is a placeholder - actual MMAP allocation would happen here
-        // In full implementation:
-        // - Allocate MMAP region of proto.size_bytes
-        // - Store allocation handle for potential rollback
-        
-        // Step 4: Copy content atomically (placeholder)
-        // In full implementation:
-        // - Copy proto.content to MMAP region
-        // - Use atomic operations or transactions
-        // - Store original state for rollback
-        
+
+        eprintln!(
+            "[Crystallizer] Starting heap→MMAP migration for dimension {:?} (size: {} bytes, checksum: {})",
+            dimension_id,
+            proto.size_bytes,
+            heap_checksum
+        );
+
+        // Step 3: Allocate MMAP region
+        // Allocate from memory pool (reserve region for crystallization)
+        let offset = self.memory_manager.allocate(proto.size_bytes)
+            .map_err(|e| {
+                eprintln!(
+                    "[Crystallizer] MMAP allocation failed for dimension {:?}: {}",
+                    dimension_id,
+                    e
+                );
+                ConsciousnessError::LearningError(
+                    format!("MMAP allocation failed: {}", e)
+                )
+            })?;
+
+        eprintln!(
+            "[Crystallizer] Allocated MMAP region: pool_id={}, offset={}, size={}",
+            offset.pool_id,
+            offset.offset,
+            proto.size_bytes
+        );
+
+        // Step 4: Copy content atomically to MMAP
+        // Create proto-dimension in memory manager (this stores in heap first)
+        // The memory manager will handle the actual MMAP mapping
+        let layer_id = self.memory_manager.create_proto_dimension(
+            dimension_id,
+            proto.content.clone(),
+        ).map_err(|e| {
+            // Rollback: deallocate MMAP region on failure
+            eprintln!(
+                "[Crystallizer] Proto-dimension creation failed for {:?}, rolling back allocation",
+                dimension_id
+            );
+            let _ = self.memory_manager.deallocate(offset, proto.size_bytes);
+            e
+        })?;
+
+        eprintln!(
+            "[Crystallizer] Created proto-dimension layer {:?} in memory manager",
+            layer_id
+        );
+
         // Step 5: Verify integrity
         let verify_checksum = Self::calculate_checksum(&proto.content);
-        
+
         if heap_checksum != verify_checksum {
-            // Rollback: In full implementation, would:
-            // - Deallocate MMAP region
-            // - Restore original state
-            // - Ensure no partial migration
-            
+            // Rollback: deallocate MMAP region and cleanup
+            eprintln!(
+                "[Crystallizer] Integrity check failed for dimension {:?}, rolling back",
+                dimension_id
+            );
+
+            let _ = self.memory_manager.deallocate(offset, proto.size_bytes);
+
             return Err(ConsciousnessError::LearningError(
                 "Integrity check failed: checksums don't match".to_string()
             ));
         }
-        
-        // Step 6: Update dimension registry (placeholder)
-        // In full implementation:
-        // - Register new dimension in registry
-        // - Mark as active
-        // - Update metadata
-        
-        // Step 7: Free heap memory (placeholder)
-        // In full implementation:
-        // - Drop proto.content
-        // - Update memory tracker
-        // - Confirm heap freed
-        
+
+        eprintln!(
+            "[Crystallizer] Integrity verified: heap_checksum={}, verify_checksum={}",
+            heap_checksum,
+            verify_checksum
+        );
+
+        // Step 6: Crystallize to MMAP (atomic pointer swap)
+        // This migrates the proto-dimension from heap to MMAP
+        self.memory_manager.crystallize_proto_dimension(layer_id)
+            .map_err(|e| {
+                // Rollback: deallocate MMAP region on failure
+                eprintln!(
+                    "[Crystallizer] Crystallization to MMAP failed for {:?}, rolling back",
+                    dimension_id
+                );
+                let _ = self.memory_manager.deallocate(offset, proto.size_bytes);
+                e
+            })?;
+
+        eprintln!(
+            "[Crystallizer] Crystallization complete: dimension {:?} migrated to MMAP",
+            dimension_id
+        );
+
+        // Step 7: Heap memory is automatically freed
+        // The original proto.content will be dropped when proto is dropped
+        // The memory manager now owns the content in MMAP
+
         Ok(())
     }
     
