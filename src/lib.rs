@@ -184,6 +184,201 @@ impl Frequency {
     }
 }
 
+/// Memory manager configuration
+///
+/// Controls memory allocation, pool sizes, and resource limits for the MMAP-based
+/// memory management system. This configuration ensures predictable memory usage
+/// and optimal performance for dimensional layer access.
+#[derive(Debug, Clone)]
+pub struct MemoryConfig {
+    /// Total memory limit in MB (default: 280MB for 14 dimensions)
+    pub total_memory_mb: usize,
+    
+    /// Base path for MMAP files (default: data/consciousness)
+    pub base_path: std::path::PathBuf,
+    
+    /// Pool configurations: (size_mb, block_size)
+    /// Default pools:
+    /// - 32MB of 4KB blocks (small layers)
+    /// - 128MB of 16KB blocks (medium layers)
+    /// - 80MB of 64KB blocks (large layers)
+    /// - 40MB of 256KB blocks (very large dimensions)
+    pub pool_configs: Vec<(usize, usize)>,
+    
+    /// Enable memory usage warnings at thresholds
+    pub enable_warnings: bool,
+    
+    /// Warning threshold percentage (default: 75%)
+    pub warning_threshold: f32,
+    
+    /// Eviction threshold percentage (default: 85%)
+    pub eviction_threshold: f32,
+    
+    /// Critical threshold percentage (default: 95%)
+    pub critical_threshold: f32,
+}
+
+impl Default for MemoryConfig {
+    fn default() -> Self {
+        Self {
+            total_memory_mb: 280,
+            base_path: std::path::PathBuf::from("data/consciousness"),
+            pool_configs: vec![
+                (32, 4096),      // 32MB of 4KB blocks
+                (128, 16384),    // 128MB of 16KB blocks
+                (80, 65536),     // 80MB of 64KB blocks
+                (40, 262144),    // 40MB of 256KB blocks
+            ],
+            enable_warnings: true,
+            warning_threshold: 75.0,
+            eviction_threshold: 85.0,
+            critical_threshold: 95.0,
+        }
+    }
+}
+
+impl MemoryConfig {
+    /// Create a new memory configuration with specified total memory
+    pub fn with_memory_mb(total_mb: usize) -> Self {
+        Self {
+            total_memory_mb: total_mb,
+            ..Default::default()
+        }
+    }
+
+    /// Set custom base path for MMAP files
+    pub fn with_base_path<P: Into<std::path::PathBuf>>(mut self, path: P) -> Self {
+        self.base_path = path.into();
+        self
+    }
+
+    /// Set custom pool configurations
+    pub fn with_pools(mut self, pools: Vec<(usize, usize)>) -> Self {
+        self.pool_configs = pools;
+        self
+    }
+
+    /// Disable memory usage warnings
+    pub fn without_warnings(mut self) -> Self {
+        self.enable_warnings = false;
+        self
+    }
+
+    /// Validate configuration
+    pub fn validate(&self) -> Result<()> {
+        // Check that pool sizes sum to less than total memory
+        let pool_total: usize = self.pool_configs.iter().map(|(size, _)| size).sum();
+        if pool_total > self.total_memory_mb {
+            return Err(ConsciousnessError::MemoryError(
+                format!(
+                    "Pool configurations ({} MB) exceed total memory limit ({} MB)",
+                    pool_total, self.total_memory_mb
+                )
+            ));
+        }
+
+        // Check that thresholds are in valid range
+        if self.warning_threshold >= self.eviction_threshold
+            || self.eviction_threshold >= self.critical_threshold {
+            return Err(ConsciousnessError::MemoryError(
+                "Memory thresholds must be: warning < eviction < critical".to_string()
+            ));
+        }
+
+        // Check that block sizes are reasonable (at least 1KB, at most 1MB)
+        for (_, block_size) in &self.pool_configs {
+            if *block_size < 1024 || *block_size > 1024 * 1024 {
+                return Err(ConsciousnessError::MemoryError(
+                    format!("Block size {} is outside valid range (1KB - 1MB)", block_size)
+                ));
+            }
+        }
+
+        Ok(())
+    }
+}
+
+/// Memory usage statistics
+///
+/// Provides detailed metrics about memory allocation, usage patterns, and performance
+/// characteristics of the MMAP-based memory management system.
+#[derive(Debug, Clone, Default)]
+pub struct MemoryStats {
+    /// Total memory allocated in bytes
+    pub total_allocated_bytes: usize,
+
+    /// Total memory currently in use in bytes
+    pub total_used_bytes: usize,
+
+    /// Number of dimensions currently loaded
+    pub dimensions_loaded: usize,
+
+    /// Number of layers currently accessible
+    pub layers_loaded: usize,
+
+    /// Number of active MMAP regions
+    pub active_regions: usize,
+
+    /// Peak memory usage in bytes
+    pub peak_usage_bytes: usize,
+
+    /// Number of successful allocations
+    pub allocation_count: usize,
+
+    /// Number of failed allocations
+    pub allocation_failures: usize,
+
+    /// Average access latency in microseconds
+    pub avg_access_latency_us: f64,
+
+    /// Whether system is in simulation mode (fallback)
+    pub simulation_mode: bool,
+
+    /// Memory usage percentage (0.0-100.0)
+    pub usage_percentage: f32,
+
+    /// Pool-specific statistics: (block_size, allocated_blocks, free_blocks)
+    pub pool_stats: Vec<(usize, usize, usize)>,
+}
+
+impl MemoryStats {
+    /// Create new empty statistics
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Calculate memory usage percentage
+    pub fn calculate_usage_percentage(&mut self, total_limit_bytes: usize) {
+        if total_limit_bytes > 0 {
+            self.usage_percentage = (self.total_used_bytes as f32 / total_limit_bytes as f32) * 100.0;
+        }
+    }
+
+    /// Check if memory usage exceeds warning threshold
+    pub fn is_warning_level(&self, threshold: f32) -> bool {
+        self.usage_percentage >= threshold
+    }
+
+    /// Check if memory usage exceeds critical threshold
+    pub fn is_critical_level(&self, threshold: f32) -> bool {
+        self.usage_percentage >= threshold
+    }
+
+    /// Format statistics as human-readable string
+    pub fn format_summary(&self) -> String {
+        format!(
+            "Memory: {:.1}MB used / {:.1}MB allocated ({:.1}%), {} dimensions, {} layers, {} regions{}",
+            self.total_used_bytes as f64 / (1024.0 * 1024.0),
+            self.total_allocated_bytes as f64 / (1024.0 * 1024.0),
+            self.usage_percentage,
+            self.dimensions_loaded,
+            self.layers_loaded,
+            self.active_regions,
+            if self.simulation_mode { " [SIMULATION]" } else { "" }
+        )
+    }
+}
+
 /// Core consciousness system configuration
 #[derive(Debug, Clone)]
 pub struct ConsciousnessConfig {
