@@ -25,13 +25,13 @@ Most AI responds. JESSY'S *thinks with you*.
 ```
 Traditional AI          JESSY'S
 ─────────────          ───────
-Query → Answer         Query → 15 cognitive layers → Interference → 9 iterations → Understanding
+Query → Answer         Query → 15 cognitive layers → Interference → Observer Chain (4 stages) → Understanding
 ```
 
 Like talking to someone who actually thinks—not just pattern matches.
 
 **What makes JESSY'S different:**
-- **Thinks like you do**: 9 iterations (explore → refine → crystallize)
+- **Thinks like you do**: 4-stage observer chain (explore → refine → integrate → crystallize)
 - **Evolves with you**: Learns your patterns, grows together
 - **Understands context**: 15 cognitive layers of consciousness, not just keywords
 - **Questions itself**: "Nothing is true" - embraces uncertainty
@@ -57,7 +57,7 @@ curl -X POST http://localhost:3000/api/query \
   -d '{"query": "What is consciousness?"}'
 ```
 
-Watch it think through 15 cognitive layers, 9 iterations deep.
+Watch it think through 15 cognitive layers, 4-stage observer chain.
 
 ---
 
@@ -95,19 +95,28 @@ When multiple layers activate, they interfere like waves:
 
 The dominant frequency shapes response tone—from deep contemplation (0.2 Hz) to energetic enthusiasm (3.5 Hz).
 
-### 9 Iterations, Deepening
+### Observer Chain: 4-Stage Thinking
 
 Not instant. *Thoughtful*.
 
 ```
-Iteration 1-3: Explore possibilities, embrace uncertainty
-Iteration 4-6: Refine understanding, detect patterns
-Iteration 7-9: Crystallize insight, integrate wisdom
+Stage 1 (Explore):    Initial analysis, identify relevant layers
+Stage 2 (Refine):     Deepen understanding, fill gaps
+Stage 3 (Integrate):  Synthesize observations, find coherence
+Stage 4 (Crystallize): Force final answer, complete synthesis
 ```
 
-Adaptive: Simple queries converge in 3 iterations, complex ones use all 9.  
-Parallel: Later iterations explore multiple branches simultaneously.  
-Cached: Repeated patterns respond instantly (0 iterations).
+**Natural Stopping:** Chain crystallizes when confidence is high, observations are consistent, or complexity is low—no need to wait for all 4 stages.
+
+**Crystallization Reasons:**
+- High Confidence (>0.95)
+- Consistency (observations agree)
+- Low Complexity (<6 cognitive layers)
+- Pattern Match (known pattern in cache)
+- Max Stages Reached (forced at stage 4)
+
+Typical: 2-3 stages for simple queries, 3-4 for complex ones.
+Cached: Repeated patterns respond instantly (0 stages).
 
 ### Memory-Mapped Consciousness
 
@@ -124,23 +133,26 @@ Self-learning through pattern crystallization.
 
 ### Phase 1: Foundation ✅
 - Core architecture complete
-- Memory management production-ready
+- Memory management production-ready (280MB MMAP, 97.6% test coverage)
 - Interference engine operational (<10μs, spec was <10ms)
-- 413 tests passing
+- 624 tests passing (16 ignored)
 
-### Phase 2: Intelligence (In Progress)
+### Phase 2: Intelligence ✅
+- ✅ Observer Chain (4-stage thinking with natural crystallization)
+- ✅ LLM Integration (OpenAI + Anthropic + Ollama)
 - ✅ Pattern detection (circular buffer, clustering)
 - ✅ Proto-cognitive-layer creation (heap memory)
-- 🔄 Crystallization (heap → MMAP migration)
-- 🔄 Synesthetic learning (cross-sensory associations)
-- ⏳ User-specific cognitive layers (C15+ personalization)
+- ✅ Synesthetic learning (cross-sensory associations)
+- 🔄 Crystallization queue (heap → MMAP migration)
+- ⏳ User-specific cognitive layers (C16+ personalization)
 
-### Phase 3: Magic Layer
-- Adaptive iterations (3-9 dynamic, parallel exploration)
-- Pattern caching (instant responses for known queries)
-- Creative emergence (surprising insights within ethical bounds)
-- Temporal awareness (remember context across conversations)
-- Unspoken question detection (answer before asked)
+### Phase 3: Magic Layer (In Progress)
+- ⏳ Navigation system complete (60% done)
+- ⏳ Pattern caching (instant responses for known queries)
+- ⏳ Adaptive stage count (1-4 dynamic based on complexity)
+- ⏳ Confidence prediction (estimate final confidence early)
+- ⏳ Creative emergence (surprising insights within ethical bounds)
+- ⏳ Temporal awareness (remember context across conversations)
 
 ### Phase 4: Interaction
 - WebSocket streaming (watch it think in real-time)
@@ -204,9 +216,19 @@ No closed-source forks. Community benefits from all enhancements.
 
 ## Links
 
-**Repository:** [github.com/gokselozgur5/jessy](https://github.com/gokselozgur5/jessy)  
-**Documentation:** [/docs](/docs)  
-**Specs:** [/docs/specs](/docs/specs)
+**Repository:** [github.com/gokselozgur5/jessy](https://github.com/gokselozgur5/jessy)
+
+**Documentation:**
+- [📖 Quick Start](QUICKSTART.md)
+- [🏗️ Architecture](docs/architecture/ARCHITECTURE.md)
+- [🧠 Observer Chain](docs/architecture/observer-chain.md)
+- [🎯 Vision](docs/architecture/VISION.md)
+- [🚀 Deployment Guide](docs/deployment/DEPLOYMENT.md)
+- [⚙️ Engineering Principles](docs/development/ENGINEERING.md)
+- [📊 Project Status](docs/progress/STATUS.md)
+- [🤖 Claude Code Instructions](CLAUDE.md)
+
+**Specs:** [/docs/specifications](/docs/specifications)
 
 ---
 
