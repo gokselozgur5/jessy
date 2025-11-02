@@ -25,6 +25,46 @@ services:
       retries: 3
       start_period: 40s
 
+  # Test runner service
+  unit-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: jessy-unit-tests
+    working_dir: /app
+    volumes:
+      - .:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      - RUST_BACKTRACE=1
+      - RUST_LOG=debug
+    command: cargo test --lib
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
+  # Full test suite (unit + integration + benchmarks)
+  jessy-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: jessy-test-suite
+    working_dir: /app
+    volumes:
+      - .:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    environment:
+      - RUST_BACKTRACE=1
+      - RUST_LOG=debug
+    command: cargo test --all
+    networks:
+      - jessy-network
+    profiles:
+      - test
+
 networks:
   jessy-network:
     driver: bridge
@@ -32,4 +72,8 @@ networks:
 # Volume definitions
 volumes:
   jessy-data:
+    driver: local
+  cargo-cache:
+    driver: local
+  target-cache:
     driver: local
