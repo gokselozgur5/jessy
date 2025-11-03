@@ -16,6 +16,7 @@ use tokio::sync::Mutex;
 pub struct ChatRequest {
     pub message: String,
     pub session_id: Option<String>,
+    pub user_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -87,7 +88,7 @@ pub async fn chat(
     }; // Lock released here
 
     // Process message (no lock held during LLM call)
-    match process_chat_message(&req.message, &mut conversation, &data).await {
+    match process_chat_message(&req.message, req.user_id.as_deref(), &mut conversation, &data).await {
         Ok((response, dimensional_state)) => {
             // Update conversation in state (short lock)
             {
@@ -118,10 +119,16 @@ pub async fn chat(
 
 async fn process_chat_message(
     message: &str,
+    user_id: Option<&str>,
     conversation: &mut ConversationHistory,
     data: &AppState,
 ) -> Result<(String, DimensionalState), Box<dyn std::error::Error>> {
     use std::time::Instant;
+
+    // Log user_id for personalized C31+ layer scanning (future use)
+    if let Some(uid) = user_id {
+        eprintln!("[Chat API] Processing query for user: {}", uid);
+    }
 
     // Step 1: Select dimensions (with fallback)
     let start = Instant::now();
