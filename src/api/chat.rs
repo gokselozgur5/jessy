@@ -77,8 +77,8 @@ impl AppState {
                 .map_err(|e| format!("Failed to load dimensions: {}", e))?
         );
 
-        eprintln!("[AppState] ✅ Loaded {} dimensions from {}",
-                  registry.dimension_count(), dimensions_path);
+        eprintln!("[AppState] ✅ Loaded {} dimensions, {} layers from {}",
+                  registry.dimension_count(), registry.layer_count(), dimensions_path);
 
         let navigation = Arc::new(NavigationSystem::new(registry, memory_manager.clone())?);
 
