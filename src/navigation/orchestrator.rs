@@ -502,18 +502,62 @@ impl NavigationSystem {
         );
 
         // Check if we have any activations (C01-C15 + C16-C30 + C31+)
-        if activations.is_empty() && shared_activations.is_empty() && user_activations.is_empty() {
-            tracing::error!(
-                query = %query,
-                threshold = self.config.confidence_threshold,
-                "No dimensions activated: insufficient matches"
-            );
-            self.metrics.record_insufficient_matches();
-            return Err(NavigationError::InsufficientMatches {
-                threshold: self.config.confidence_threshold,
-                query: query.to_string(),
-            });
-        }
+        let activations = if activations.is_empty() && shared_activations.is_empty() && user_activations.is_empty() {
+            // 🦉 Haiku Fallback: Use LLM dimension selector if available
+            if let Some(ref llm_selector) = self.llm_selector {
+                eprintln!("[Haiku Fallback] No keyword matches - using LLM dimension selector");
+                tracing::info!(
+                    query = %query,
+                    "Keyword matching failed - falling back to Haiku LLM selector"
+                );
+
+                // Use Haiku to select dimensions based on query intent
+                match llm_selector.select(query).await {
+                    Ok(selection) => {
+                        eprintln!("[Haiku Fallback] ✅ Selected {} dimensions: {:?}",
+                                 selection.dimensions.len(), selection.dimensions);
+
+                        // Convert LLM selection to activations with base confidence
+                        selection.dimensions.iter().map(|dim_id| {
+                            super::parallel_scanner::DimensionActivation::new(
+                                *dim_id,
+                                selection.confidence,  // Use LLM selection confidence
+                                vec![],  // No keyword matches
+                                0,  // LLM-based, not scanned
+                            )
+                        }).collect()
+                    }
+                    Err(e) => {
+                        // Haiku fallback failed - return InsufficientMatches
+                        eprintln!("[Haiku Fallback] ❌ LLM selector failed: {}", e);
+                        tracing::error!(
+                            query = %query,
+                            error = %e,
+                            "Haiku fallback failed - no dimensions available"
+                        );
+                        self.metrics.record_insufficient_matches();
+                        return Err(NavigationError::InsufficientMatches {
+                            threshold: self.config.confidence_threshold,
+                            query: query.to_string(),
+                        });
+                    }
+                }
+            } else {
+                // No LLM selector available - return InsufficientMatches
+                tracing::error!(
+                    query = %query,
+                    threshold = self.config.confidence_threshold,
+                    "No dimensions activated: insufficient matches (no LLM fallback available)"
+                );
+                self.metrics.record_insufficient_matches();
+                return Err(NavigationError::InsufficientMatches {
+                    threshold: self.config.confidence_threshold,
+                    query: query.to_string(),
+                });
+            }
+        } else {
+            activations
+        };
 
         // Step 3: Convert activations to paths and select (track duration)
         let selection_start = Instant::now();
