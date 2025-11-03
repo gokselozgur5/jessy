@@ -236,7 +236,7 @@ pub extern "C" fn jessy_core_init(memory_limit_mb: u32) -> i32 {
 fn initialize_orchestrator(memory_limit_mb: u32) -> Result<ConsciousnessOrchestrator, String> {
     use crate::navigation::registry::DimensionRegistry;
     use crate::learning::LearningSystem;
-    
+
     // Create dimension registry
     let registry = Arc::new(DimensionRegistry::new());
 
@@ -246,19 +246,29 @@ fn initialize_orchestrator(memory_limit_mb: u32) -> Result<ConsciousnessOrchestr
             .map_err(|e| format!("Memory init failed: {}", e))?
     );
 
-    // Create navigation system (requires memory manager)
-    let navigation = Arc::new(
-        NavigationSystem::new(registry, memory.clone())
-            .map_err(|e| format!("Navigation init failed: {}", e))?
-    );
-    
+    // Create navigation system with Haiku LLM fallback if API key available
+    let navigation = if let Ok(api_key) = std::env::var("ANTHROPIC_API_KEY") {
+        eprintln!("[FFI] ANTHROPIC_API_KEY found - enabling Haiku LLM dimension selector");
+        Arc::new(
+            NavigationSystem::with_llm_selector(registry, memory.clone(), api_key)
+                .map_err(|e| format!("Navigation init with LLM failed: {}", e))?
+        )
+    } else {
+        eprintln!("[FFI] ANTHROPIC_API_KEY not found - using keyword-only matching");
+        eprintln!("[FFI] Set ANTHROPIC_API_KEY to enable Haiku fallback for better query coverage");
+        Arc::new(
+            NavigationSystem::new(registry, memory.clone())
+                .map_err(|e| format!("Navigation init failed: {}", e))?
+        )
+    };
+
     // Create learning system
     let learning = LearningSystem::new();
-    
+
     // Create orchestrator with default config
     let config = ConsciousnessConfig::default();
     let orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
-    
+
     Ok(orchestrator)
 }
 
