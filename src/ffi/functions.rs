@@ -349,12 +349,15 @@ pub unsafe extern "C" fn jessy_core_process_query(
         // Parse session ID
         let session_id = from_c_string(req.session_id)
             .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-        
+
         // Validate session ID
         if let Err(e) = validate_session_id(&session_id) {
             log_error(&e, "process_query_validation");
             return Err(e);
         }
+
+        // Parse user_id (optional for C31+ personalization)
+        let user_id = from_c_string(req.user_id);
         
         // Validate max_iterations
         if req.max_iterations == 0 || req.max_iterations > 9 {
@@ -379,6 +382,7 @@ pub unsafe extern "C" fn jessy_core_process_query(
             &orchestrator,
             &query,
             &session_id,
+            user_id.as_deref(),
             req.max_iterations,
             timeout,
         )?;
@@ -445,6 +449,7 @@ fn process_query_with_timeout(
     orchestrator: &Arc<Mutex<ConsciousnessOrchestrator>>,
     query: &str,
     session_id: &str,
+    user_id: Option<&str>,
     max_iterations: u32,
     timeout: Duration,
 ) -> Result<(String, f32, Vec<String>, u32, bool), FFIError> {
@@ -457,8 +462,9 @@ fn process_query_with_timeout(
     let session_id = session_id.to_string();
     
     // Spawn processing thread
+    let user_id = user_id.map(|s| s.to_string());
     thread::spawn(move || {
-        let result = process_query_internal(&orch, &query, &session_id, max_iterations);
+        let result = process_query_internal(&orch, &query, &session_id, user_id.as_deref(), max_iterations);
         let _ = tx.send(result);
     });
     
@@ -483,6 +489,7 @@ fn process_query_internal(
     orchestrator: &Arc<Mutex<ConsciousnessOrchestrator>>,
     query: &str,
     session_id: &str,
+    user_id: Option<&str>,
     max_iterations: u32,
 ) -> Result<(String, f32, Vec<String>, u32, bool), String> {
     // Lock orchestrator
