@@ -237,8 +237,15 @@ fn initialize_orchestrator(memory_limit_mb: u32) -> Result<ConsciousnessOrchestr
     use crate::navigation::registry::DimensionRegistry;
     use crate::learning::LearningSystem;
 
-    // Create dimension registry
-    let registry = Arc::new(DimensionRegistry::new());
+    // Load dimension registry from dimensions.json
+    let dimensions_path = "data/dimensions.json";
+    let dimensions_data = std::fs::read_to_string(dimensions_path)
+        .map_err(|e| format!("Failed to read {}: {}", dimensions_path, e))?;
+
+    let registry = Arc::new(
+        DimensionRegistry::load_dimensions(&dimensions_data)
+            .map_err(|e| format!("Failed to load dimensions: {}", e))?
+    );
 
     // Create memory manager first (needed by navigation system)
     let memory = Arc::new(
