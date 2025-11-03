@@ -15,6 +15,8 @@ pub struct ChainContext {
     pub observations: Vec<Observation>,
     /// When processing started
     pub start_time: SystemTime,
+    /// Conversation history (for context-aware deep thinking)
+    pub conversation_history: Vec<crate::llm::Message>,
 }
 
 impl ChainContext {
@@ -24,6 +26,20 @@ impl ChainContext {
             query: query.into(),
             observations: Vec::new(),
             start_time: SystemTime::now(),
+            conversation_history: Vec::new(),
+        }
+    }
+
+    /// Create new context from query with conversation history
+    pub fn from_query_with_conversation(
+        query: impl Into<String>,
+        conversation: Vec<crate::llm::Message>
+    ) -> Self {
+        Self {
+            query: query.into(),
+            observations: Vec::new(),
+            start_time: SystemTime::now(),
+            conversation_history: conversation,
         }
     }
 
@@ -105,6 +121,29 @@ impl ChainContext {
 
         let sum: f32 = self.observations.iter().map(|o| o.confidence).sum();
         sum / self.observations.len() as f32
+    }
+
+    /// Format conversation history for prompt inclusion
+    pub fn format_conversation_history(&self) -> String {
+        if self.conversation_history.is_empty() {
+            return String::new();
+        }
+
+        let mut formatted = String::from("CONVERSATION HISTORY:\n");
+        formatted.push_str("(Previous messages in this conversation)\n\n");
+
+        for (idx, msg) in self.conversation_history.iter().enumerate() {
+            let role_label = match msg.role.as_str() {
+                "user" => "User",
+                "assistant" => "Assistant",
+                _ => "Unknown",
+            };
+
+            formatted.push_str(&format!("[{}] {}:\n{}\n\n",
+                idx + 1, role_label, msg.content));
+        }
+
+        formatted
     }
 }
 

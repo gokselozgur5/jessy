@@ -23,7 +23,7 @@ pub fn build_observer_prompt(stage: usize, context: &ChainContext) -> String {
     let role = STAGE_ROLES[stage - 1];
 
     match stage {
-        1 => build_stage_1_prompt(&context.query, role),
+        1 => build_stage_1_prompt(&context.query, context, role),
         2 => build_stage_2_prompt(&context.query, context, role),
         3 => build_stage_3_prompt(&context.query, context, role),
         4 => build_stage_4_prompt(&context.query, context, role),
@@ -32,11 +32,13 @@ pub fn build_observer_prompt(stage: usize, context: &ChainContext) -> String {
 }
 
 /// Stage 1: Explore - Initial analysis
-fn build_stage_1_prompt(query: &str, role: &str) -> String {
+fn build_stage_1_prompt(query: &str, context: &ChainContext, role: &str) -> String {
+    let conversation_section = context.format_conversation_history();
+
     format!(
         r#"You are an AI Observer in stage 1: {role}
 
-Your task is to perform initial analysis of this query:
+{conversation_section}Your task is to perform initial analysis of this query:
 
 "{query}"
 
@@ -73,11 +75,12 @@ Your analysis here..."#
 /// Stage 2: Refine - Deepen understanding
 fn build_stage_2_prompt(query: &str, context: &ChainContext, role: &str) -> String {
     let summary = context.build_summary();
+    let conversation_section = context.format_conversation_history();
 
     format!(
         r#"You are an AI Observer in stage 2: {role}
 
-Original query:
+{conversation_section}Original query:
 "{query}"
 
 {summary}
@@ -99,11 +102,12 @@ Your refined analysis here..."#
 /// Stage 3: Integrate - Synthesize observations
 fn build_stage_3_prompt(query: &str, context: &ChainContext, role: &str) -> String {
     let summary = context.build_summary();
+    let conversation_section = context.format_conversation_history();
 
     format!(
         r#"You are an AI Observer in stage 3: {role}
 
-Original query:
+{conversation_section}Original query:
 "{query}"
 
 {summary}
@@ -125,13 +129,14 @@ Your synthesized analysis here..."#
 /// Stage 4: Crystallize - Force final answer
 fn build_stage_4_prompt(query: &str, context: &ChainContext, role: &str) -> String {
     let summary = context.build_summary();
+    let conversation_section = context.format_conversation_history();
 
     format!(
         r#"You are an AI Observer in stage 4: {role}
 
 This is the FINAL stage. You must provide a crystallized answer.
 
-Original query:
+{conversation_section}Original query:
 "{query}"
 
 {summary}

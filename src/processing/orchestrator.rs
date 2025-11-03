@@ -164,6 +164,7 @@ impl ConsciousnessOrchestrator {
     ///
     /// * `query` - The query string to process
     /// * `user_id` - Optional user ID for personalized C31+ layer scanning
+    /// * `conversation` - Previous conversation history for context-aware processing
     ///
     /// # Returns
     ///
@@ -191,18 +192,24 @@ impl ConsciousnessOrchestrator {
     /// # let memory = Arc::new(MmapManager::new(280)?);
     /// let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
     ///
-    /// // Without user-specific layers
-    /// let response = orchestrator.process("What is empathy?", None).await?;
+    /// // Without user-specific layers or conversation
+    /// let response = orchestrator.process("What is empathy?", None, vec![]).await?;
     ///
-    /// // With user-specific layers (C31+)
-    /// let response = orchestrator.process("What is empathy?", Some("user_123")).await?;
+    /// // With user-specific layers and conversation history
+    /// let conversation = vec![/* previous messages */];
+    /// let response = orchestrator.process("What is empathy?", Some("user_123"), conversation).await?;
     /// println!("Answer: {}", response.final_response);
     /// println!("Dimensions: {:?}", response.metadata.dimensions_activated);
     /// println!("Converged: {}", response.metadata.converged);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn process(&mut self, query: &str, user_id: Option<&str>) -> Result<ConsciousnessResponse> {
+    pub async fn process(
+        &mut self,
+        query: &str,
+        user_id: Option<&str>,
+        conversation: Vec<crate::llm::Message>,
+    ) -> Result<ConsciousnessResponse> {
         let pipeline_start = Instant::now();
         let mut metadata = ResponseMetadata::new();
 
@@ -309,8 +316,9 @@ impl ConsciousnessOrchestrator {
 
         let (final_answer, chain_length, converged) = if let Some(ref observer_chain) = self.observer_chain {
             eprintln!("[Consciousness] Using OBSERVER CHAIN (4-stage max, crystallizes early)");
+            eprintln!("[Consciousness] Conversation history: {} messages", conversation.len());
 
-            let result = observer_chain.process(query).await
+            let result = observer_chain.process(query, conversation).await
                 .map_err(|e| {
                     eprintln!("[Consciousness] Observer chain failed: {}", e);
                     eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}",
