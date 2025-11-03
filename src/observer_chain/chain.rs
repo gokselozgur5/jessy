@@ -47,8 +47,17 @@ impl ObserverChain {
     ///
     /// Executes up to `max_stages` observations, checking for crystallization
     /// after each stage. Returns as soon as crystallization occurs.
-    pub async fn process(&self, query: impl Into<String>) -> Result<CrystallizedResponse> {
-        let mut context = ChainContext::from_query(query);
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The user's query
+    /// * `conversation` - Previous conversation history for context-aware processing
+    pub async fn process(
+        &self,
+        query: impl Into<String>,
+        conversation: Vec<crate::llm::Message>,
+    ) -> Result<CrystallizedResponse> {
+        let mut context = ChainContext::from_query_with_conversation(query, conversation);
 
         for stage in 1..=self.max_stages {
             // Observer step: Generate observation

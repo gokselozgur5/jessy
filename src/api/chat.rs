@@ -6,8 +6,9 @@ use crate::{
     DimensionId,
     navigation::DimensionSelector,
     memory::MmapManager,
-    llm::{LLMManager, LLMConfig, AnthropicProvider, Message},
+    llm::{LLMManager, LLMConfig, Message},
     conversation::{ConversationHistory, ConversationStore, DimensionalState, MessageRole},
+    processing::ConsciousnessOrchestrator,
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -40,10 +41,13 @@ pub struct AppState {
     pub llm: LLMManager,
     pub store: ConversationStore,
     pub conversations: Arc<Mutex<std::collections::HashMap<String, ConversationHistory>>>,
+    pub orchestrator: Arc<Mutex<ConsciousnessOrchestrator>>,  // Full pipeline with 3-tier memory & learning
 }
 
 impl AppState {
     pub fn new(api_key: String) -> Result<Self, Box<dyn std::error::Error>> {
+        use crate::navigation::{NavigationSystem, DimensionRegistry};
+
         let selector = DimensionSelector::new(api_key.clone());
         let memory_manager = Arc::new(MmapManager::new(280)?);
 
@@ -54,11 +58,24 @@ impl AppState {
             timeout_secs: 30,
             max_retries: 3,
         };
-        let llm = LLMManager::new(llm_config)?;
+        let llm = LLMManager::new(llm_config.clone())?;
 
         let data_dir = std::path::PathBuf::from("./data");
         std::fs::create_dir_all(&data_dir)?;
         let store = ConversationStore::new(data_dir.join("web_conversations.json"))?;
+
+        // Initialize ConsciousnessOrchestrator with full 3-tier memory system
+        eprintln!("[AppState] Initializing ConsciousnessOrchestrator with 3-tier memory...");
+        let registry = Arc::new(DimensionRegistry::new());
+        let navigation = Arc::new(NavigationSystem::new(registry, memory_manager.clone())?);
+
+        let orchestrator = ConsciousnessOrchestrator::with_llm(
+            navigation,
+            memory_manager.clone(),
+            llm_config
+        )?;
+
+        eprintln!("[AppState] ✅ ConsciousnessOrchestrator initialized with learning system");
 
         Ok(Self {
             selector,
@@ -66,6 +83,7 @@ impl AppState {
             llm,
             store,
             conversations: Arc::new(Mutex::new(std::collections::HashMap::new())),
+            orchestrator: Arc::new(Mutex::new(orchestrator)),
         })
     }
 }
@@ -125,46 +143,22 @@ async fn process_chat_message(
 ) -> Result<(String, DimensionalState), Box<dyn std::error::Error>> {
     use std::time::Instant;
 
-    // Log user_id for personalized C31+ layer scanning (future use)
+    // Log user_id for personalized C31+ layer scanning
     if let Some(uid) = user_id {
         eprintln!("[Chat API] Processing query for user: {}", uid);
     }
 
-    // Step 1: Select dimensions (with fallback)
     let start = Instant::now();
-    let selection = match data.selector.select(message).await {
-        Ok(sel) => sel,
-        Err(e) => {
-            eprintln!("⚠️ Dimension selector failed: {}. Using fallback.", e);
-            // Fallback: use intelligent defaults based on simple keyword analysis
-            use crate::navigation::SimpleDimensionSelection;
-            SimpleDimensionSelection {
-                dimensions: fallback_dimension_selection(message),
-                reasoning: Some(format!("Fallback selection due to selector error: {}", e)),
-                confidence: 0.7,  // Lower confidence for fallback vs LLM selection (0.9)
-            }
-        }
-    };
-    let selection_duration = start.elapsed();
 
-    // Step 2: Create paths
-    let paths = create_paths_from_dimensions(&selection.dimensions);
+    // Step 1: Add user message to conversation (before processing)
+    // Note: We'll need to get dimensions after orchestrator runs, so add temporary empty vec
+    conversation.add_user_message(message.to_string(), vec![]);
 
-    // Step 3: Load contexts
-    let contexts = match data.memory_manager.load_contexts(&paths) {
-        Ok(ctx) => ctx,
-        Err(_) => create_simulated_contexts(&paths),
-    };
-
-    // Step 4: Add user message
-    conversation.add_user_message(message.to_string(), selection.dimensions.clone());
-
-    // Step 5: Generate response using native messages array (proper role-based conversation)
-    let system_prompt = build_system_prompt(&selection);
-
-    // Convert conversation history to messages array
+    // Step 2: Convert conversation history to messages array (exclude the just-added message)
     let mut messages = Vec::new();
-    for msg in &conversation.messages {
+    // Take all messages except the last one (which is the current user message)
+    let history_len = conversation.messages.len().saturating_sub(1);
+    for msg in conversation.messages.iter().take(history_len) {
         let role = match msg.role {
             MessageRole::User => "user",
             MessageRole::Assistant => "assistant",
@@ -175,37 +169,40 @@ async fn process_chat_message(
         });
     }
 
-    eprintln!("[Chat API] Sending {} messages in conversation history", messages.len());
+    eprintln!("[Chat API] Processing with {} messages in conversation history", messages.len());
 
-    let api_key = std::env::var("ANTHROPIC_API_KEY")?;
-    let llm_config = LLMConfig {
-        provider: "anthropic".to_string(),
-        model: "claude-sonnet-4-20250514".to_string(),
-        api_key,
-        timeout_secs: 30,
-        max_retries: 3,
-    };
-    let anthropic = AnthropicProvider::new(&llm_config)?;
+    // Step 3: Process through ConsciousnessOrchestrator (full pipeline with learning)
+    let mut orchestrator = data.orchestrator.lock().await;
+    let orchestrator_result = orchestrator.process(message, user_id, messages).await?;
 
-    // Use native messages array API (Claude can see role-based conversation)
-    let response = anthropic.call_api_with_conversation(messages, &system_prompt).await?;
+    let selection_duration = start.elapsed();
 
-    // Step 6: Save with dimensional state
+    // Step 4: Extract response and metadata
+    let response = orchestrator_result.final_response;
+    let metadata = orchestrator_result.metadata;
+
+    // Step 5: Build dimensional state from orchestrator metadata
     let dimensional_state = DimensionalState {
-        activated_dimensions: selection.dimensions.clone(),
-        selection_duration_ms: selection_duration.as_millis() as u64,
-        contexts_loaded: contexts.len(),
-        frequency_pattern: Some(
-            selection
-                .dimensions
-                .iter()
-                .zip(&paths)
-                .map(|(dim_id, path)| (*dim_id, path.frequency.hz()))
-                .collect(),
-        ),
+        activated_dimensions: metadata.dimensions_activated,
+        selection_duration_ms: metadata.navigation_duration_ms,
+        contexts_loaded: metadata.contexts_loaded,
+        frequency_pattern: None,  // Orchestrator doesn't expose frequency patterns yet
     };
 
+    // Step 6: Update the last user message with actual dimensions
+    if let Some(last_msg) = conversation.messages.last_mut() {
+        last_msg.dimensions = dimensional_state.activated_dimensions.clone();
+    }
+
+    // Step 7: Add assistant response with dimensional state
     conversation.add_assistant_message_with_state(response.clone(), dimensional_state.clone());
+
+    eprintln!(
+        "[Chat API] ✅ Processed via orchestrator: {} dimensions, {} contexts, {}ms total",
+        dimensional_state.activated_dimensions.len(),
+        dimensional_state.contexts_loaded,
+        selection_duration.as_millis()
+    );
 
     Ok((response, dimensional_state))
 }
