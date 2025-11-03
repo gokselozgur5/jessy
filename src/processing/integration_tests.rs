@@ -60,7 +60,7 @@ mod integration_tests {
         
         // Process a simple query
         let query = "What is empathy?";
-        let result = orchestrator.process(query, None).await;
+        let result = orchestrator.process(query, None, vec![]).await;
         
         // If dimensional content is not available, test passes
         // This allows tests to run in CI without full data setup
@@ -97,7 +97,7 @@ mod integration_tests {
         ];
         
         for (query, query_type) in queries {
-            let result = orchestrator.process(query, None).await;
+            let result = orchestrator.process(query, None, vec![]).await;
             assert!(result.is_ok(), "Query '{}' ({}) should succeed", query, query_type);
             
             let response = result.unwrap();
@@ -117,7 +117,7 @@ mod integration_tests {
         let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         let query = "What is the meaning of life?";
-        let result = orchestrator.process(query, None).await;
+        let result = orchestrator.process(query, None, vec![]).await;
         assert!(result.is_ok());
         
         let response = result.unwrap();
@@ -165,7 +165,7 @@ mod integration_tests {
         let mut orchestrator = ConsciousnessOrchestrator::with_config(navigation, memory, config, learning);
         
         let query = "What is love?";
-        let result = orchestrator.process(query, None).await;
+        let result = orchestrator.process(query, None, vec![]).await;
         assert!(result.is_ok());
         
         let response = result.unwrap();
@@ -198,7 +198,7 @@ mod integration_tests {
         
         // Simple query that might converge early
         let query = "What is 2+2?";
-        let result = orchestrator.process(query, None).await;
+        let result = orchestrator.process(query, None, vec![]).await;
         assert!(result.is_ok());
         
         let response = result.unwrap();
@@ -226,7 +226,7 @@ mod integration_tests {
         
         // Emotional query should activate emotion dimension
         let query = "I feel happy and grateful";
-        let result = orchestrator.process(query, None).await;
+        let result = orchestrator.process(query, None, vec![]).await;
         assert!(result.is_ok());
         
         let response = result.unwrap();
@@ -252,7 +252,7 @@ mod integration_tests {
         let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         let query = "";
-        let result = orchestrator.process(query, None).await;
+        let result = orchestrator.process(query, None, vec![]).await;
         
         // Empty query should fail at navigation stage
         assert!(result.is_err(), "Empty query should fail");
@@ -280,7 +280,7 @@ mod integration_tests {
             let q = query.to_string();
             let handle = tokio::spawn(async move {
                 let mut orch_guard = orch.lock().await;
-                orch_guard.process(&q, None).await
+                orch_guard.process(&q, None, vec![]).await
             });
             handles.push(handle);
         }
@@ -301,7 +301,7 @@ mod integration_tests {
         let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
         
         let query = "What is reality?";
-        let result = orchestrator.process(query, None).await;
+        let result = orchestrator.process(query, None, vec![]).await;
         assert!(result.is_ok());
         
         let response = result.unwrap();
