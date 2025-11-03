@@ -52,6 +52,7 @@ type QuerySession struct {
 // QueryRequest represents an incoming query
 type QueryRequest struct {
 	Query   string            `json:"query" validate:"required,min=1,max=10000"`
+	UserID  string            `json:"user_id,omitempty"`
 	Options map[string]string `json:"options,omitempty"`
 }
 
@@ -181,7 +182,12 @@ func (cs *JessyCoreService) ProcessQuery(c *fiber.Ctx) error {
 	cs.mutex.Unlock()
 	
 	// Process query through Rust JessyCore system via CGO
-	response, err := ProcessQueryNative(req.Query, sessionID, 9)
+	// Pass user_id for personalized C31+ layer scanning
+	userID := req.UserID
+	if userID == "" {
+		userID = "anonymous" // Default user
+	}
+	response, err := ProcessQueryNative(req.Query, sessionID, userID, 9)
 	if err != nil {
 		cs.mutex.Lock()
 		session.Status = "error"

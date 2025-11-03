@@ -22,10 +22,13 @@ pub const ERROR_UNKNOWN: i32 = 99;
 pub struct CQueryRequest {
     /// Query string (null-terminated C string)
     pub query: *const c_char,
-    
+
     /// Session ID (null-terminated C string)
     pub session_id: *const c_char,
-    
+
+    /// User ID for personalized C31+ layers (null-terminated C string, optional)
+    pub user_id: *const c_char,
+
     /// Maximum iterations (1-9)
     pub max_iterations: u32,
 }
