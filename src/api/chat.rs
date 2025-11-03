@@ -6,8 +6,8 @@ use crate::{
     DimensionId,
     navigation::DimensionSelector,
     memory::MmapManager,
-    llm::{LLMManager, LLMConfig, AnthropicProvider},
-    conversation::{ConversationHistory, ConversationStore, DimensionalState},
+    llm::{LLMManager, LLMConfig, AnthropicProvider, Message},
+    conversation::{ConversationHistory, ConversationStore, DimensionalState, MessageRole},
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -159,9 +159,23 @@ async fn process_chat_message(
     // Step 4: Add user message
     conversation.add_user_message(message.to_string(), selection.dimensions.clone());
 
-    // Step 5: Generate response
+    // Step 5: Generate response using native messages array (proper role-based conversation)
     let system_prompt = build_system_prompt(&selection);
-    let user_prompt = build_user_prompt(message, conversation);
+
+    // Convert conversation history to messages array
+    let mut messages = Vec::new();
+    for msg in &conversation.messages {
+        let role = match msg.role {
+            MessageRole::User => "user",
+            MessageRole::Assistant => "assistant",
+        };
+        messages.push(Message {
+            role: role.to_string(),
+            content: msg.content.clone(),
+        });
+    }
+
+    eprintln!("[Chat API] Sending {} messages in conversation history", messages.len());
 
     let api_key = std::env::var("ANTHROPIC_API_KEY")?;
     let llm_config = LLMConfig {
@@ -173,8 +187,8 @@ async fn process_chat_message(
     };
     let anthropic = AnthropicProvider::new(&llm_config)?;
 
-    // Non-streaming for REST API
-    let response = anthropic.call_api_with_system(&user_prompt, &system_prompt).await?;
+    // Use native messages array API (Claude can see role-based conversation)
+    let response = anthropic.call_api_with_conversation(messages, &system_prompt).await?;
 
     // Step 6: Save with dimensional state
     let dimensional_state = DimensionalState {
@@ -430,18 +444,19 @@ pub fn build_system_prompt(selection: &crate::navigation::SimpleDimensionSelecti
     prompt
 }
 
-fn build_user_prompt(message: &str, conversation: &ConversationHistory) -> String {
-    let mut prompt = String::new();
-
-    if conversation.len() > 1 {
-        prompt.push_str("CONVERSATION HISTORY:\n");
-        prompt.push_str(&conversation.format_for_context(10));
-        prompt.push_str("\n");
-    }
-
-    prompt.push_str(&format!("CURRENT QUERY: {}", message));
-    prompt
-}
+// Deprecated: Now using native messages array instead of string formatting
+// fn build_user_prompt(message: &str, conversation: &ConversationHistory) -> String {
+//     let mut prompt = String::new();
+//
+//     if conversation.len() > 1 {
+//         prompt.push_str("CONVERSATION HISTORY:\n");
+//         prompt.push_str(&conversation.format_for_context(10));
+//         prompt.push_str("\n");
+//     }
+//
+//     prompt.push_str(&format!("CURRENT QUERY: {}", message));
+//     prompt
+// }
 
 fn get_dimension_name(dim: DimensionId) -> &'static str {
     match dim.0 {
