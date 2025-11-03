@@ -23,6 +23,7 @@ use super::{
     DimensionSelector,
 };
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 /// Navigation system orchestrator
@@ -72,6 +73,9 @@ pub struct NavigationSystem {
 
     /// User layer manager for C31+ personal patterns
     user_layer_manager: Arc<Mutex<UserLayerManager>>,
+
+    /// Query counter for periodic persistence (every 10 queries)
+    query_counter: AtomicUsize,
 }
 
 impl NavigationSystem {
@@ -125,6 +129,7 @@ impl NavigationSystem {
             metrics: Arc::new(NavigationMetrics::new()),
             shared_layer_manager: Arc::new(Mutex::new(shared_layer_manager)),
             user_layer_manager: Arc::new(Mutex::new(user_layer_manager)),
+            query_counter: AtomicUsize::new(0),
         })
     }
     
@@ -164,6 +169,7 @@ impl NavigationSystem {
             metrics: Arc::new(NavigationMetrics::new()),
             shared_layer_manager: Arc::new(Mutex::new(shared_layer_manager)),
             user_layer_manager: Arc::new(Mutex::new(user_layer_manager)),
+            query_counter: AtomicUsize::new(0),
         })
     }
 
@@ -223,6 +229,7 @@ impl NavigationSystem {
             metrics: Arc::new(NavigationMetrics::new()),
             shared_layer_manager: Arc::new(Mutex::new(shared_layer_manager)),
             user_layer_manager: Arc::new(Mutex::new(user_layer_manager)),
+            query_counter: AtomicUsize::new(0),
         })
     }
     
@@ -583,7 +590,27 @@ impl NavigationSystem {
             depth_navigation_ms = depth_navigation_duration_ms,
             "Navigation completed"
         );
-        
+
+        // Increment query counter and persist layers every 10 queries
+        let count = self.query_counter.fetch_add(1, Ordering::Relaxed) + 1;
+        if count % 10 == 0 {
+            eprintln!("[NavigationSystem] Persisting learned layers (query #{})", count);
+
+            // Save SharedLayers (C16-C30) to disk
+            if let Ok(shared_manager) = self.shared_layer_manager.lock() {
+                if let Err(e) = shared_manager.save() {
+                    eprintln!("[NavigationSystem] Failed to save SharedLayers: {}", e);
+                }
+            }
+
+            // Save UserLayers (C31+) to disk
+            if let Ok(user_manager) = self.user_layer_manager.lock() {
+                if let Err(e) = user_manager.save() {
+                    eprintln!("[NavigationSystem] Failed to save UserLayers: {}", e);
+                }
+            }
+        }
+
         Ok(result)
     }
     
@@ -625,6 +652,16 @@ impl NavigationSystem {
     /// Get reference to metrics (Task 10.4)
     pub fn metrics(&self) -> &Arc<NavigationMetrics> {
         &self.metrics
+    }
+
+    /// Get reference to shared layer manager for external access
+    pub fn get_shared_layer_manager(&self) -> Result<Arc<Mutex<SharedLayerManager>>, NavigationError> {
+        Ok(Arc::clone(&self.shared_layer_manager))
+    }
+
+    /// Get reference to user layer manager for external access
+    pub fn get_user_layer_manager(&self) -> Result<Arc<Mutex<UserLayerManager>>, NavigationError> {
+        Ok(Arc::clone(&self.user_layer_manager))
     }
 }
 
