@@ -34,6 +34,7 @@ package main
 typedef struct {
     const char* query;
     const char* session_id;
+    const char* user_id;
     unsigned int max_iterations;
 } CQueryRequest;
 
@@ -98,21 +99,26 @@ func InitJessyCore(memoryLimitMB uint32) error {
 // Parameters:
 //   - query: The user's query string
 //   - sessionID: Unique session identifier (generated if empty)
+//   - userID: Optional user identifier for personalized C31+ layers
 //   - maxIterations: Maximum iterations (1-9, typically 9)
 //
 // Returns QueryResponse or error.
-func ProcessQueryNative(query string, sessionID string, maxIterations uint32) (*QueryResponse, error) {
+func ProcessQueryNative(query string, sessionID string, userID string, maxIterations uint32) (*QueryResponse, error) {
 	// Convert Go strings to C strings
 	cQuery := C.CString(query)
 	defer C.free(unsafe.Pointer(cQuery))
-	
+
 	cSessionID := C.CString(sessionID)
 	defer C.free(unsafe.Pointer(cSessionID))
-	
+
+	cUserID := C.CString(userID)
+	defer C.free(unsafe.Pointer(cUserID))
+
 	// Create request
 	request := C.CQueryRequest{
 		query:          cQuery,
 		session_id:     cSessionID,
+		user_id:        cUserID,
 		max_iterations: C.uint(maxIterations),
 	}
 	
