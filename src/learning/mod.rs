@@ -1156,3 +1156,7 @@ mod tests {
         assert!((rate - 0.8).abs() < 0.01);
     }
 }
+
+// End-to-end tests for 3-Tier Cognitive Layer System
+#[cfg(test)]
+mod e2e_tests;
