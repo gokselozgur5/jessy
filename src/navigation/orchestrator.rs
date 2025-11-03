@@ -101,19 +101,37 @@ impl NavigationSystem {
 
         // Initialize SharedLayerManager (C16-C30)
         // Reserve Pool: 92MB at offset 0x0A00_0000
-        let shared_layer_manager = SharedLayerManager::new(
+        let mut shared_layer_manager = SharedLayerManager::new(
             memory_manager.clone(),
             92 * 1024 * 1024,  // 92MB reserve pool size
             0x0A00_0000,       // Reserve pool base offset
         );
 
+        // Load SharedLayers from disk (if exists)
+        eprintln!("[NavigationSystem] Loading SharedLayers from disk...");
+        if let Err(e) = shared_layer_manager.load() {
+            eprintln!("[NavigationSystem] Failed to load SharedLayers: {}", e);
+            eprintln!("[NavigationSystem] Starting with empty SharedLayers");
+        } else {
+            eprintln!("[NavigationSystem] ✅ Loaded {} SharedLayers from disk", shared_layer_manager.layer_count());
+        }
+
         // Initialize UserLayerManager (C31+)
         // User-Specific region: 32MB at offset 0x1000_0000
-        let user_layer_manager = UserLayerManager::new(
+        let mut user_layer_manager = UserLayerManager::new(
             memory_manager.clone(),
             32 * 1024 * 1024,  // 32MB user region size
             0x1000_0000,       // User region base offset
         );
+
+        // Load UserLayers from disk (if exists)
+        eprintln!("[NavigationSystem] Loading UserLayers from disk...");
+        if let Err(e) = user_layer_manager.load() {
+            eprintln!("[NavigationSystem] Failed to load UserLayers: {}", e);
+            eprintln!("[NavigationSystem] Starting with empty UserLayers");
+        } else {
+            eprintln!("[NavigationSystem] ✅ Loaded {} UserLayers from disk", user_layer_manager.total_layer_count());
+        }
 
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
@@ -141,19 +159,37 @@ impl NavigationSystem {
     ) -> Result<Self, NavigationError> {
         // Initialize SharedLayerManager (C16-C30)
         // Reserve Pool: 92MB at offset 0x0A00_0000
-        let shared_layer_manager = SharedLayerManager::new(
+        let mut shared_layer_manager = SharedLayerManager::new(
             memory_manager.clone(),
             92 * 1024 * 1024,  // 92MB reserve pool size
             0x0A00_0000,       // Reserve pool base offset
         );
 
+        // Load SharedLayers from disk (if exists)
+        eprintln!("[NavigationSystem] Loading SharedLayers from disk...");
+        if let Err(e) = shared_layer_manager.load() {
+            eprintln!("[NavigationSystem] Failed to load SharedLayers: {}", e);
+            eprintln!("[NavigationSystem] Starting with empty SharedLayers");
+        } else {
+            eprintln!("[NavigationSystem] ✅ Loaded {} SharedLayers from disk", shared_layer_manager.layer_count());
+        }
+
         // Initialize UserLayerManager (C31+)
         // User-Specific region: 32MB at offset 0x1000_0000
-        let user_layer_manager = UserLayerManager::new(
+        let mut user_layer_manager = UserLayerManager::new(
             memory_manager.clone(),
             32 * 1024 * 1024,  // 32MB user region size
             0x1000_0000,       // User region base offset
         );
+
+        // Load UserLayers from disk (if exists)
+        eprintln!("[NavigationSystem] Loading UserLayers from disk...");
+        if let Err(e) = user_layer_manager.load() {
+            eprintln!("[NavigationSystem] Failed to load UserLayers: {}", e);
+            eprintln!("[NavigationSystem] Starting with empty UserLayers");
+        } else {
+            eprintln!("[NavigationSystem] ✅ Loaded {} UserLayers from disk", user_layer_manager.total_layer_count());
+        }
 
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
@@ -201,19 +237,37 @@ impl NavigationSystem {
 
         // Initialize SharedLayerManager (C16-C30)
         // Reserve Pool: 92MB at offset 0x0A00_0000
-        let shared_layer_manager = SharedLayerManager::new(
+        let mut shared_layer_manager = SharedLayerManager::new(
             memory_manager.clone(),
             92 * 1024 * 1024,  // 92MB reserve pool size
             0x0A00_0000,       // Reserve pool base offset
         );
 
+        // Load SharedLayers from disk (if exists)
+        eprintln!("[NavigationSystem] Loading SharedLayers from disk...");
+        if let Err(e) = shared_layer_manager.load() {
+            eprintln!("[NavigationSystem] Failed to load SharedLayers: {}", e);
+            eprintln!("[NavigationSystem] Starting with empty SharedLayers");
+        } else {
+            eprintln!("[NavigationSystem] ✅ Loaded {} SharedLayers from disk", shared_layer_manager.layer_count());
+        }
+
         // Initialize UserLayerManager (C31+)
         // User-Specific region: 32MB at offset 0x1000_0000
-        let user_layer_manager = UserLayerManager::new(
+        let mut user_layer_manager = UserLayerManager::new(
             memory_manager.clone(),
             32 * 1024 * 1024,  // 32MB user region size
             0x1000_0000,       // User region base offset
         );
+
+        // Load UserLayers from disk (if exists)
+        eprintln!("[NavigationSystem] Loading UserLayers from disk...");
+        if let Err(e) = user_layer_manager.load() {
+            eprintln!("[NavigationSystem] Failed to load UserLayers: {}", e);
+            eprintln!("[NavigationSystem] Starting with empty UserLayers");
+        } else {
+            eprintln!("[NavigationSystem] ✅ Loaded {} UserLayers from disk", user_layer_manager.total_layer_count());
+        }
 
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
