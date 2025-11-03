@@ -27,10 +27,10 @@ struct AnthropicRequest {
     stream: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Message {
-    role: String,
-    content: String,
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Message {
+    pub role: String,
+    pub content: String,
 }
 
 #[derive(Deserialize)]
@@ -88,14 +88,14 @@ impl AnthropicProvider {
     /// Make API call with retries and custom system prompt
     pub async fn call_api_with_system(&self, user_prompt: &str, system_prompt: &str) -> Result<String> {
         let mut last_error = None;
-        
+
         for attempt in 0..=self.max_retries {
             if attempt > 0 {
                 let backoff = Duration::from_millis(100 * 2_u64.pow(attempt - 1));
                 eprintln!("[Anthropic] Retry attempt {} after {:?}", attempt, backoff);
                 tokio::time::sleep(backoff).await;
             }
-            
+
             match self.try_call(user_prompt, system_prompt).await {
                 Ok(response) => return Ok(response),
                 Err(e) => {
@@ -104,9 +104,60 @@ impl AnthropicProvider {
                 }
             }
         }
-        
-        Err(last_error.unwrap_or_else(|| 
+
+        Err(last_error.unwrap_or_else(||
             crate::ConsciousnessError::LearningError("API call failed".to_string())
+        ))
+    }
+
+    /// Make API call with full conversation history (native messages array)
+    ///
+    /// This method sends the entire conversation history as a messages array,
+    /// allowing Claude to see role-based conversation context (user/assistant).
+    ///
+    /// # Arguments
+    ///
+    /// * `messages` - Array of messages with role (user/assistant) and content
+    /// * `system_prompt` - System prompt for context
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use jessy::llm::anthropic::{AnthropicProvider, Message};
+    /// # use jessy::llm::LLMConfig;
+    /// # async fn example() -> jessy::Result<()> {
+    /// # let config = LLMConfig::default();
+    /// # let provider = AnthropicProvider::new(&config)?;
+    /// let messages = vec![
+    ///     Message { role: "user".to_string(), content: "Hello!".to_string() },
+    ///     Message { role: "assistant".to_string(), content: "Hi there!".to_string() },
+    ///     Message { role: "user".to_string(), content: "How are you?".to_string() },
+    /// ];
+    /// let response = provider.call_api_with_conversation(messages, "You are JESSY").await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn call_api_with_conversation(&self, messages: Vec<Message>, system_prompt: &str) -> Result<String> {
+        let mut last_error = None;
+
+        for attempt in 0..=self.max_retries {
+            if attempt > 0 {
+                let backoff = Duration::from_millis(100 * 2_u64.pow(attempt - 1));
+                eprintln!("[Anthropic] Retry attempt {} after {:?}", attempt, backoff);
+                tokio::time::sleep(backoff).await;
+            }
+
+            match self.try_call_with_messages(&messages, system_prompt).await {
+                Ok(response) => return Ok(response),
+                Err(e) => {
+                    eprintln!("[Anthropic] API call failed (attempt {}): {}", attempt + 1, e);
+                    last_error = Some(e);
+                }
+            }
+        }
+
+        Err(last_error.unwrap_or_else(||
+            crate::ConsciousnessError::LearningError("API call with conversation failed".to_string())
         ))
     }
     
@@ -124,7 +175,25 @@ impl AnthropicProvider {
             system: system_prompt.to_string(),
             stream: None,
         };
-        
+
+        self.send_request(request).await
+    }
+
+    /// Try single API call with conversation messages array
+    async fn try_call_with_messages(&self, messages: &[Message], system_prompt: &str) -> Result<String> {
+        let request = AnthropicRequest {
+            model: self.model.clone(),
+            max_tokens: 2000,
+            messages: messages.to_vec(),
+            system: system_prompt.to_string(),
+            stream: None,
+        };
+
+        self.send_request(request).await
+    }
+
+    /// Send request and parse response (shared logic)
+    async fn send_request(&self, request: AnthropicRequest) -> Result<String> {
         let response = self.client
             .post("https://api.anthropic.com/v1/messages")
             .header("x-api-key", &self.api_key)
@@ -136,7 +205,7 @@ impl AnthropicProvider {
             .map_err(|e| crate::ConsciousnessError::LearningError(
                 format!("HTTP request failed: {}", e)
             ))?;
-        
+
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
@@ -144,12 +213,12 @@ impl AnthropicProvider {
                 format!("API error {}: {}", status, error_text)
             ));
         }
-        
+
         let api_response: AnthropicResponse = response.json().await
             .map_err(|e| crate::ConsciousnessError::LearningError(
                 format!("Failed to parse response: {}", e)
             ))?;
-        
+
         api_response.content
             .first()
             .map(|content| content.text.clone())

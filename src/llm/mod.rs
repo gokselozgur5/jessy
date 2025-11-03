@@ -14,7 +14,7 @@ use async_trait::async_trait;
 
 pub use config::LLMConfig;
 pub use openai::OpenAIProvider;
-pub use anthropic::AnthropicProvider;
+pub use anthropic::{AnthropicProvider, Message};
 pub use ollama::OllamaProvider;
 
 /// Trait for LLM providers
