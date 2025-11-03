@@ -1,5 +1,6 @@
 # Multi-stage build for JESSY - Context-Aware AI Assistant
 # Stage 1: Build
+# Updated: 2025-01-03 - Invalidate cache for conversation fix
 FROM rust:1.83-slim as builder
 
 # Install build dependencies
