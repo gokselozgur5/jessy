@@ -16,13 +16,18 @@ mod tests {
     use tokio::task::JoinSet;
 
     fn create_test_system() -> NavigationSystem {
+        use crate::memory::MmapManager;
+
         let config_data = std::fs::read_to_string("data/dimensions.json")
             .expect("Failed to read dimensions.json");
         let registry = Arc::new(
             DimensionRegistry::load_dimensions(&config_data)
                 .expect("Failed to load registry")
         );
-        NavigationSystem::new(registry).expect("Failed to create system")
+        let memory_manager = Arc::new(
+            MmapManager::new(280).expect("Failed to create memory manager")
+        );
+        NavigationSystem::new(registry, memory_manager).expect("Failed to create system")
     }
 
     // ============================================================================
@@ -43,7 +48,7 @@ mod tests {
             let query = format!("test query number {}", i);
             
             join_set.spawn(async move {
-                system_clone.navigate(&query).await
+                system_clone.navigate(&query, None).await
             });
         }
         
@@ -87,7 +92,7 @@ mod tests {
                 // Each task performs multiple operations
                 for j in 0..5 {
                     let query = format!("query {} iteration {}", i, j);
-                    let _ = system_clone.navigate(&query).await;
+                    let _ = system_clone.navigate(&query, None).await;
                 }
             });
             
@@ -125,7 +130,7 @@ mod tests {
                 let query_str = query.to_string();
                 
                 join_set.spawn(async move {
-                    (i, query_str.clone(), system_clone.navigate(&query_str).await)
+                    (i, query_str.clone(), system_clone.navigate(&query_str, None).await)
                 });
             }
         }
@@ -203,7 +208,7 @@ mod tests {
             
             join_set.spawn(async move {
                 let start = Instant::now();
-                let result = system_clone.navigate(&query).await;
+                let result = system_clone.navigate(&query, None).await;
                 let duration = start.elapsed();
                 (duration, result)
             });
@@ -241,7 +246,7 @@ mod tests {
         
         // Run navigation
         let start = Instant::now();
-        let _result = system.navigate(query).await;
+        let _result = system.navigate(query, None).await;
         let navigation_duration = start.elapsed();
         
         // In Rust, cleanup happens automatically via Drop
@@ -257,7 +262,7 @@ mod tests {
         // Run multiple times to verify no memory leaks
         for i in 0..10 {
             let query = format!("cleanup test {}", i);
-            let _ = system.navigate(&query).await;
+            let _ = system.navigate(&query, None).await;
         }
         
         // If we reach here without OOM, cleanup is working
@@ -271,7 +276,7 @@ mod tests {
         
         // Run same query sequentially
         let query = "empathy compassion understanding";
-        let sequential_result = system.navigate(query).await;
+        let sequential_result = system.navigate(query, None).await;
         
         // Run same query 20 times concurrently
         let mut join_set = JoinSet::new();
@@ -280,7 +285,7 @@ mod tests {
             let query_str = query.to_string();
             
             join_set.spawn(async move {
-                system_clone.navigate(&query_str).await
+                system_clone.navigate(&query_str, None).await
             });
         }
         
@@ -343,7 +348,7 @@ mod tests {
                 let query = format!("deadlock test {}", i);
                 
                 join_set.spawn(async move {
-                    system_clone.navigate(&query).await
+                    system_clone.navigate(&query, None).await
                 });
             }
             
@@ -383,7 +388,7 @@ mod tests {
                 let qtype = query_type.to_string();
                 
                 join_set.spawn(async move {
-                    (qtype, i, system_clone.navigate(&query_str).await)
+                    (qtype, i, system_clone.navigate(&query_str, None).await)
                 });
             }
         }
@@ -432,7 +437,7 @@ mod tests {
                 
                 // Navigate
                 let query = format!("memory safety test {}", i);
-                let _ = system_clone.navigate(&query).await;
+                let _ = system_clone.navigate(&query, None).await;
                 
                 // Access metrics
                 let _metrics = system_clone.metrics();

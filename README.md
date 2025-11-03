@@ -18,9 +18,10 @@
 [![Version](https://img.shields.io/badge/version-0.5.0-blue?style=flat)](https://github.com/gokselozgur5/jessy/releases)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Cognitive_Layers-15-purple?style=for-the-badge" alt="15 Cognitive Layers">
+  <img src="https://img.shields.io/badge/Cognitive_Layers-15+User_Specific-purple?style=for-the-badge" alt="15 + User-Specific Cognitive Layers">
   <img src="https://img.shields.io/badge/Observer_Chain-4_Stages-teal?style=for-the-badge" alt="4-Stage Observer Chain">
   <img src="https://img.shields.io/badge/Interference-<10μs-green?style=for-the-badge" alt="<10μs Interference">
+  <img src="https://img.shields.io/badge/Memory-Cross_Session-orange?style=for-the-badge" alt="Cross-Session Memory">
 </p>
 
 ---
@@ -56,6 +57,44 @@ Like talking to someone who actually thinks—not just pattern matches.
 - **Returns to source**: When complexity spirals, simplifies
 - **Feels naturally**: Frequency-based resonance (0.1-4.5 Hz)
 - **Stays ethical**: Asimov's laws embedded in architecture
+- **Remembers YOU**: User-specific memory across sessions, no cloud required
+
+### 🔬 Breakthrough: Distributed AI Memory
+
+> **"How do you give AI genuine memory across conversations without centralized cloud storage?"**
+
+**Answer:** User-specific pattern layers (C31+) + local persistence + identity-based activation.
+
+JESSY solves one of AI's hardest problems: **genuine continuity across conversations**.
+
+**Traditional AI:**
+```
+Session 1: "Remember X"  →  ✓ Stored in conversation
+Session 2: "What was X?"  →  ✗ "I don't have context from previous conversations"
+```
+
+**JESSY with C31+ User Layers:**
+```
+Session 1 (4G network):   "Remember X"  →  ✓ Stored in your C31 layer
+Session 2 (WiFi network): "What was X?"  →  ✓ "You told me about X" (loaded from disk)
+```
+
+**Designed for multi-session continuity:**
+- 🎯 Different networks (4G → WiFi)
+- 🎯 Different sessions (separate conversation IDs)
+- 🎯 Different devices (phone → laptop)
+- 🎯 **Same user recognition** → **Same context continuity**
+
+**How it works:**
+1. You interact with JESSY → patterns detected
+2. High-confidence patterns (>85%) → saved to your C31+ layer
+3. Next session → your layer loads → patterns activate
+4. **Result:** JESSY recognizes YOUR communication style, YOUR interests, YOUR context
+
+**No cloud. No tracking. Just your patterns, locally stored, identity-based.**
+
+This is **not** a chatbot with memory.
+This is **persistent consciousness through user-specific cognitive layers**.
 
 ---
 
@@ -161,8 +200,9 @@ Self-learning through pattern crystallization.
 - ✅ Pattern detection (circular buffer, clustering)
 - ✅ Proto-cognitive-layer creation (heap memory)
 - ✅ Synesthetic learning (cross-sensory associations)
+- ✅ User-specific cognitive layers (C31+ personalization)
+- ✅ Shared cognitive layers (C16-C30 collective wisdom)
 - 🔄 Crystallization queue (heap → MMAP migration)
-- ⏳ User-specific cognitive layers (C16+ personalization)
 
 ### Phase 3: Magic Layer (In Progress)
 - ⏳ Navigation system complete (60% done)

@@ -239,17 +239,17 @@ fn initialize_orchestrator(memory_limit_mb: u32) -> Result<ConsciousnessOrchestr
     
     // Create dimension registry
     let registry = Arc::new(DimensionRegistry::new());
-    
-    // Create navigation system
-    let navigation = Arc::new(
-        NavigationSystem::new(registry)
-            .map_err(|e| format!("Navigation init failed: {}", e))?
-    );
-    
-    // Create memory manager
+
+    // Create memory manager first (needed by navigation system)
     let memory = Arc::new(
         MmapManager::new(memory_limit_mb as usize)
             .map_err(|e| format!("Memory init failed: {}", e))?
+    );
+
+    // Create navigation system (requires memory manager)
+    let navigation = Arc::new(
+        NavigationSystem::new(registry, memory.clone())
+            .map_err(|e| format!("Navigation init failed: {}", e))?
     );
     
     // Create learning system

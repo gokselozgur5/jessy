@@ -246,7 +246,7 @@ impl ConsciousnessOrchestrator {
         
         // Phase 1: Navigation (fail fast on error)
         let nav_start = Instant::now();
-        let nav_result = self.navigation.navigate(query_to_use).await
+        let nav_result = self.navigation.navigate(query_to_use, None).await
             .map_err(|e| {
                 // Preserve full error context for debugging
                 eprintln!("[Consciousness] Navigation failed: {}", e);
@@ -704,8 +704,11 @@ mod tests {
     
     // Helper function for tests
     fn create_test_navigation() -> Arc<NavigationSystem> {
+        use crate::memory::MmapManager;
+
         let registry = Arc::new(DimensionRegistry::new());
-        Arc::new(NavigationSystem::new(registry).expect("Failed to create navigation"))
+        let memory = Arc::new(MmapManager::new(280).expect("Failed to create memory manager"));
+        Arc::new(NavigationSystem::new(registry, memory).expect("Failed to create navigation"))
     }
 
     // ===== OBSERVER CHAIN INTEGRATION TESTS =====

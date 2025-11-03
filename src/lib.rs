@@ -163,7 +163,7 @@ pub struct LayerId {
 }
 
 /// Frequency measurement in Hz
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Frequency(pub f32);
 
 impl Frequency {

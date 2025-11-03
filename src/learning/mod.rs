@@ -85,6 +85,8 @@ pub use self::crystallization_queue::{CrystallizationQueue, CrystallizationPrior
 pub use self::synesthetic_learner::{SynestheticLearner, KeywordAssociation};
 pub use self::pattern_detector::PatternDetector;
 pub use self::proto_dimension_manager::ProtoDimensionManager;
+pub use self::shared_layer::{SharedLayer, SharedLayerManager, SharedLayerStats};
+pub use self::user_layer::{UserLayer, UserLayerManager, UserLayerStats};
 
 // Module declarations
 mod observation;
@@ -98,6 +100,8 @@ mod proto_dimension_manager;
 mod crystallizer;
 mod crystallization_queue;
 mod synesthetic_learner;
+mod shared_layer;      // NEW: Tier 2 (C16-C30)
+mod user_layer;        // NEW: Tier 3 (C31+)
 
 #[cfg(test)]
 mod integration_tests;
