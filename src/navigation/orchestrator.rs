@@ -13,6 +13,8 @@
 //! components.
 
 use crate::{DimensionId, LayerId};
+use crate::learning::{SharedLayerManager, UserLayerManager};
+use crate::memory::MmapManager;
 use super::{
     NavigationError, NavigationConfig, NavigationResult, NavigationPath,
     QueryAnalyzer, ParallelScanner, PathSelector, DepthNavigator,
@@ -20,7 +22,7 @@ use super::{
     metrics::NavigationMetrics,
     DimensionSelector,
 };
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 /// Navigation system orchestrator
@@ -64,6 +66,12 @@ pub struct NavigationSystem {
 
     /// Metrics collector (Task 10.4)
     metrics: Arc<NavigationMetrics>,
+
+    /// Shared layer manager for C16-C30 collective wisdom
+    shared_layer_manager: Arc<Mutex<SharedLayerManager>>,
+
+    /// User layer manager for C31+ personal patterns
+    user_layer_manager: Arc<Mutex<UserLayerManager>>,
 }
 
 impl NavigationSystem {
@@ -72,15 +80,36 @@ impl NavigationSystem {
     /// # Arguments
     ///
     /// * `registry` - Shared dimension registry
+    /// * `memory_manager` - Memory manager for MMAP allocations
     ///
     /// # Examples
     ///
     /// ```rust,ignore
     /// let registry = Arc::new(DimensionRegistry::load_dimensions(&config)?);
-    /// let system = NavigationSystem::new(registry)?;
+    /// let memory_manager = Arc::new(MmapManager::new(280)?);
+    /// let system = NavigationSystem::new(registry, memory_manager)?;
     /// ```
-    pub fn new(registry: Arc<DimensionRegistry>) -> Result<Self, NavigationError> {
+    pub fn new(
+        registry: Arc<DimensionRegistry>,
+        memory_manager: Arc<MmapManager>,
+    ) -> Result<Self, NavigationError> {
         let config = NavigationConfig::default();
+
+        // Initialize SharedLayerManager (C16-C30)
+        // Reserve Pool: 92MB at offset 0x0A00_0000
+        let shared_layer_manager = SharedLayerManager::new(
+            memory_manager.clone(),
+            92 * 1024 * 1024,  // 92MB reserve pool size
+            0x0A00_0000,       // Reserve pool base offset
+        );
+
+        // Initialize UserLayerManager (C31+)
+        // User-Specific region: 32MB at offset 0x1000_0000
+        let user_layer_manager = UserLayerManager::new(
+            memory_manager.clone(),
+            32 * 1024 * 1024,  // 32MB user region size
+            0x1000_0000,       // User region base offset
+        );
 
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
@@ -94,14 +123,33 @@ impl NavigationSystem {
             llm_selector: None,  // Disabled by default
             config,
             metrics: Arc::new(NavigationMetrics::new()),
+            shared_layer_manager: Arc::new(Mutex::new(shared_layer_manager)),
+            user_layer_manager: Arc::new(Mutex::new(user_layer_manager)),
         })
     }
     
     /// Create navigation system with custom configuration
     pub fn with_config(
         registry: Arc<DimensionRegistry>,
+        memory_manager: Arc<MmapManager>,
         config: NavigationConfig,
     ) -> Result<Self, NavigationError> {
+        // Initialize SharedLayerManager (C16-C30)
+        // Reserve Pool: 92MB at offset 0x0A00_0000
+        let shared_layer_manager = SharedLayerManager::new(
+            memory_manager.clone(),
+            92 * 1024 * 1024,  // 92MB reserve pool size
+            0x0A00_0000,       // Reserve pool base offset
+        );
+
+        // Initialize UserLayerManager (C31+)
+        // User-Specific region: 32MB at offset 0x1000_0000
+        let user_layer_manager = UserLayerManager::new(
+            memory_manager.clone(),
+            32 * 1024 * 1024,  // 32MB user region size
+            0x1000_0000,       // User region base offset
+        );
+
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
                 "data/emotional.txt",
@@ -114,6 +162,8 @@ impl NavigationSystem {
             llm_selector: None,  // Disabled by default
             config,
             metrics: Arc::new(NavigationMetrics::new()),
+            shared_layer_manager: Arc::new(Mutex::new(shared_layer_manager)),
+            user_layer_manager: Arc::new(Mutex::new(user_layer_manager)),
         })
     }
 
@@ -125,20 +175,39 @@ impl NavigationSystem {
     /// # Arguments
     ///
     /// * `registry` - Shared dimension registry
+    /// * `memory_manager` - Memory manager for MMAP allocations
     /// * `api_key` - Anthropic API key for Claude
     ///
     /// # Examples
     ///
     /// ```rust,ignore
     /// let registry = Arc::new(DimensionRegistry::load_dimensions(&config)?);
+    /// let memory_manager = Arc::new(MmapManager::new(280)?);
     /// let api_key = env::var("ANTHROPIC_API_KEY")?;
-    /// let system = NavigationSystem::with_llm_selector(registry, api_key)?;
+    /// let system = NavigationSystem::with_llm_selector(registry, memory_manager, api_key)?;
     /// ```
     pub fn with_llm_selector(
         registry: Arc<DimensionRegistry>,
+        memory_manager: Arc<MmapManager>,
         api_key: String,
     ) -> Result<Self, NavigationError> {
         let config = NavigationConfig::default();
+
+        // Initialize SharedLayerManager (C16-C30)
+        // Reserve Pool: 92MB at offset 0x0A00_0000
+        let shared_layer_manager = SharedLayerManager::new(
+            memory_manager.clone(),
+            92 * 1024 * 1024,  // 92MB reserve pool size
+            0x0A00_0000,       // Reserve pool base offset
+        );
+
+        // Initialize UserLayerManager (C31+)
+        // User-Specific region: 32MB at offset 0x1000_0000
+        let user_layer_manager = UserLayerManager::new(
+            memory_manager.clone(),
+            32 * 1024 * 1024,  // 32MB user region size
+            0x1000_0000,       // User region base offset
+        );
 
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
@@ -152,6 +221,8 @@ impl NavigationSystem {
             llm_selector: Some(DimensionSelector::new(api_key)),
             config,
             metrics: Arc::new(NavigationMetrics::new()),
+            shared_layer_manager: Arc::new(Mutex::new(shared_layer_manager)),
+            user_layer_manager: Arc::new(Mutex::new(user_layer_manager)),
         })
     }
     
@@ -170,6 +241,7 @@ impl NavigationSystem {
     /// # Arguments
     ///
     /// * `query` - User query string
+    /// * `user_id` - Optional user ID for personalized C31+ layer scanning
     ///
     /// # Returns
     ///
@@ -185,10 +257,14 @@ impl NavigationSystem {
     /// # Examples
     ///
     /// ```rust,ignore
-    /// let result = system.navigate("How do I feel empathy?").await?;
+    /// // Without user-specific layers
+    /// let result = system.navigate("How do I feel empathy?", None).await?;
+    ///
+    /// // With user-specific layers (C31+)
+    /// let result = system.navigate("How do I feel empathy?", Some("user_123")).await?;
     /// println!("Activated {} dimensions", result.paths.len());
     /// ```
-    pub async fn navigate(&self, query: &str) -> Result<NavigationResult, NavigationError> {
+    pub async fn navigate(&self, query: &str, user_id: Option<&str>) -> Result<NavigationResult, NavigationError> {
         let start_time = Instant::now();
         
         // Track concurrent requests (Task 10.4)
@@ -265,9 +341,107 @@ impl NavigationSystem {
             scan_duration_ms = dimension_scan_duration_ms,
             "Dimension scanning completed"
         );
-        
-        // Check if we have any activations
-        if activations.is_empty() {
+
+        // Step 2.5: Scan C16-C30 shared layers (collective wisdom)
+        // SharedLayer confidence threshold: ≥0.90 (high bar for collective patterns)
+        let shared_scan_start = Instant::now();
+        let mut shared_activations = Vec::new();
+
+        {
+            let shared_manager = self.shared_layer_manager.lock()
+                .map_err(|e| NavigationError::NavigationFailed {
+                    message: format!("Failed to lock SharedLayerManager: {}", e),
+                })?;
+
+            let shared_layers = shared_manager.get_all_shared_layers();
+
+            for shared_layer in shared_layers {
+                // Match keywords against shared layer
+                let matched_keywords: Vec<String> = analysis.keywords.iter()
+                    .filter(|kw| shared_layer.keywords.contains(kw))
+                    .cloned()
+                    .collect();
+
+                if !matched_keywords.is_empty() {
+                    // Calculate confidence based on keyword match ratio
+                    let match_ratio = matched_keywords.len() as f32 / shared_layer.keywords.len() as f32;
+                    let confidence = shared_layer.confidence * match_ratio;
+
+                    // Only include if confidence >= 90% (Tier 2 threshold)
+                    if confidence >= 0.90 {
+                        tracing::debug!(
+                            dimension_id = shared_layer.dimension_id.0,
+                            confidence = confidence,
+                            matched_keywords = ?matched_keywords,
+                            "SharedLayer activated (C16-C30)"
+                        );
+
+                        shared_activations.push((shared_layer.dimension_id, confidence, matched_keywords));
+                    }
+                }
+            }
+        }
+
+        let shared_scan_duration_ms = shared_scan_start.elapsed().as_millis() as u64;
+
+        tracing::debug!(
+            shared_activations = shared_activations.len(),
+            scan_duration_ms = shared_scan_duration_ms,
+            "SharedLayer scanning completed (C16-C30)"
+        );
+
+        // Step 2.6: Scan C31+ user-specific layers (personal patterns)
+        // UserLayer confidence threshold: ≥0.85 (85%, lower bar for personalization)
+        let user_scan_start = Instant::now();
+        let mut user_activations = Vec::new();
+
+        if let Some(uid) = user_id {
+            let user_manager = self.user_layer_manager.lock()
+                .map_err(|e| NavigationError::NavigationFailed {
+                    message: format!("Failed to lock UserLayerManager: {}", e),
+                })?;
+
+            let user_layers = user_manager.get_user_layers(uid);
+
+            for user_layer in user_layers {
+                // Match keywords against user layer
+                let matched_keywords: Vec<String> = analysis.keywords.iter()
+                    .filter(|kw| user_layer.keywords.contains(kw))
+                    .cloned()
+                    .collect();
+
+                if !matched_keywords.is_empty() {
+                    // Calculate confidence based on keyword match ratio
+                    let match_ratio = matched_keywords.len() as f32 / user_layer.keywords.len() as f32;
+                    let confidence = user_layer.confidence * match_ratio;
+
+                    // Only include if confidence >= 85% (Tier 3 threshold)
+                    if confidence >= 0.85 {
+                        tracing::debug!(
+                            user_id = uid,
+                            dimension_id = user_layer.dimension_id.0,
+                            confidence = confidence,
+                            matched_keywords = ?matched_keywords,
+                            "UserLayer activated (C31+)"
+                        );
+
+                        user_activations.push((user_layer.dimension_id, confidence, matched_keywords));
+                    }
+                }
+            }
+        }
+
+        let user_scan_duration_ms = user_scan_start.elapsed().as_millis() as u64;
+
+        tracing::debug!(
+            user_id = user_id.unwrap_or("none"),
+            user_activations = user_activations.len(),
+            scan_duration_ms = user_scan_duration_ms,
+            "UserLayer scanning completed (C31+)"
+        );
+
+        // Check if we have any activations (C01-C15 + C16-C30 + C31+)
+        if activations.is_empty() && shared_activations.is_empty() && user_activations.is_empty() {
             tracing::error!(
                 query = %query,
                 threshold = self.config.confidence_threshold,
@@ -279,9 +453,11 @@ impl NavigationSystem {
                 query: query.to_string(),
             });
         }
-        
+
         // Step 3: Convert activations to paths and select (track duration)
         let selection_start = Instant::now();
+
+        // Convert C01-C15 activations to paths
         let mut paths: Vec<NavigationPath> = activations
             .into_iter()
             .map(|activation| {
@@ -289,11 +465,11 @@ impl NavigationSystem {
                 let dimension = self.depth_navigator.registry()
                     .get_dimension(activation.dimension_id)
                     .expect("Dimension should exist");
-                
+
                 let frequency = crate::Frequency::new(
                     (dimension.frequency_range.0 + dimension.frequency_range.1) / 2.0
                 );
-                
+
                 let mut path = NavigationPath::new(
                     activation.dimension_id,
                     frequency,
@@ -303,8 +479,32 @@ impl NavigationSystem {
                 path
             })
             .collect();
-        
-        eprintln!("[Navigation] Created {} paths from activations", paths.len());
+
+        // Convert C16-C30 shared layer activations to paths
+        for (dimension_id, confidence, matched_keywords) in shared_activations {
+            // SharedLayers have their own frequency stored
+            // For now, use a default frequency (will be enhanced later)
+            let frequency = crate::Frequency::new(2.5); // Default mid-range frequency
+
+            let mut path = NavigationPath::new(dimension_id, frequency);
+            path.confidence = confidence;
+            path.keywords_matched = matched_keywords;
+            paths.push(path);
+        }
+
+        // Convert C31+ user-specific layer activations to paths
+        for (dimension_id, confidence, matched_keywords) in user_activations {
+            // UserLayers have their own frequency stored (from proto-dimension)
+            // For now, use a default frequency (will be enhanced later)
+            let frequency = crate::Frequency::new(2.0); // Default user-specific frequency
+
+            let mut path = NavigationPath::new(dimension_id, frequency);
+            path.confidence = confidence;
+            path.keywords_matched = matched_keywords;
+            paths.push(path);
+        }
+
+        eprintln!("[Navigation] Created {} paths from activations (C01-C15 + C16-C30 + C31+)", paths.len());
         let selected_paths = self.path_selector.select_paths(paths);
         eprintln!("[Navigation] Selected {} paths after filtering", selected_paths.len());
         
@@ -457,7 +657,10 @@ mod tests {
             DimensionRegistry::load_dimensions(&config_data)
                 .expect("Failed to load registry")
         );
-        NavigationSystem::new(registry).expect("Failed to create system")
+        let memory_manager = Arc::new(
+            MmapManager::new(280).expect("Failed to create memory manager")
+        );
+        NavigationSystem::new(registry, memory_manager).expect("Failed to create system")
     }
     
     #[tokio::test]
@@ -469,9 +672,9 @@ mod tests {
     #[tokio::test]
     async fn test_navigate_emotional_query() {
         let system = create_test_system();
-        
+
         // Test with simple emotional keywords
-        let result = system.navigate("empathy compassion love understanding").await;
+        let result = system.navigate("empathy compassion love understanding", None).await;
         if let Err(e) = &result {
             eprintln!("Navigation error: {:?}", e);
         }
@@ -495,7 +698,7 @@ mod tests {
     async fn test_navigate_technical_query() {
         let system = create_test_system();
         
-        let result = system.navigate("algorithm code system").await;
+        let result = system.navigate("algorithm code system", None).await;
         
         // Accept either success or insufficient matches
         match result {
@@ -511,7 +714,7 @@ mod tests {
     async fn test_navigate_empty_query() {
         let system = create_test_system();
         
-        let result = system.navigate("").await;
+        let result = system.navigate("", None).await;
         assert!(result.is_err());
     }
     
@@ -521,7 +724,8 @@ mod tests {
         
         // Query with many keywords
         let result = system.navigate(
-            "empathy compassion understanding algorithm code system meaning purpose truth"
+            "empathy compassion understanding algorithm code system meaning purpose truth",
+            None
         ).await;
         
         match result {
@@ -541,7 +745,7 @@ mod tests {
         let system = create_test_system();
         
         let start = Instant::now();
-        let _result = system.navigate("test query").await;
+        let _result = system.navigate("test query", None).await;
         let duration = start.elapsed();
         
         // Should complete reasonably fast regardless of result
@@ -556,7 +760,8 @@ mod tests {
         
         // Query mixing emotional, technical, and philosophical elements
         let result = system.navigate(
-            "I feel anxious about implementing algorithms and wonder about the meaning of code"
+            "I feel anxious about implementing algorithms and wonder about the meaning of code",
+            None
         ).await;
         
         match result {
@@ -583,7 +788,8 @@ mod tests {
         // With threshold 0.0, this will activate max dimensions (8)
         let result = system.navigate(
             "empathy compassion love understanding algorithm code system \
-             meaning purpose truth creativity art design balance harmony"
+             meaning purpose truth creativity art design balance harmony",
+            None
         ).await;
 
         match result {
@@ -604,7 +810,7 @@ mod tests {
     async fn test_integration_philosophical_query() {
         let system = create_test_system();
         
-        let result = system.navigate("What is the meaning of existence and consciousness?").await;
+        let result = system.navigate("What is the meaning of existence and consciousness?", None).await;
         
         match result {
             Ok(result) => {
@@ -629,7 +835,7 @@ mod tests {
     async fn test_integration_high_urgency_query() {
         let system = create_test_system();
         
-        let result = system.navigate("URGENT: I need immediate help with critical problem!").await;
+        let result = system.navigate("URGENT: I need immediate help with critical problem!", None).await;
         
         match result {
             Ok(result) => {
@@ -655,7 +861,7 @@ mod tests {
             .collect::<Vec<_>>()
             .join(" ");
         
-        let result = system.navigate(&long_query).await;
+        let result = system.navigate(&long_query, None).await;
         
         // Should handle gracefully
         match result {
@@ -675,7 +881,7 @@ mod tests {
         let system = create_test_system();
         
         // Query with only stopwords
-        let result = system.navigate("the a an and or but").await;
+        let result = system.navigate("the a an and or but", None).await;
         
         // Should handle gracefully
         match result {
@@ -700,7 +906,7 @@ mod tests {
         for i in 0..20 {
             let query = format!("test query number {}", i);
             let start = Instant::now();
-            let _ = system.navigate(&query).await;
+            let _ = system.navigate(&query, None).await;
             durations.push(start.elapsed().as_millis());
         }
         
@@ -724,7 +930,7 @@ mod tests {
         
         // Query that should activate multiple dimensions
         let query = "I feel anxious about technical algorithms";
-        let result = system.navigate(query).await;
+        let result = system.navigate(query, None).await;
         
         // Even if timeout occurs, should return partial results
         // (In real scenario, we'd mock slow dimensions to trigger timeout)
@@ -747,7 +953,7 @@ mod tests {
         
         // Query that activates multiple dimensions
         let query = "emotional technical philosophical question";
-        let result = system.navigate(query).await;
+        let result = system.navigate(query, None).await;
         
         // Should succeed even if one dimension fails
         assert!(result.is_ok(), "Should continue scanning despite single failure");
@@ -766,7 +972,7 @@ mod tests {
 
         // Query with no meaningful keywords (all stopwords)
         let query = "the a an of to";
-        let result = system.navigate(query).await;
+        let result = system.navigate(query, None).await;
 
         // With threshold 0.0, scanner returns all dimensions with 0.01 confidence
         // So this now succeeds instead of returning InsufficientMatches
@@ -791,7 +997,7 @@ mod tests {
         let system = create_test_system();
         
         let test_query = "meaningless gibberish xyz123";
-        let result = system.navigate(test_query).await;
+        let result = system.navigate(test_query, None).await;
         
         if let Err(err) = result {
             let error_msg = format!("{}", err);
@@ -811,7 +1017,7 @@ mod tests {
         
         // Query that should activate some dimensions
         let query = "emotional empathy compassion";
-        let result = system.navigate(query).await;
+        let result = system.navigate(query, None).await;
         
         assert!(result.is_ok(), "Should succeed with partial results");
         
@@ -832,7 +1038,7 @@ mod tests {
         // Requirement 9.4: Empty query error includes context
         let system = create_test_system();
         
-        let result = system.navigate("").await;
+        let result = system.navigate("", None).await;
         
         assert!(result.is_err(), "Empty query should return error");
         
@@ -853,7 +1059,7 @@ mod tests {
         let system = create_test_system();
         
         let long_query = "a".repeat(10_001);
-        let result = system.navigate(&long_query).await;
+        let result = system.navigate(&long_query, None).await;
         
         assert!(result.is_err(), "Too long query should return error");
         
@@ -873,7 +1079,7 @@ mod tests {
         
         // Query that should activate multiple dimensions
         let query = "complex emotional technical philosophical question about life";
-        let result = system.navigate(query).await;
+        let result = system.navigate(query, None).await;
         
         // Should succeed with results from working dimensions
         assert!(result.is_ok(), "Should succeed despite potential dimension failures");
@@ -893,7 +1099,7 @@ mod tests {
         let system = create_test_system();
         
         let query = "test query for timeout scenario";
-        let result = system.navigate(query).await;
+        let result = system.navigate(query, None).await;
         
         // In normal operation (no actual timeout), should succeed
         if let Ok(nav_result) = result {
@@ -911,10 +1117,10 @@ mod tests {
         let system = create_test_system();
         
         // First query: trigger error
-        let _ = system.navigate("").await;
+        let _ = system.navigate("", None).await;
         
         // Second query: should still work
-        let result = system.navigate("valid query").await;
+        let result = system.navigate("valid query", None).await;
         assert!(result.is_ok(), "System should recover from errors");
     }
 
@@ -936,8 +1142,11 @@ mod tests {
             DimensionRegistry::load_dimensions(&config_data)
                 .expect("Failed to load registry")
         );
-        
-        let result = NavigationSystem::new(registry);
+        let memory_manager = Arc::new(
+            MmapManager::new(280).expect("Failed to create memory manager")
+        );
+
+        let result = NavigationSystem::new(registry, memory_manager);
         assert!(result.is_ok(), "System initialization should succeed");
     }
     
@@ -951,8 +1160,11 @@ mod tests {
             DimensionRegistry::load_dimensions(&config_data)
                 .expect("Failed to load registry")
         );
-        
-        let system = NavigationSystem::new(registry);
+        let memory_manager = Arc::new(
+            MmapManager::new(280).expect("Failed to create memory manager")
+        );
+
+        let system = NavigationSystem::new(registry, memory_manager);
         assert!(system.is_ok(), "Should load all vocabularies successfully");
     }
     
@@ -978,7 +1190,7 @@ mod tests {
         // Requirements: 14.13
         let system = create_test_system();
         
-        let result = system.navigate("test query").await;
+        let result = system.navigate("test query", None).await;
         
         // Should either succeed or fail with InsufficientMatches (both are valid)
         match result {
