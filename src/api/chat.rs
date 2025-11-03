@@ -66,7 +66,20 @@ impl AppState {
 
         // Initialize ConsciousnessOrchestrator with full 3-tier memory system
         eprintln!("[AppState] Initializing ConsciousnessOrchestrator with 3-tier memory...");
-        let registry = Arc::new(DimensionRegistry::new());
+
+        // Load dimension registry from dimensions.json
+        let dimensions_path = "data/dimensions.json";
+        let dimensions_data = std::fs::read_to_string(dimensions_path)
+            .map_err(|e| format!("Failed to read {}: {}", dimensions_path, e))?;
+
+        let registry = Arc::new(
+            DimensionRegistry::load_dimensions(&dimensions_data)
+                .map_err(|e| format!("Failed to load dimensions: {}", e))?
+        );
+
+        eprintln!("[AppState] ✅ Loaded {} dimensions from {}",
+                  registry.dimension_count(), dimensions_path);
+
         let navigation = Arc::new(NavigationSystem::new(registry, memory_manager.clone())?);
 
         let orchestrator = ConsciousnessOrchestrator::with_llm(
