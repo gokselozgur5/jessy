@@ -155,7 +155,7 @@ impl ConsciousnessOrchestrator {
     /// Process a query through the complete consciousness pipeline
     ///
     /// Executes the following stages:
-    /// 1. Navigation - Select dimensional paths
+    /// 1. Navigation - Select dimensional paths (with optional user-specific C31+ layers)
     /// 2. Memory - Load contexts from selected dimensions
     /// 3. Interference - Calculate frequency patterns
     /// 4. Iteration - Deep thinking with convergence
@@ -163,6 +163,7 @@ impl ConsciousnessOrchestrator {
     /// # Arguments
     ///
     /// * `query` - The query string to process
+    /// * `user_id` - Optional user ID for personalized C31+ layer scanning
     ///
     /// # Returns
     ///
@@ -188,16 +189,20 @@ impl ConsciousnessOrchestrator {
     /// # async fn example() -> jessy::Result<()> {
     /// # let navigation = Arc::new(NavigationSystem::new()?);
     /// # let memory = Arc::new(MmapManager::new(280)?);
-    /// let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
+    /// let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
     ///
-    /// let response = orchestrator.process("What is empathy?").await?;
+    /// // Without user-specific layers
+    /// let response = orchestrator.process("What is empathy?", None).await?;
+    ///
+    /// // With user-specific layers (C31+)
+    /// let response = orchestrator.process("What is empathy?", Some("user_123")).await?;
     /// println!("Answer: {}", response.final_response);
     /// println!("Dimensions: {:?}", response.metadata.dimensions_activated);
     /// println!("Converged: {}", response.metadata.converged);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn process(&mut self, query: &str) -> Result<ConsciousnessResponse> {
+    pub async fn process(&mut self, query: &str, user_id: Option<&str>) -> Result<ConsciousnessResponse> {
         let pipeline_start = Instant::now();
         let mut metadata = ResponseMetadata::new();
 
@@ -245,8 +250,9 @@ impl ConsciousnessOrchestrator {
         };
         
         // Phase 1: Navigation (fail fast on error)
+        // Pass user_id for personalized C31+ layer scanning
         let nav_start = Instant::now();
-        let nav_result = self.navigation.navigate(query_to_use, None).await
+        let nav_result = self.navigation.navigate(query_to_use, user_id).await
             .map_err(|e| {
                 // Preserve full error context for debugging
                 eprintln!("[Consciousness] Navigation failed: {}", e);
@@ -380,21 +386,75 @@ impl ConsciousnessOrchestrator {
                     eprintln!("[Consciousness] Detected {} patterns", patterns.len());
                     
                     // Create proto-dimensions for high-confidence patterns
+                    // Tier 2 (SharedLayer): ≥0.90 confidence → C16-C30
+                    // Tier 3 (UserLayer): ≥0.85 confidence → C31+ (per-user)
                     for pattern in patterns {
-                        if pattern.confidence >= 0.85 {
+                        // Tier 2: Shared cognitive layers (C16-C30) for collective wisdom
+                        if pattern.confidence >= 0.90 {
+                            eprintln!(
+                                "[Consciousness] Pattern meets Tier 2 threshold (≥0.90): confidence={:.2}",
+                                pattern.confidence
+                            );
+
+                            // Determine next available SharedLayer dimension ID (C16-C30)
+                            let shared_layer_manager = match self.navigation.get_shared_layer_manager() {
+                                Ok(mgr) => mgr,
+                                Err(e) => {
+                                    eprintln!("[Consciousness] Failed to get SharedLayerManager: {}", e);
+                                    continue;
+                                }
+                            };
+
+                            let layer_count = shared_layer_manager.lock().unwrap().layer_count();
+                            if layer_count >= 15 {
+                                eprintln!("[Consciousness] SharedLayers full (15/15), LRU eviction will occur");
+                            }
+
+                            // Assign next dimension_id (C16-C30)
+                            let dimension_id = crate::DimensionId((16 + (layer_count % 15)) as u8);
+
+                            // Create SharedLayer from pattern
+                            let shared_layer = crate::learning::SharedLayer::new(
+                                dimension_id,
+                                crate::LayerId { dimension: dimension_id, layer: 1 },
+                                pattern.keywords.join(" ").into_bytes(), // Content
+                                pattern.keywords.clone(),
+                                Frequency::new((pattern.frequency_range.0 + pattern.frequency_range.1) / 2.0),
+                                pattern.confidence,
+                            );
+
+                            match shared_layer {
+                                Ok(layer) => {
+                                    let mut manager = shared_layer_manager.lock().unwrap();
+                                    match manager.create_shared_layer(layer) {
+                                        Ok(_) => {
+                                            eprintln!(
+                                                "[Consciousness] Created SharedLayer {:?} (Tier 2, confidence: {:.2})",
+                                                dimension_id, pattern.confidence
+                                            );
+                                        }
+                                        Err(e) => {
+                                            eprintln!("[Consciousness] Failed to create SharedLayer: {}", e);
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("[Consciousness] Failed to create SharedLayer instance: {}", e);
+                                }
+                            }
+                        }
+                        // Tier 3: User-specific layers (C31+) for personalization
+                        else if pattern.confidence >= 0.85 {
+                            // Create proto-dimension for Tier 3 (0.85-0.90)
                             match self.learning.create_proto_dimension(&pattern) {
                                 Ok(dimension_id) => {
                                     eprintln!(
-                                        "[Consciousness] Created proto-dimension {:?} from pattern (confidence: {:.2})",
+                                        "[Consciousness] Created proto-dimension {:?} from pattern (Tier 3, confidence: {:.2})",
                                         dimension_id, pattern.confidence
                                     );
-                                    
+
                                     // Queue for crystallization (background task)
-                                    // Clone dimension_id for async task
-                                    let learning_ref = &mut self.learning;
                                     tokio::spawn(async move {
-                                        // Note: This is a placeholder for background crystallization
-                                        // In full implementation, we'd use a proper task queue
                                         eprintln!(
                                             "[Consciousness] Queued proto-dimension {:?} for crystallization",
                                             dimension_id
@@ -643,61 +703,61 @@ mod tests {
         assert!(error_string.contains(original_error));
     }
     
-    #[test]
-    fn test_synesthetic_enhancement_no_associations() {
+    #[tokio::test]
+    async fn test_synesthetic_enhancement_no_associations() {
         // Given: Orchestrator with no learned associations
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).unwrap());
         let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
-        
+
         // When: Enhancing query with no associations
         let enhanced = orchestrator.enhance_query_with_synesthesia("test query");
-        
+
         // Then: Should return empty string (no enhancement)
         assert_eq!(enhanced, "");
     }
-    
-    #[test]
-    fn test_synesthetic_enhancement_with_associations() {
+
+    #[tokio::test]
+    async fn test_synesthetic_enhancement_with_associations() {
         // Given: Orchestrator with learned associations
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).unwrap());
         let mut orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
-        
+
         // Learn some associations (strengthen multiple times to get strength > 2.0)
         // Learning rate is 1.1, so 1.1^9 = 2.36 > 2.0
         for _ in 0..9 {
             orchestrator.learning_mut().strengthen_keyword_association("emotional", "feeling");
             orchestrator.learning_mut().strengthen_keyword_association("emotional", "empathy");
         }
-        
+
         // Verify associations are strong enough
         let strength = orchestrator.learning().get_keyword_strength("emotional", "feeling");
         assert!(strength.is_some());
         assert!(strength.unwrap() > 2.0, "Strength should be > 2.0, got {:?}", strength);
-        
+
         // When: Enhancing query with associations
         let enhanced = orchestrator.enhance_query_with_synesthesia("emotional intelligence");
-        
+
         // Then: Should include associated keywords
         assert!(!enhanced.is_empty(), "Enhanced query should not be empty");
         assert!(enhanced.contains("emotional"));
         assert!(enhanced.contains("intelligence"));
         // Should include strongly associated keywords (strength > 2.0)
-        assert!(enhanced.contains("feeling") || enhanced.contains("empathy"), 
+        assert!(enhanced.contains("feeling") || enhanced.contains("empathy"),
                "Enhanced query should contain associated keywords: {}", enhanced);
     }
-    
-    #[test]
-    fn test_synesthetic_enhancement_empty_query() {
+
+    #[tokio::test]
+    async fn test_synesthetic_enhancement_empty_query() {
         // Given: Orchestrator
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).unwrap());
         let orchestrator = ConsciousnessOrchestrator::new(navigation, memory);
-        
+
         // When: Enhancing empty query
         let enhanced = orchestrator.enhance_query_with_synesthesia("");
-        
+
         // Then: Should return empty string
         assert_eq!(enhanced, "");
     }
@@ -713,8 +773,8 @@ mod tests {
 
     // ===== OBSERVER CHAIN INTEGRATION TESTS =====
 
-    #[test]
-    fn test_orchestrator_with_llm_has_observer_chain() {
+    #[tokio::test]
+    async fn test_orchestrator_with_llm_has_observer_chain() {
         // Given: LLM config
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).unwrap());
@@ -746,8 +806,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_orchestrator_without_llm_has_no_observer_chain() {
+    #[tokio::test]
+    async fn test_orchestrator_without_llm_has_no_observer_chain() {
         // Given: Orchestrator without LLM
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).unwrap());
@@ -760,8 +820,8 @@ mod tests {
         assert!(orchestrator.llm_manager.is_none(), "LLM manager should NOT exist without LLM");
     }
 
-    #[test]
-    fn test_observer_chain_initialized_with_correct_stages() {
+    #[tokio::test]
+    async fn test_observer_chain_initialized_with_correct_stages() {
         // Given: LLM config
         let navigation = create_test_navigation();
         let memory = Arc::new(MmapManager::new(280).unwrap());
@@ -791,8 +851,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_llm_manager_is_arc_wrapped_for_sharing() {
+    #[tokio::test]
+    async fn test_llm_manager_is_arc_wrapped_for_sharing() {
         // This test validates that LLM manager is Arc-wrapped for sharing
         // with observer chain (type safety test)
 
