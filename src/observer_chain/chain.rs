@@ -1,6 +1,6 @@
 //! Main observer chain orchestrator
 //!
-//! Coordinates the 4-stage observer chain, manages LLM calls,
+//! Coordinates the 2-stage observer chain (Explore → Refine), manages LLM calls,
 //! checks crystallization, and produces final response.
 
 use super::{
@@ -13,12 +13,12 @@ use std::sync::Arc;
 
 /// Observer chain orchestrator
 ///
-/// Manages the 4-stage observer chain where each stage is a fresh
+/// Manages the 2-stage observer chain where each stage is a fresh
 /// Claude instance that observes, analyzes, and passes context.
 pub struct ObserverChain {
     /// LLM manager for API calls
     llm: Arc<LLMManager>,
-    /// Maximum stages (4)
+    /// Maximum stages (2)
     max_stages: usize,
     /// Pattern cache for quick crystallization (TODO: implement)
     pattern_cache_enabled: bool,
@@ -29,7 +29,7 @@ impl ObserverChain {
     ///
     /// # Arguments
     /// * `llm` - LLM manager for API calls
-    /// * `max_stages` - Maximum stages (typically 4)
+    /// * `max_stages` - Maximum stages (typically 2)
     pub fn new(llm: Arc<LLMManager>, max_stages: usize) -> Self {
         assert!(
             max_stages >= 1 && max_stages <= 10,
