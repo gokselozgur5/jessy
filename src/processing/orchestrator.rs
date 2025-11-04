@@ -100,6 +100,13 @@ impl ConsciousnessOrchestrator {
         let mut learning = LearningSystem::new();
         learning.init_crystallizer(memory.clone());
 
+        // Load synesthetic associations from disk if available
+        let synesthetic_path = "data/synesthetic_associations.json";
+        if let Err(e) = learning.load_synesthetic_associations(synesthetic_path) {
+            eprintln!("[Orchestrator] Failed to load synesthetic associations: {}", e);
+            eprintln!("[Orchestrator] Starting with fresh synesthetic learner");
+        }
+
         let llm_manager = Arc::new(LLMManager::new(llm_config)?);
 
         // Create observer chain with 2 stages (Explore → Refine)
@@ -491,8 +498,14 @@ impl ConsciousnessOrchestrator {
             
             // Decay unused synesthetic associations
             self.learning.decay_keyword_associations();
+
+            // Save synesthetic associations periodically
+            let synesthetic_path = "data/synesthetic_associations.json";
+            if let Err(e) = self.learning.save_synesthetic_associations(synesthetic_path) {
+                eprintln!("[Consciousness] Failed to save synesthetic associations: {}", e);
+            }
         }
-        
+
         // Assemble response
         // Observer chain doesn't have iteration steps - it's a 4-stage chain
         let iterations = vec![];  // No iteration history in observer chain model
