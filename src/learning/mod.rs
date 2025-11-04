@@ -87,6 +87,7 @@ pub use self::pattern_detector::PatternDetector;
 pub use self::proto_dimension_manager::ProtoDimensionManager;
 pub use self::shared_layer::{SharedLayer, SharedLayerManager, SharedLayerStats};
 pub use self::user_layer::{UserLayer, UserLayerManager, UserLayerStats};
+pub use self::pattern_cache::{PatternCache, PatternCacheConfig, CachedResponse, PatternCacheStats};
 
 // Module declarations
 mod observation;
@@ -102,6 +103,7 @@ mod crystallization_queue;
 mod synesthetic_learner;
 mod shared_layer;      // NEW: Tier 2 (C16-C30)
 mod user_layer;        // NEW: Tier 3 (C31+)
+mod pattern_cache;     // NEW: Instant responses for FAQ
 
 #[cfg(test)]
 mod integration_tests;
@@ -253,6 +255,7 @@ pub struct LearningSystem {
     crystallizer: Option<crystallizer::Crystallizer>,
     crystallization_queue: Option<crystallization_queue::CrystallizationQueue>,
     synesthetic_learner: synesthetic_learner::SynestheticLearner,
+    pattern_cache: pattern_cache::PatternCache,
     metrics: LearningMetrics,
 }
 
@@ -282,7 +285,8 @@ impl LearningSystem {
             config.learning_rate,
             config.decay_rate,
         );
-        
+        let pattern_cache = pattern_cache::PatternCache::default();
+
         Self {
             config,
             observation_buffer,
@@ -292,6 +296,7 @@ impl LearningSystem {
             crystallizer: None, // Will be initialized when memory manager is available
             crystallization_queue: None, // Will be initialized with crystallizer
             synesthetic_learner,
+            pattern_cache,
             metrics: LearningMetrics::default(),
         }
     }
@@ -720,6 +725,52 @@ impl LearningSystem {
     pub fn load_synesthetic_associations<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
         self.synesthetic_learner = synesthetic_learner::SynestheticLearner::load(path)?;
         Ok(())
+    }
+
+    /// Check pattern cache for instant response
+    ///
+    /// Returns cached response if query matches a known pattern.
+    /// This enables <100ms responses for frequently asked questions.
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The query to check in cache
+    ///
+    /// # Returns
+    ///
+    /// `Some(CachedResponse)` if cache hit, `None` if cache miss
+    pub fn check_pattern_cache(&mut self, query: &str) -> Option<CachedResponse> {
+        self.pattern_cache.get(query)
+    }
+
+    /// Store response in pattern cache
+    ///
+    /// Caches a response for instant future retrieval.
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The original query
+    /// * `response` - The response to cache
+    /// * `dimensions` - Dimensions that were activated
+    /// * `confidence` - Confidence score (0.0-1.0)
+    pub fn cache_pattern_response(
+        &mut self,
+        query: &str,
+        response: String,
+        dimensions: Vec<crate::DimensionId>,
+        confidence: f32,
+    ) {
+        self.pattern_cache.put(query, response, dimensions, confidence);
+    }
+
+    /// Get pattern cache statistics
+    pub fn pattern_cache_stats(&self) -> PatternCacheStats {
+        self.pattern_cache.stats()
+    }
+
+    /// Clear pattern cache
+    pub fn clear_pattern_cache(&mut self) {
+        self.pattern_cache.clear();
     }
 
     /// Get current metrics snapshot
