@@ -690,7 +690,38 @@ impl LearningSystem {
     pub fn get_keyword_strength(&self, keyword1: &str, keyword2: &str) -> Option<f32> {
         self.synesthetic_learner.get_strength(keyword1, keyword2)
     }
-    
+
+    /// Save synesthetic associations to file
+    ///
+    /// Persists learned keyword associations to disk for later loading.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to save file (e.g., "data/synesthetic_associations.json")
+    ///
+    /// # Errors
+    ///
+    /// Returns error if save fails
+    pub fn save_synesthetic_associations<P: AsRef<std::path::Path>>(&self, path: P) -> Result<()> {
+        self.synesthetic_learner.save(path)
+    }
+
+    /// Load synesthetic associations from file
+    ///
+    /// Replaces current associations with loaded ones.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to load file from
+    ///
+    /// # Errors
+    ///
+    /// Returns error if load fails (file doesn't exist is OK, returns empty learner)
+    pub fn load_synesthetic_associations<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
+        self.synesthetic_learner = synesthetic_learner::SynestheticLearner::load(path)?;
+        Ok(())
+    }
+
     /// Get current metrics snapshot
     ///
     /// Returns a copy of current metrics for monitoring and observability.
