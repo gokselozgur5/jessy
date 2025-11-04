@@ -105,6 +105,11 @@ impl AppState {
         eprintln!("[AppState] ✅ Loaded {} dimensions, {} layers from {}",
                   registry.dimension_count(), registry.layer_count(), config_path);
 
+        // Register layers from registry into memory manager's layer index
+        // This populates the layer_index so memory loading can find layers
+        memory_manager.register_layers_from_registry(&registry)
+            .map_err(|e| format!("Failed to register layers: {}", e))?;
+
         let navigation = Arc::new(NavigationSystem::new(registry, memory_manager.clone())?);
 
         let orchestrator = ConsciousnessOrchestrator::with_llm(
