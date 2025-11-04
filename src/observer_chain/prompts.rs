@@ -32,7 +32,7 @@ pub fn build_observer_prompt(stage: usize, context: &ChainContext) -> String {
 }
 
 /// Stage 1: Explore - Initial analysis
-fn build_stage_1_prompt(query: &str, context: &ChainContext, role: &str) -> String {
+fn build_stage_1_prompt(query: &str, context: &ChainContext, _role: &str) -> String {
     let conversation_section = context.format_conversation_history();
 
     format!(
@@ -65,7 +65,7 @@ Your natural response here..."#
 }
 
 /// Stage 2: Refine - Deepen understanding
-fn build_stage_2_prompt(query: &str, context: &ChainContext, role: &str) -> String {
+fn build_stage_2_prompt(query: &str, context: &ChainContext, _role: &str) -> String {
     let summary = context.build_summary();
     let conversation_section = context.format_conversation_history();
 
@@ -90,7 +90,7 @@ Your refined (but still natural) response..."#
 }
 
 /// Stage 3: Integrate - Synthesize observations
-fn build_stage_3_prompt(query: &str, context: &ChainContext, role: &str) -> String {
+fn build_stage_3_prompt(query: &str, context: &ChainContext, _role: &str) -> String {
     let summary = context.build_summary();
     let conversation_section = context.format_conversation_history();
 
@@ -115,7 +115,7 @@ Your integrated (still natural) response..."#
 }
 
 /// Stage 4: Crystallize - Force final answer
-fn build_stage_4_prompt(query: &str, context: &ChainContext, role: &str) -> String {
+fn build_stage_4_prompt(query: &str, context: &ChainContext, _role: &str) -> String {
     let summary = context.build_summary();
     let conversation_section = context.format_conversation_history();
 

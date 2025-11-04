@@ -489,11 +489,11 @@ fn process_query_internal(
     orchestrator: &Arc<Mutex<ConsciousnessOrchestrator>>,
     query: &str,
     session_id: &str,
-    user_id: Option<&str>,
+    _user_id: Option<&str>,
     max_iterations: u32,
 ) -> Result<(String, f32, Vec<String>, u32, bool), String> {
     // Lock orchestrator
-    let mut orch = orchestrator.lock()
+    let _orch = orchestrator.lock()
         .map_err(|e| format!("Failed to lock orchestrator: {}", e))?;
     
     // TODO: This is a placeholder implementation

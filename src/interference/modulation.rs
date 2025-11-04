@@ -19,7 +19,7 @@ pub fn generate_modulation_suggestions(
     let mut suggestions = Vec::new();
     
     // Check for extreme frequencies
-    for (idx, freq_state) in pattern.frequencies.iter().enumerate() {
+    for (_idx, freq_state) in pattern.frequencies.iter().enumerate() {
         if freq_state.frequency.is_extreme() {
             let target = super::balance::calculate_balance_target(freq_state.frequency.hz());
             let strength = super::balance::calculate_modulation_strength(freq_state.frequency.hz());

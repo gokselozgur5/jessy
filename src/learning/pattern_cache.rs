@@ -161,27 +161,39 @@ impl PatternCache {
 
         let key = self.normalize_query(query);
 
-        if let Some(mut entry) = self.cache.get_mut(&key) {
-            // Check if expired
-            if entry.is_expired(self.config.ttl) {
-                // Remove expired entry
-                self.cache.remove(&key);
-                self.misses += 1;
-                return None;
-            }
+        // Check if entry exists and not expired
+        let should_remove = if let Some(entry) = self.cache.get(&key) {
+            entry.is_expired(self.config.ttl)
+        } else {
+            self.misses += 1;
+            return None;
+        };
 
-            // Increment hit count
+        if should_remove {
+            self.cache.remove(&key);
+            self.misses += 1;
+            return None;
+        }
+
+        // Now we can safely get_mut and increment
+        if let Some(entry) = self.cache.get_mut(&key) {
             entry.increment_hits();
             self.hits += 1;
+
+            let hit_count = entry.hit_count;
+            let result = entry.clone();
+
+            // Calculate hit rate after we're done with the mutable borrow
+            let hit_rate = self.hit_rate() * 100.0;
 
             eprintln!(
                 "[PatternCache] HIT: '{}' (hits: {}, total hit rate: {:.1}%)",
                 key,
-                entry.hit_count,
-                self.hit_rate() * 100.0
+                hit_count,
+                hit_rate
             );
 
-            Some(entry.clone())
+            Some(result)
         } else {
             self.misses += 1;
             None
