@@ -254,6 +254,33 @@ impl ConsciousnessOrchestrator {
 
         eprintln!("[Consciousness] D14 Security: PASS ({}ms)", security_start.elapsed().as_millis());
 
+        // Phase -0.5: Pattern Cache Check (instant response for FAQ)
+        // Check if we have a cached response for this exact query (<100ms)
+        if let Some(cached) = self.learning.check_pattern_cache(query) {
+            let cache_duration = pipeline_start.elapsed().as_millis() as u64;
+
+            eprintln!(
+                "[Consciousness] PATTERN CACHE HIT! Returning instant response ({}ms, {} hits total, hit rate: {:.1}%)",
+                cache_duration,
+                cached.hit_count,
+                self.learning.pattern_cache_stats().hit_rate * 100.0
+            );
+
+            // Build minimal metadata for cached response
+            metadata.total_duration_ms = cache_duration;
+            metadata.dimensions_activated = cached.dimensions;
+            metadata.navigation_confidence = cached.confidence;
+            metadata.contexts_loaded = 0; // No memory loading for cache hit
+            metadata.iterations_completed = 0; // No iterations for cache hit
+            metadata.converged = true; // Always "converged" for cache
+
+            return Ok(ConsciousnessResponse::new(
+                cached.response,
+                metadata,
+                vec![], // No iteration history
+            ));
+        }
+
         // Phase 0: Synesthetic Enhancement (optional, non-blocking)
         // Enhance query with learned keyword associations to improve navigation
         let enhanced_query = self.enhance_query_with_synesthesia(query);
@@ -506,8 +533,24 @@ impl ConsciousnessOrchestrator {
             }
         }
 
+        // Phase 7: Cache Pattern Response (for future instant retrieval)
+        // Store this response in pattern cache for future queries
+        self.learning.cache_pattern_response(
+            query,
+            final_answer.clone(),
+            nav_result.dimensions.clone(),
+            nav_result.total_confidence,
+        );
+
+        eprintln!(
+            "[Consciousness] Cached response for future queries (cache size: {}/{}, hit rate: {:.1}%)",
+            self.learning.pattern_cache_stats().size,
+            self.learning.pattern_cache_stats().max_size,
+            self.learning.pattern_cache_stats().hit_rate * 100.0
+        );
+
         // Assemble response
-        // Observer chain doesn't have iteration steps - it's a 4-stage chain
+        // Observer chain doesn't have iteration steps - it's a 2-stage chain
         let iterations = vec![];  // No iteration history in observer chain model
 
         Ok(ConsciousnessResponse::new(
