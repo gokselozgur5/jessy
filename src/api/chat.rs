@@ -67,18 +67,43 @@ impl AppState {
         // Initialize ConsciousnessOrchestrator with full 3-tier memory system
         eprintln!("[AppState] Initializing ConsciousnessOrchestrator with 3-tier memory...");
 
-        // Load dimension registry from dimensions.json
-        let dimensions_path = "data/dimensions.json";
-        let dimensions_data = std::fs::read_to_string(dimensions_path)
-            .map_err(|e| format!("Failed to read {}: {}", dimensions_path, e))?;
+        // Load dimension registry
+        // Try cognitive_layers.json first (new format with layers), fallback to dimensions.json
+        let (config_data, config_path) = if std::path::Path::new("data/cognitive_layers.json").exists() {
+            let cognitive_data = std::fs::read_to_string("data/cognitive_layers.json")
+                .map_err(|e| format!("Failed to read cognitive_layers.json: {}", e))?;
+
+            // cognitive_layers.json only has layers, need to merge with dimensions metadata
+            let dimensions_data = std::fs::read_to_string("data/dimensions.json")
+                .map_err(|e| format!("Failed to read dimensions.json: {}", e))?;
+
+            // Parse both
+            let dims: serde_json::Value = serde_json::from_str(&dimensions_data)
+                .map_err(|e| format!("Failed to parse dimensions.json: {}", e))?;
+            let layers: serde_json::Value = serde_json::from_str(&cognitive_data)
+                .map_err(|e| format!("Failed to parse cognitive_layers.json: {}", e))?;
+
+            // Merge them
+            let merged = serde_json::json!({
+                "dimensions": dims.get("dimensions").unwrap_or(&serde_json::json!([])),
+                "layers": layers.get("layers").unwrap_or(&serde_json::json!([]))
+            });
+
+            (serde_json::to_string(&merged).unwrap(), "data/cognitive_layers.json + dimensions.json")
+        } else {
+            // Fallback to dimensions.json only
+            let data = std::fs::read_to_string("data/dimensions.json")
+                .map_err(|e| format!("Failed to read dimensions.json: {}", e))?;
+            (data, "data/dimensions.json")
+        };
 
         let registry = Arc::new(
-            DimensionRegistry::load_dimensions(&dimensions_data)
+            DimensionRegistry::load_dimensions(&config_data)
                 .map_err(|e| format!("Failed to load dimensions: {}", e))?
         );
 
         eprintln!("[AppState] ✅ Loaded {} dimensions, {} layers from {}",
-                  registry.dimension_count(), registry.layer_count(), dimensions_path);
+                  registry.dimension_count(), registry.layer_count(), config_path);
 
         let navigation = Arc::new(NavigationSystem::new(registry, memory_manager.clone())?);
 
