@@ -23,7 +23,7 @@ use std::time::Instant;
 /// - Navigation system for dimensional path selection
 /// - Memory manager for context loading
 /// - Interference calculator for frequency analysis
-/// - Observer chain for deep thinking (4-stage: Explore → Refine → Integrate → Crystallize)
+/// - Observer chain for deep thinking (2-stage: Explore → Refine)
 ///
 /// # Thread Safety
 ///
@@ -102,8 +102,8 @@ impl ConsciousnessOrchestrator {
 
         let llm_manager = Arc::new(LLMManager::new(llm_config)?);
 
-        // Create observer chain with 4 stages (max)
-        let observer_chain = ObserverChain::new(llm_manager.clone(), 4);
+        // Create observer chain with 2 stages (Explore → Refine)
+        let observer_chain = ObserverChain::new(llm_manager.clone(), 2);
 
         let mut orchestrator = Self::with_config(
             navigation,
@@ -311,11 +311,11 @@ impl ConsciousnessOrchestrator {
                 e
             })?;
         
-        // Phase 4: Observer Chain (4-stage: Explore → Refine → Integrate → Crystallize)
+        // Phase 4: Observer Chain (2-stage: Explore → Refine)
         let observer_start = Instant::now();
 
         let (final_answer, chain_length, converged) = if let Some(ref observer_chain) = self.observer_chain {
-            eprintln!("[Consciousness] Using OBSERVER CHAIN (4-stage max, crystallizes early)");
+            eprintln!("[Consciousness] Using OBSERVER CHAIN (2-stage max, crystallizes early)");
             eprintln!("[Consciousness] Conversation history: {} messages", conversation.len());
 
             let result = observer_chain.process(query, conversation).await
@@ -328,13 +328,13 @@ impl ConsciousnessOrchestrator {
 
             eprintln!(
                 "[Consciousness] Observer chain crystallized at stage {}/{} (reason: {:?})",
-                result.chain_length, 4, result.crystallization_reason
+                result.chain_length, 2, result.crystallization_reason
             );
 
             (
                 result.final_observation.content,
                 result.chain_length,
-                result.chain_length < 4, // Converged early if < 4 stages
+                result.chain_length < 2, // Converged early if < 2 stages
             )
         } else {
             // No observer chain - simple fallback
