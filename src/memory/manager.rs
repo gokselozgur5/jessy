@@ -682,6 +682,63 @@ impl MmapManager {
         Ok(())
     }
     
+    /// Register layers from DimensionRegistry into memory index
+    ///
+    /// This populates the layer_index with metadata from the registry,
+    /// creating synthetic heap-based locations for layers that don't have MMAP files yet.
+    ///
+    /// Thread Safety: Acquires write lock on layer_index
+    pub fn register_layers_from_registry(
+        &self,
+        registry: &crate::navigation::DimensionRegistry,
+    ) -> Result<()> {
+        let mut layer_index = self.layer_index.write()
+            .map_err(|e| ConsciousnessError::MemoryError(
+                format!("Failed to acquire layer_index write lock: {}", e)
+            ))?;
+
+        // Get all dimensions
+        for dim in registry.all_dimensions() {
+            // Get all layers for this dimension (L0-L3)
+            for layer_num in 0..=3 {
+                let layer_id = LayerId {
+                    dimension: dim.id,
+                    layer: layer_num,
+                };
+
+                // Check if layer exists in registry
+                if let Some(layer_meta) = registry.get_layer(layer_id) {
+                    // Create synthetic heap location with layer metadata
+                    // This allows navigation to work even without MMAP files
+                    let content = format!(
+                        "# {} - Layer {}\n\nKeywords: {}\nFrequency: {} Hz\n",
+                        dim.name,
+                        layer_num,
+                        layer_meta.keywords.join(", "),
+                        layer_meta.frequency
+                    );
+
+                    let location = LayerLocation {
+                        region_id: u32::MAX, // Special marker for synthetic content
+                        content_location: ContentLocation::Heap {
+                            data: content.into_bytes(),
+                            created_at: std::time::SystemTime::now(),
+                        },
+                    };
+
+                    layer_index.insert(layer_id, location);
+                }
+            }
+        }
+
+        let layer_count = layer_index.len();
+        drop(layer_index); // Release write lock
+
+        eprintln!("[MmapManager] Registered {} layers from registry", layer_count);
+
+        Ok(())
+    }
+
     /// Create a new proto-dimension in heap memory (for learning)
     ///
     /// Thread Safety: Acquires write lock on layer_index
@@ -694,7 +751,7 @@ impl MmapManager {
             dimension: dimension_id,
             layer: 0, // Proto-dimensions start at layer 0
         };
-        
+
         let location = LayerLocation {
             region_id: u32::MAX, // Special marker for heap-only content
             content_location: ContentLocation::Heap {
@@ -702,14 +759,14 @@ impl MmapManager {
                 created_at: std::time::SystemTime::now(),
             },
         };
-        
+
         // Acquire write lock to insert
         let mut layer_index = self.layer_index.write()
             .map_err(|e| ConsciousnessError::MemoryError(
                 format!("Failed to acquire layer_index write lock: {}", e)
             ))?;
         layer_index.insert(layer_id, location);
-        
+
         Ok(layer_id)
     }
     
