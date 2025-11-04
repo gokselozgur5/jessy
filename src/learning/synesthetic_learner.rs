@@ -25,9 +25,13 @@
 
 use std::collections::HashMap;
 use std::time::SystemTime;
+use serde::{Serialize, Deserialize};
+use std::path::Path;
+use std::fs;
+use crate::{Result, ConsciousnessError};
 
 /// Association between two keywords
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeywordAssociation {
     /// First keyword
     pub keyword1: String,
@@ -89,14 +93,15 @@ impl KeywordAssociation {
 }
 
 /// Synesthetic learner for keyword associations
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SynestheticLearner {
     /// Associations indexed by keyword pair
     /// Key format: "keyword1:keyword2" (alphabetically sorted)
     associations: HashMap<String, KeywordAssociation>,
-    
+
     /// Learning rate (multiplier for strengthening)
     learning_rate: f32,
-    
+
     /// Decay rate (multiplier for decay per day)
     decay_rate: f32,
 }
@@ -214,6 +219,108 @@ impl SynestheticLearner {
         } else {
             format!("{}:{}", keyword2, keyword1)
         }
+    }
+
+    /// Save synesthetic associations to JSON file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to save file (e.g., "data/synesthetic_associations.json")
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - Parent directory doesn't exist or can't be created
+    /// - File can't be written
+    /// - Serialization fails
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let path = path.as_ref();
+
+        // Create parent directory if it doesn't exist
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).map_err(|e| {
+                ConsciousnessError::LearningError(format!(
+                    "Failed to create directory {:?}: {}",
+                    parent, e
+                ))
+            })?;
+        }
+
+        // Serialize to JSON with pretty formatting
+        let json = serde_json::to_string_pretty(self).map_err(|e| {
+            ConsciousnessError::LearningError(format!(
+                "Failed to serialize synesthetic associations: {}",
+                e
+            ))
+        })?;
+
+        // Write to file
+        fs::write(path, json).map_err(|e| {
+            ConsciousnessError::LearningError(format!(
+                "Failed to write synesthetic associations to {:?}: {}",
+                path, e
+            ))
+        })?;
+
+        eprintln!(
+            "[SynestheticLearner] Saved {} associations to {:?}",
+            self.association_count(),
+            path
+        );
+
+        Ok(())
+    }
+
+    /// Load synesthetic associations from JSON file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to load file from
+    ///
+    /// # Returns
+    ///
+    /// Returns loaded learner if file exists, or new learner if file doesn't exist
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// - File exists but can't be read
+    /// - Deserialization fails
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let path = path.as_ref();
+
+        // If file doesn't exist, return new learner
+        if !path.exists() {
+            eprintln!(
+                "[SynestheticLearner] No saved associations found at {:?}, starting fresh",
+                path
+            );
+            return Ok(Self::new(1.1, 0.95));
+        }
+
+        // Read file
+        let json = fs::read_to_string(path).map_err(|e| {
+            ConsciousnessError::LearningError(format!(
+                "Failed to read synesthetic associations from {:?}: {}",
+                path, e
+            ))
+        })?;
+
+        // Deserialize
+        let learner: Self = serde_json::from_str(&json).map_err(|e| {
+            ConsciousnessError::LearningError(format!(
+                "Failed to deserialize synesthetic associations: {}",
+                e
+            ))
+        })?;
+
+        eprintln!(
+            "[SynestheticLearner] Loaded {} associations from {:?}",
+            learner.association_count(),
+            path
+        );
+
+        Ok(learner)
     }
 }
 
