@@ -258,12 +258,13 @@ impl ConsciousnessOrchestrator {
         // Check if we have a cached response for this exact query (<100ms)
         if let Some(cached) = self.learning.check_pattern_cache(query) {
             let cache_duration = pipeline_start.elapsed().as_millis() as u64;
+            let cache_stats = self.learning.pattern_cache_stats();
 
             eprintln!(
                 "[Consciousness] PATTERN CACHE HIT! Returning instant response ({}ms, {} hits total, hit rate: {:.1}%)",
                 cache_duration,
                 cached.hit_count,
-                self.learning.pattern_cache_stats().hit_rate * 100.0
+                cache_stats.hit_rate * 100.0
             );
 
             // Build minimal metadata for cached response
@@ -542,11 +543,12 @@ impl ConsciousnessOrchestrator {
             nav_result.total_confidence,
         );
 
+        let cache_stats = self.learning.pattern_cache_stats();
         eprintln!(
             "[Consciousness] Cached response for future queries (cache size: {}/{}, hit rate: {:.1}%)",
-            self.learning.pattern_cache_stats().size,
-            self.learning.pattern_cache_stats().max_size,
-            self.learning.pattern_cache_stats().hit_rate * 100.0
+            cache_stats.size,
+            cache_stats.max_size,
+            cache_stats.hit_rate * 100.0
         );
 
         // Assemble response
