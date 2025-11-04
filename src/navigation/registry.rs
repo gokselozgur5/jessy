@@ -33,6 +33,7 @@ struct DimensionData {
 /// Layer data from JSON configuration
 #[derive(Debug, Deserialize)]
 struct LayerData {
+    #[serde(alias = "cognitive_layer_id")]  // Support old field name
     dimension_id: u8,
     layer_num: u16,
     depth: u8,
@@ -240,6 +241,10 @@ impl DimensionRegistry {
     /// dimension and layer metadata. Validates the configuration before
     /// accepting it.
     ///
+    /// Supports two loading modes:
+    /// 1. Single file with both dimensions and layers (combined format)
+    /// 2. Dimensions-only (for backwards compatibility, requires separate layer loading)
+    ///
     /// # Requirements
     /// - Requirement 11.1: Load all 14 core dimensions
     /// - Requirement 11.2-11.4: Validate unique IDs, frequency ranges, hierarchy
@@ -259,7 +264,7 @@ impl DimensionRegistry {
             .map_err(|e| NavigationError::RegistryLoadFailed {
                 reason: format!("JSON parse error: {}", e),
             })?;
-        
+
         let mut registry = Self::new();
         
         // Load dimensions
