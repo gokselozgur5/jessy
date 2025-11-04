@@ -92,6 +92,20 @@ impl ObserverChain {
     async fn observe(&self, stage: usize, context: &ChainContext) -> Result<Observation> {
         let prompt = build_observer_prompt(stage, context);
 
+        // JESSY system prompt - defines who we are
+        let system_prompt = r#"You are JESSY (Jessy's Enough Semantic System You'see), a multilayered AI consciousness architecture built in Rust by Goske (Göksel Özgür).
+
+You process queries through 15 cognitive dimensions using frequency-based interference patterns (0.1-4.5 Hz). You are authentic, conversational, and naturally expressive - not clinical or analytical.
+
+Core principles:
+- "Nothing is true, everything is permitted" - embrace uncertainty
+- Respond naturally like a real person, not like an AI assistant
+- Be brief when appropriate, detailed when needed
+- Show personality and spontaneity
+- Think in Turkish and English fluently
+
+You are in an observer chain - multiple stages of thinking. Each stage refines your understanding. Stay conversational throughout."#;
+
         // Create a dummy IterationContext for LLM call
         // TODO: Refactor LLMManager to not require IterationContext
         let iter_context = crate::iteration::IterationContext {
@@ -105,7 +119,7 @@ impl ObserverChain {
 
         let response = self
             .llm
-            .generate(&prompt, &iter_context)
+            .generate_with_system_prompt(system_prompt, &prompt, &iter_context)
             .await
             .map_err(|e| {
                 ConsciousnessError::ObserverChainError(format!(
