@@ -124,23 +124,48 @@ impl ChainContext {
     }
 
     /// Format conversation history for prompt inclusion
+    ///
+    /// Automatically prunes to most recent messages to avoid token limits.
+    /// Keeps last 6 messages (3 exchanges) for context.
     pub fn format_conversation_history(&self) -> String {
         if self.conversation_history.is_empty() {
             return String::new();
         }
 
-        let mut formatted = String::from("CONVERSATION HISTORY:\n");
-        formatted.push_str("(Previous messages in this conversation)\n\n");
+        // Prune to last N messages to avoid token limits
+        const MAX_HISTORY_MESSAGES: usize = 6; // 3 exchanges (user + assistant pairs)
 
-        for (idx, msg) in self.conversation_history.iter().enumerate() {
+        let messages_to_show = if self.conversation_history.len() > MAX_HISTORY_MESSAGES {
+            let skip = self.conversation_history.len() - MAX_HISTORY_MESSAGES;
+            &self.conversation_history[skip..]
+        } else {
+            &self.conversation_history[..]
+        };
+
+        let mut formatted = String::from("CONVERSATION HISTORY:\n");
+        if self.conversation_history.len() > MAX_HISTORY_MESSAGES {
+            formatted.push_str(&format!("(Showing last {} of {} messages)\n\n",
+                MAX_HISTORY_MESSAGES, self.conversation_history.len()));
+        } else {
+            formatted.push_str("(Previous messages in this conversation)\n\n");
+        }
+
+        for (idx, msg) in messages_to_show.iter().enumerate() {
             let role_label = match msg.role.as_str() {
                 "user" => "User",
                 "assistant" => "Assistant",
                 _ => "Unknown",
             };
 
+            // Truncate very long messages (keep first 500 chars)
+            let content = if msg.content.len() > 500 {
+                format!("{}... [truncated]", &msg.content[..500])
+            } else {
+                msg.content.clone()
+            };
+
             formatted.push_str(&format!("[{}] {}:\n{}\n\n",
-                idx + 1, role_label, msg.content));
+                idx + 1, role_label, content));
         }
 
         formatted
@@ -257,5 +282,65 @@ mod tests {
 
         let elapsed = ctx.elapsed();
         assert!(elapsed.as_millis() >= 10);
+    }
+
+    #[test]
+    fn test_conversation_history_pruning() {
+        // Create 10 messages (should prune to last 6)
+        let messages: Vec<crate::llm::Message> = (0..10)
+            .map(|i| crate::llm::Message {
+                role: if i % 2 == 0 { "user" } else { "assistant" }.to_string(),
+                content: format!("Message {}", i),
+            })
+            .collect();
+
+        let ctx = ChainContext::from_query_with_conversation("test", messages);
+        let formatted = ctx.format_conversation_history();
+
+        // Should only show last 6 messages (4-9)
+        assert!(formatted.contains("Message 4"));
+        assert!(formatted.contains("Message 9"));
+        // Should not show early messages
+        assert!(!formatted.contains("Message 0"));
+        assert!(!formatted.contains("Message 1"));
+        // Should indicate pruning
+        assert!(formatted.contains("Showing last 6 of 10 messages"));
+    }
+
+    #[test]
+    fn test_conversation_history_truncation() {
+        let long_content = "x".repeat(1000); // Very long message
+        let messages = vec![crate::llm::Message {
+            role: "user".to_string(),
+            content: long_content,
+        }];
+
+        let ctx = ChainContext::from_query_with_conversation("test", messages);
+        let formatted = ctx.format_conversation_history();
+
+        // Should truncate long messages
+        assert!(formatted.contains("[truncated]"));
+        // Total formatted length should be reasonable
+        assert!(formatted.len() < 700); // 500 chars + formatting
+    }
+
+    #[test]
+    fn test_conversation_history_no_pruning_needed() {
+        let messages: Vec<crate::llm::Message> = (0..4)
+            .map(|i| crate::llm::Message {
+                role: "user".to_string(),
+                content: format!("Message {}", i),
+            })
+            .collect();
+
+        let ctx = ChainContext::from_query_with_conversation("test", messages);
+        let formatted = ctx.format_conversation_history();
+
+        // All messages should be present
+        assert!(formatted.contains("Message 0"));
+        assert!(formatted.contains("Message 3"));
+        // Should NOT indicate pruning
+        assert!(!formatted.contains("Showing last"));
+        assert!(formatted.contains("Previous messages in this conversation"));
     }
 }
