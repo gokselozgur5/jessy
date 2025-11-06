@@ -146,11 +146,11 @@ mod tests {
         let ctx = ChainContext::from_query("What is consciousness?");
         let prompt = build_observer_prompt(1, &ctx);
 
-        assert!(prompt.contains("stage 1"));
-        assert!(prompt.contains("Explorer"));
+        assert!(prompt.contains("JESSY"));
         assert!(prompt.contains("What is consciousness?"));
-        assert!(prompt.contains("C01: Emotion"));
+        assert!(prompt.contains("naturally"));
         assert!(prompt.contains("CONFIDENCE:"));
+        assert!(prompt.contains("CONTENT:"));
     }
 
     #[test]
@@ -166,11 +166,11 @@ mod tests {
 
         let prompt = build_observer_prompt(2, &ctx);
 
-        assert!(prompt.contains("stage 2"));
-        assert!(prompt.contains("Refiner"));
-        assert!(prompt.contains("Previous observations"));
+        assert!(prompt.contains("JESSY"));
+        assert!(prompt.contains("second look"));
         assert!(prompt.contains("Initial analysis"));
-        assert!(prompt.contains("REFINE"));
+        assert!(prompt.contains("CONFIDENCE:"));
+        assert!(prompt.contains("refined"));
     }
 
     #[test]
@@ -193,10 +193,11 @@ mod tests {
 
         let prompt = build_observer_prompt(3, &ctx);
 
-        assert!(prompt.contains("stage 3"));
-        assert!(prompt.contains("Integrator"));
-        assert!(prompt.contains("INTEGRATE"));
-        assert!(prompt.contains("SYNTHESIZE"));
+        assert!(prompt.contains("JESSY"));
+        assert!(prompt.contains("pull it together"));
+        assert!(prompt.contains("First"));
+        assert!(prompt.contains("CONFIDENCE:"));
+        assert!(prompt.contains("integrated"));
     }
 
     #[test]
@@ -214,10 +215,11 @@ mod tests {
 
         let prompt = build_observer_prompt(4, &ctx);
 
-        assert!(prompt.contains("stage 4"));
-        assert!(prompt.contains("Crystallizer"));
-        assert!(prompt.contains("FINAL stage"));
-        assert!(prompt.contains("CRYSTALLIZE"));
+        assert!(prompt.contains("JESSY"));
+        assert!(prompt.contains("final answer"));
+        assert!(prompt.contains("Observation"));
+        assert!(prompt.contains("CONFIDENCE:"));
+        assert!(prompt.contains("final response"));
     }
 
     #[test]
