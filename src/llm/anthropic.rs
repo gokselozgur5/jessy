@@ -91,8 +91,20 @@ impl AnthropicProvider {
 
         for attempt in 0..=self.max_retries {
             if attempt > 0 {
-                let backoff = Duration::from_millis(100 * 2_u64.pow(attempt - 1));
-                eprintln!("[Anthropic] Retry attempt {} after {:?}", attempt, backoff);
+                // Check if last error was rate limit (429)
+                let is_rate_limit = last_error.as_ref()
+                    .map(|e| format!("{:?}", e).contains("429") || format!("{:?}", e).contains("rate_limit"))
+                    .unwrap_or(false);
+
+                let backoff = if is_rate_limit {
+                    // For rate limits, wait much longer (60 seconds minimum)
+                    Duration::from_secs(60)
+                } else {
+                    // For other errors, use exponential backoff
+                    Duration::from_millis(100 * 2_u64.pow(attempt - 1))
+                };
+
+                eprintln!("[Anthropic] Retry attempt {} after {:?} (rate_limit: {})", attempt, backoff, is_rate_limit);
                 tokio::time::sleep(backoff).await;
             }
 
@@ -142,8 +154,20 @@ impl AnthropicProvider {
 
         for attempt in 0..=self.max_retries {
             if attempt > 0 {
-                let backoff = Duration::from_millis(100 * 2_u64.pow(attempt - 1));
-                eprintln!("[Anthropic] Retry attempt {} after {:?}", attempt, backoff);
+                // Check if last error was rate limit (429)
+                let is_rate_limit = last_error.as_ref()
+                    .map(|e| format!("{:?}", e).contains("429") || format!("{:?}", e).contains("rate_limit"))
+                    .unwrap_or(false);
+
+                let backoff = if is_rate_limit {
+                    // For rate limits, wait much longer (60 seconds minimum)
+                    Duration::from_secs(60)
+                } else {
+                    // For other errors, use exponential backoff
+                    Duration::from_millis(100 * 2_u64.pow(attempt - 1))
+                };
+
+                eprintln!("[Anthropic] Retry attempt {} after {:?} (rate_limit: {})", attempt, backoff, is_rate_limit);
                 tokio::time::sleep(backoff).await;
             }
 
@@ -208,9 +232,33 @@ impl AnthropicProvider {
 
         if !response.status().is_success() {
             let status = response.status();
+
+            // Check for rate limiting headers
+            let rate_limit_info = if status.as_u16() == 429 {
+                let mut info = String::from("\n[Rate Limit Hit]");
+                if let Some(limit) = response.headers().get("anthropic-ratelimit-requests-limit") {
+                    info.push_str(&format!(" Requests limit: {:?}", limit));
+                }
+                if let Some(remaining) = response.headers().get("anthropic-ratelimit-requests-remaining") {
+                    info.push_str(&format!(", Remaining: {:?}", remaining));
+                }
+                if let Some(reset) = response.headers().get("anthropic-ratelimit-requests-reset") {
+                    info.push_str(&format!(", Reset: {:?}", reset));
+                }
+                if let Some(tokens_limit) = response.headers().get("anthropic-ratelimit-tokens-limit") {
+                    info.push_str(&format!(", Token limit: {:?}", tokens_limit));
+                }
+                if let Some(tokens_remaining) = response.headers().get("anthropic-ratelimit-tokens-remaining") {
+                    info.push_str(&format!(", Tokens remaining: {:?}", tokens_remaining));
+                }
+                info
+            } else {
+                String::new()
+            };
+
             let error_text = response.text().await.unwrap_or_default();
             return Err(crate::ConsciousnessError::LearningError(
-                format!("API error {}: {}", status, error_text)
+                format!("API error {}: {}{}", status, error_text, rate_limit_info)
             ));
         }
 
