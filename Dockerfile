@@ -1,5 +1,6 @@
 # Multi-stage build for JESSY - Context-Aware AI Assistant
-# Stage 1: Build with dependency caching
+# Stage 1: Build
+# Updated: 2025-01-03 - Invalidate cache for conversation fix
 FROM rust:1.83-slim as builder
 
 # Install build dependencies
@@ -10,24 +11,14 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy manifests first (for dependency caching)
+# Copy manifests
 COPY Cargo.toml Cargo.lock ./
 
-# Create dummy source files to build dependencies only
-RUN mkdir src && \
-    echo "fn main() {println!(\"dummy\")}" > src/main.rs && \
-    mkdir benches && \
-    echo "fn main() {}" > benches/dummy.rs
-
-# Build dependencies (this layer will be cached)
-RUN cargo build --release --bin jessy-web && \
-    rm -rf src benches target/release/.fingerprint/jessy-*
-
-# Copy actual source code
+# Copy source code and benches (needed for Cargo.toml validation)
 COPY src ./src
 COPY benches ./benches
 
-# Build actual binary (dependencies already cached)
+# Build release binary for web server
 RUN cargo build --release --bin jessy-web
 
 # Stage 2: Runtime
