@@ -133,24 +133,24 @@
     - Handle typing indicators
     - _Requirements: 7.1, 7.5, 7.7_
 
-- [ ] 7. Add conversation metadata extraction
-  - [ ] 7.1 Implement emotional tone detection
-    - Analyze message sentiment (positive, negative, neutral)
-    - Detect playful, serious, curious tones
-    - Store tone in conversation metadata
+- [x] 7. Add conversation metadata extraction
+  - [x] 7.1 Implement emotional tone detection
+    - Analyze message sentiment (positive, negative, neutral) ✅
+    - Detect playful, serious, curious, excited, concerned tones ✅
+    - Store tone in conversation metadata ✅
     - _Requirements: 5.1, 5.2_
   
-  - [ ] 7.2 Implement key moment detection
-    - Detect jokes (laughter indicators, playful language)
-    - Detect insights (breakthrough moments, "aha" patterns)
-    - Detect emotional moments (vulnerability, excitement)
-    - Assign significance scores to moments
+  - [x] 7.2 Implement key moment detection
+    - Detect jokes (laughter indicators, playful language) ✅
+    - Detect insights (breakthrough moments, "aha" patterns) ✅
+    - Detect emotional moments (vulnerability, excitement) ✅
+    - Assign significance scores to moments ✅
     - _Requirements: 5.2, 5.5_
   
-  - [ ] 7.3 Implement unfinished thread tracking
-    - Detect incomplete topics ("we should discuss", "remind me")
-    - Extract topic and context
-    - Assign priority based on user interest
+  - [x] 7.3 Implement unfinished thread tracking
+    - Detect incomplete topics ("we should discuss", "remind me") ✅
+    - Extract topic and context ✅
+    - Assign priority based on user interest ✅
     - _Requirements: 5.3_
 
 - [ ] 8. Integration and testing

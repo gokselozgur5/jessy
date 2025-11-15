@@ -9,8 +9,13 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub mod persistence;
+pub mod metadata;
 
 pub use persistence::ConversationStore;
+pub use metadata::{
+    MetadataExtractor, ConversationMetadata, EmotionalTone,
+    KeyMoment, KeyMomentType, UnfinishedThread,
+};
 
 /// Conversation history for multi-turn chat
 #[derive(Debug, Clone, Serialize, Deserialize)]
