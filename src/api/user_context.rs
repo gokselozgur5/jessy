@@ -157,15 +157,15 @@ mod tests {
             user_id: "test_user".to_string(),
             conversation_count: 5,
             relationship_dynamics: RelationshipDynamicsSummary {
-                formality_level: 0.3,
+                formality_level: "Casual".to_string(),
                 humor_frequency: 0.7,
                 energy_level: 0.8,
                 trust_level: 0.9,
             },
             conversation_flavor: ConversationFlavorSummary {
                 typical_topics: vec!["rust".to_string(), "ai".to_string()],
-                communication_style: "casual".to_string(),
-                preferred_depth: "deep".to_string(),
+                communication_style: "DirectHonest".to_string(),
+                preferred_depth: "Warm".to_string(),
             },
             unfinished_threads: vec![],
         };

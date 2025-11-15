@@ -358,8 +358,10 @@ mod tests {
     fn test_detect_key_moments() {
         let extractor = MetadataExtractor::new();
         let moments = extractor.detect_key_moments("Aha! I finally understand 💡", "user");
-        assert_eq!(moments.len(), 1);
+        // This message matches both "insight" (aha) and "breakthrough" (finally understand)
+        assert_eq!(moments.len(), 2);
         assert_eq!(moments[0].moment_type, KeyMomentType::Insight);
+        assert_eq!(moments[1].moment_type, KeyMomentType::Breakthrough);
     }
 
     #[test]
