@@ -42,6 +42,7 @@ pub struct AppState {
     pub store: ConversationStore,
     pub conversations: Arc<Mutex<std::collections::HashMap<String, ConversationHistory>>>,
     pub orchestrator: Arc<Mutex<ConsciousnessOrchestrator>>,  // Full pipeline with 3-tier memory & learning
+    pub context_manager: Arc<Mutex<crate::memory::PersistentContextManager>>,  // User context persistence
 }
 
 impl AppState {
@@ -120,6 +121,15 @@ impl AppState {
 
         eprintln!("[AppState] ✅ ConsciousnessOrchestrator initialized with learning system");
 
+        // Initialize persistent context manager
+        let context_manager = crate::memory::PersistentContextManager::new(
+            std::path::PathBuf::from("data/user_contexts"),
+            100,  // max_cache_size
+            30,   // retention_days
+        )?;
+
+        eprintln!("[AppState] ✅ PersistentContextManager initialized");
+
         Ok(Self {
             selector,
             memory_manager,
@@ -127,6 +137,7 @@ impl AppState {
             store,
             conversations: Arc::new(Mutex::new(std::collections::HashMap::new())),
             orchestrator: Arc::new(Mutex::new(orchestrator)),
+            context_manager: Arc::new(Mutex::new(context_manager)),
         })
     }
 }
