@@ -141,6 +141,21 @@ impl JessyWebSocket {
     }
 }
 
+/// Internal message for streaming tokens from async tasks
+#[derive(actix::Message)]
+#[rtype(result = "()")]
+struct StreamToken {
+    message: WsMessage,
+}
+
+impl actix::Handler<StreamToken> for JessyWebSocket {
+    type Result = ();
+
+    fn handle(&mut self, msg: StreamToken, ctx: &mut Self::Context) {
+        self.send_message(ctx, msg.message);
+    }
+}
+
 impl Actor for JessyWebSocket {
     type Context = ws::WebsocketContext<Self>;
 
@@ -174,24 +189,65 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                         tracing::info!("Received chat message from {}: {}", 
                             user_id.as_deref().unwrap_or("anonymous"), message);
                         
-                        self.user_id = user_id;
+                        self.user_id = user_id.clone();
                         self.session_id = session_id.or_else(|| Some(Uuid::new_v4().to_string()));
                         
-                        // TODO: Process message through consciousness orchestrator
-                        // For now, send a placeholder response
+                        // Send typing indicator
                         self.send_message(ctx, WsMessage::Typing { is_typing: true });
                         
-                        // Simulate processing
-                        ctx.run_later(Duration::from_millis(500), |act, ctx| {
-                            act.send_message(ctx, WsMessage::Token {
-                                content: "Processing your message...".to_string(),
-                                token_type: TokenType::Normal,
+                        // Process through consciousness orchestrator
+                        // Clone necessary data for async processing
+                        let message_clone = message.clone();
+                        let user_id_clone = user_id.clone();
+                        let session_id_clone = self.session_id.clone();
+                        let addr = ctx.address();
+                        
+                        // Spawn async task to process message
+                        let fut = async move {
+                            // TODO: Get AppState from somewhere - for now use test response
+                            // This will be properly integrated when we wire up AppState to WebSocket
+                            
+                            // Simulate processing delay
+                            tokio::time::sleep(Duration::from_millis(500)).await;
+                            
+                            // Test response for now
+                            let response = format!(
+                                "I received your message: \"{}\". WebSocket is connected to the handler! 🎉\n\n\
+                                Next: wire up AppState to access the consciousness orchestrator.",
+                                message_clone
+                            );
+                            
+                            // Send stage transition
+                            addr.do_send(StreamToken {
+                                message: WsMessage::StageTransition {
+                                    from_stage: "Navigation".to_string(),
+                                    to_stage: "Response".to_string(),
+                                },
                             });
                             
-                            act.send_message(ctx, WsMessage::Complete {
-                                session_id: act.session_id.clone().unwrap_or_default(),
+                            // Stream response word by word
+                            for word in response.split_whitespace() {
+                                addr.do_send(StreamToken {
+                                    message: WsMessage::Token {
+                                        content: format!("{} ", word),
+                                        token_type: TokenType::Normal,
+                                    },
+                                });
+                                tokio::time::sleep(Duration::from_millis(80)).await;
+                            }
+                            
+                            // Send completion
+                            addr.do_send(StreamToken {
+                                message: WsMessage::Typing { is_typing: false },
                             });
-                        });
+                            addr.do_send(StreamToken {
+                                message: WsMessage::Complete {
+                                    session_id: session_id_clone.unwrap_or_default(),
+                                },
+                            });
+                        };
+                        
+                        actix_web::rt::spawn(fut);
                     }
                     Ok(WsMessage::Ping) => {
                         self.send_message(ctx, WsMessage::Pong);

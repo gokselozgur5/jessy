@@ -217,6 +217,20 @@ impl ConsciousnessOrchestrator {
         user_id: Option<&str>,
         conversation: Vec<crate::llm::Message>,
     ) -> Result<ConsciousnessResponse> {
+        self.process_with_callback(query, user_id, conversation, None).await
+    }
+    
+    /// Process with optional streaming callback for real-time token emission
+    pub async fn process_with_callback<F>(
+        &mut self,
+        query: &str,
+        user_id: Option<&str>,
+        conversation: Vec<crate::llm::Message>,
+        callback: Option<F>,
+    ) -> Result<ConsciousnessResponse>
+    where
+        F: Fn(String) + Send + 'static,
+    {
         let pipeline_start = Instant::now();
         let mut metadata = ResponseMetadata::new();
 
