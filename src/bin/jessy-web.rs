@@ -25,10 +25,42 @@ async fn main() -> std::io::Result<()> {
         .unwrap_or_else(|_| "8080".to_string())
         .parse::<u16>()
         .expect("PORT must be a valid number");
+    
+    // Persistent memory configuration
+    let memory_path = env::var("PERSISTENT_MEMORY_PATH")
+        .unwrap_or_else(|_| "./data/user_contexts".to_string());
+    let memory_retention_days = env::var("MEMORY_RETENTION_DAYS")
+        .unwrap_or_else(|_| "30".to_string())
+        .parse::<i64>()
+        .unwrap_or(30);
+    let memory_cache_size = env::var("MEMORY_CACHE_SIZE")
+        .unwrap_or_else(|_| "100".to_string())
+        .parse::<usize>()
+        .unwrap_or(100);
+    
+    // WebSocket configuration
+    let ws_max_connections = env::var("WEBSOCKET_MAX_CONNECTIONS")
+        .unwrap_or_else(|_| "1000".to_string())
+        .parse::<usize>()
+        .unwrap_or(1000);
+    
+    // Feature flags
+    let enable_authenticity = env::var("ENABLE_AUTHENTICITY_FEATURES")
+        .unwrap_or_else(|_| "true".to_string())
+        .parse::<bool>()
+        .unwrap_or(true);
 
     eprintln!("🧠 JESSY Web Chat Server");
     eprintln!("========================");
     eprintln!("Starting server on {}:{}", host, port);
+    eprintln!("");
+    eprintln!("Configuration:");
+    eprintln!("  Memory Path: {}", memory_path);
+    eprintln!("  Memory Retention: {} days", memory_retention_days);
+    eprintln!("  Memory Cache Size: {} users", memory_cache_size);
+    eprintln!("  WebSocket Max Connections: {}", ws_max_connections);
+    eprintln!("  Authenticity Features: {}", if enable_authenticity { "enabled" } else { "disabled" });
+    eprintln!("");
 
     // Initialize application state (includes context manager)
     let app_state = web::Data::new(
