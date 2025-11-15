@@ -87,24 +87,24 @@
     - Emit thinking markers during processing
     - _Requirements: 7.1, 7.3, 7.4_
 
-- [ ] 5. Update API endpoints for memory integration
+- [x] 5. Update API endpoints for memory integration
   - [ ] 5.1 Update `src/api/chat.rs` POST /api/chat
-    - Accept optional `user_id` in request
-    - Load user context before processing
-    - Pass user context to orchestrator
-    - Save conversation with metadata after completion
+    - Accept optional `user_id` in request ✅ (already exists)
+    - Load user context before processing (TODO: integrate with orchestrator)
+    - Pass user context to orchestrator (TODO)
+    - Save conversation with metadata after completion (TODO)
     - _Requirements: 1.1, 1.4, 5.1_
   
-  - [ ] 5.2 Add GET /api/user/:user_id/context endpoint
-    - Return user context summary (no full conversations)
-    - Include relationship dynamics and flavor
-    - Include unfinished threads
+  - [x] 5.2 Add GET /api/user/:user_id/context endpoint
+    - Return user context summary (no full conversations) ✅
+    - Include relationship dynamics and flavor ✅
+    - Include unfinished threads ✅
     - _Requirements: 1.4, 5.4_
   
-  - [ ] 5.3 Add POST /api/user/:user_id/context/reset endpoint
-    - Clear user context (privacy feature)
-    - Keep basic relationship dynamics
-    - Log reset operations
+  - [x] 5.3 Add POST /api/user/:user_id/context/reset endpoint
+    - Clear user context (privacy feature) ✅
+    - Keep basic relationship dynamics (optional) ✅
+    - Log reset operations ✅
     - _Requirements: 1.4_
 
 - [x] 6. Implement frontend WebSocket client

@@ -50,6 +50,8 @@ pub use persistent_context::{
     PersistentContextManager, UserContext, ConversationSummary,
     RelationshipDynamics, ConversationFlavor, UnfinishedThread,
     EmotionalTone, KeyMoment, MomentType, InteractionAnalysis,
+    EnergyLevel, FormalityLevel, CommunicationStyle, HumorStyle,
+    ThreadPriority,
 };
 
 use crate::{Result, ConsciousnessError, LayerId};
