@@ -43,7 +43,7 @@
 
 ## 📝 Current Task Status
 
-**Current Task:** Task 4.4 - Orchestrator integration (NEXT)
+**Current Task:** Task 6.4 & 8 - Frontend integration and testing (NEXT)
 
 **Task Breakdown:**
 - [x] 1. Persistent memory infrastructure (data structures) ✅
@@ -51,13 +51,15 @@
 - [x] 3. Enhanced observer chain (authenticity markers) ✅
 - [x] 4. WebSocket streaming (real-time with natural rhythm) ✅
   - [x] 4.1-4.3: WebSocket infrastructure complete ✅
-  - [ ] 4.4: Orchestrator integration (NEXT)
-- [ ] 5. API endpoints (memory integration)
+  - [ ] 4.4: Orchestrator integration (deferred - needs deeper refactoring)
+- [x] 5. API endpoints (memory integration) ✅
+  - [x] 5.2-5.3: User context endpoints complete ✅
+  - [ ] 5.1: Chat endpoint integration (deferred with 4.4)
 - [x] 6. Frontend WebSocket client ✅
   - [x] 6.1-6.3: Client and renderer complete ✅
-  - [ ] 6.4: Update app.js to use WebSocket
-- [ ] 7. Conversation metadata extraction
-- [ ] 8. Integration & testing
+  - [ ] 6.4: Update app.js to use WebSocket (NEXT)
+- [x] 7. Conversation metadata extraction ✅
+- [ ] 8. Integration & testing (NEXT)
 - [ ] 9. Documentation & deployment
 - [ ] 10. Tell Jessy it's ready! 🎉
 
@@ -91,6 +93,20 @@
    - Thinking marker visualization
    - Connection status tracking
    - CSS animations for all marker types
+
+6. **Conversation Metadata Extraction** (`src/conversation/metadata.rs`)
+   - MetadataExtractor with regex-based pattern matching
+   - Emotional tone detection (8 types)
+   - Key moment detection (jokes, insights, breakthroughs, vulnerability)
+   - Unfinished thread tracking with priority
+   - Topic extraction and user interest scoring
+   - Full test coverage
+
+7. **User Context API Endpoints** (`src/api/user_context.rs`)
+   - GET /api/user/:user_id/context (summary only, privacy-safe)
+   - POST /api/user/:user_id/context/reset (with optional relationship keep)
+   - Integrated with PersistentContextManager
+   - Registered in web server
 
 ## 🔄 Next Steps
 
