@@ -30,22 +30,11 @@ async fn main() -> std::io::Result<()> {
     eprintln!("========================");
     eprintln!("Starting server on {}:{}", host, port);
 
-    // Initialize application state
+    // Initialize application state (includes context manager)
     let app_state = web::Data::new(
         AppState::new(api_key.clone())
             .expect("Failed to initialize application state")
     );
-
-    // Initialize persistent context manager
-    let context_manager = web::Data::new(Arc::new(Mutex::new(
-        PersistentContextManager::new(
-            std::path::PathBuf::from("data/user_contexts"),
-            100,  // max_cache_size
-            30,   // retention_days
-        ).expect("Failed to initialize persistent context manager")
-    )));
-
-    eprintln!("✅ Persistent context manager initialized");
 
     // Start HTTP server
     HttpServer::new(move || {
@@ -56,11 +45,8 @@ async fn main() -> std::io::Result<()> {
             .allow_any_header()
             .max_age(3600);
 
-        let context_manager = context_manager.clone();
-        
         App::new()
             .app_data(app_state.clone())
-            .app_data(context_manager.clone())
             // Middleware
             .wrap(cors)
             .wrap(middleware::Logger::default())

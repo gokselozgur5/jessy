@@ -207,6 +207,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                         
                         // Spawn async task to process message
                         let fut = async move {
+                            // Load user context if user_id provided
+                            let user_context = if let Some(ref uid) = user_id_clone {
+                                match app_state.context_manager.lock().await.load_user_context(uid).await {
+                                    Ok(ctx) => {
+                                        tracing::info!("Loaded context for user {}: {} conversations", 
+                                            uid, ctx.conversations.len());
+                                        Some(ctx)
+                                    }
+                                    Err(e) => {
+                                        tracing::warn!("Failed to load user context: {}", e);
+                                        None
+                                    }
+                                }
+                            } else {
+                                None
+                            };
+                            
                             // Send stage transition: Navigation
                             addr.do_send(StreamToken {
                                 message: WsMessage::StageTransition {
@@ -218,7 +235,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                             // Process through orchestrator
                             let mut orchestrator = app_state.orchestrator.lock().await;
                             
-                            // Build conversation history (empty for now - TODO: load from session)
+                            // Build conversation history (empty for now - ConversationSummary doesn't store full messages)
+                            // TODO: Store full conversation messages in UserContext for history
                             let conversation = vec![];
                             
                             match orchestrator.process(&message_clone, user_id_clone.as_deref(), conversation).await {
@@ -240,6 +258,41 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                                             },
                                         });
                                         tokio::time::sleep(Duration::from_millis(80)).await;
+                                    }
+                                    
+                                    // Save conversation to user context
+                                    if let Some(ref uid) = user_id_clone {
+                                        let response_clone = response_data.final_response.clone();
+                                        let message_for_save = message_clone.clone();
+                                        let app_state_clone = app_state.clone();
+                                        let uid_clone = uid.clone();
+                                        let session_id_for_save = session_id_clone.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+                                        
+                                        // Spawn save task (non-blocking)
+                                        tokio::spawn(async move {
+                                            let manager = app_state_clone.context_manager.lock().await;
+                                            
+                                            // Load or create user context
+                                            let mut context = manager.load_user_context(&uid_clone).await
+                                                .unwrap_or_else(|_| crate::memory::UserContext::new(uid_clone.clone()));
+                                            
+                                            // Add conversation summary
+                                            context.conversations.push(crate::memory::ConversationSummary {
+                                                session_id: session_id_for_save,
+                                                timestamp: chrono::Utc::now(),
+                                                emotional_tone: crate::memory::EmotionalTone::Warm,  // TODO: Extract from metadata
+                                                key_moments: vec![],  // TODO: Extract from metadata
+                                                topics: vec![],  // TODO: Extract from metadata
+                                                message_count: 2,  // User + Jessy
+                                            });
+                                            
+                                            // Save updated context
+                                            if let Err(e) = manager.save_user_context(&context).await {
+                                                tracing::error!("Failed to save user context: {}", e);
+                                            } else {
+                                                tracing::info!("Saved conversation for user {}", uid_clone);
+                                            }
+                                        });
                                     }
                                     
                                     // Send completion

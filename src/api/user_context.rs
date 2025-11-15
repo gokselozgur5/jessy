@@ -47,9 +47,9 @@ pub struct ResetContextRequest {
 /// GET /api/user/:user_id/context - Get user context summary
 pub async fn get_user_context(
     user_id: web::Path<String>,
-    context_manager: web::Data<Arc<Mutex<PersistentContextManager>>>,
+    app_state: web::Data<crate::api::AppState>,
 ) -> impl Responder {
-    let manager = context_manager.lock().await;
+    let manager = app_state.context_manager.lock().await;
     
     match manager.load_user_context(&user_id).await {
         Ok(context) => {
@@ -105,9 +105,9 @@ pub async fn get_user_context(
 pub async fn reset_user_context(
     user_id: web::Path<String>,
     req: web::Json<ResetContextRequest>,
-    context_manager: web::Data<Arc<Mutex<PersistentContextManager>>>,
+    app_state: web::Data<crate::api::AppState>,
 ) -> impl Responder {
-    let mut manager = context_manager.lock().await;
+    let mut manager = app_state.context_manager.lock().await;
     
     match manager.load_user_context(&user_id).await {
         Ok(mut context) => {
