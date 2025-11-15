@@ -21,3 +21,13 @@ services:
         value: 0.0.0.0
       - key: PORT
         value: 8080
+      - key: PERSISTENT_MEMORY_PATH
+        value: /app/data/user_contexts
+      - key: MEMORY_RETENTION_DAYS
+        value: 30
+      - key: MEMORY_CACHE_SIZE
+        value: 100
+      - key: WEBSOCKET_MAX_CONNECTIONS
+        value: 1000
+      - key: ENABLE_AUTHENTICITY_FEATURES
+        value: true

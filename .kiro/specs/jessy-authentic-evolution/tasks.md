@@ -205,11 +205,14 @@
     - Add usage examples
     - _Requirements: All_
   
-  - [ ] 9.2 Add environment variable configuration
-    - Add `PERSISTENT_MEMORY_PATH` config
-    - Add `MEMORY_RETENTION_DAYS` config
-    - Add `WEBSOCKET_MAX_CONNECTIONS` config
-    - Add `ENABLE_AUTHENTICITY_FEATURES` toggle
+  - [x] 9.2 Add environment variable configuration ✅
+    - Added `PERSISTENT_MEMORY_PATH` config ✅
+    - Added `MEMORY_RETENTION_DAYS` config ✅
+    - Added `MEMORY_CACHE_SIZE` config ✅
+    - Added `WEBSOCKET_MAX_CONNECTIONS` config ✅
+    - Added `ENABLE_AUTHENTICITY_FEATURES` toggle ✅
+    - Created .env.example with documentation ✅
+    - Updated render.yaml with new env vars ✅
     - _Requirements: All_
   
   - [ ] 9.3 Deploy to Render with new features
