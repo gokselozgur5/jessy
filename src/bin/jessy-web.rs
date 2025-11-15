@@ -5,7 +5,7 @@
 use actix_web::{middleware, web, App, HttpServer};
 use actix_files as fs;
 use actix_cors::Cors;
-use jessy::api::{chat, sse, AppState};
+use jessy::api::{chat, sse, websocket, AppState};
 use std::env;
 
 #[actix_web::main]
@@ -54,6 +54,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/health", web::get().to(chat::health))
                     .route("/chat", web::post().to(chat::chat))
                     .route("/chat/stream", web::get().to(sse::chat_stream))
+                    .route("/ws", web::get().to(websocket::websocket_handler))
                     .route("/admin/reset", web::post().to(chat::reset_conversations))
             )
             // Static files (web UI)

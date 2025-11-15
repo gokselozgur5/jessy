@@ -53,11 +53,16 @@ mod observation;
 mod crystallization;
 mod context;
 mod prompts;
+pub mod authentic_observer;
 
 pub use chain::ObserverChain;
 pub use observation::Observation;
 pub use crystallization::{CrystallizationCheck, CrystallizationReason};
 pub use context::ChainContext;
+pub use authentic_observer::{
+    AuthenticObserverChain, AuthenticObservation, AuthenticResponse,
+    AuthenticityMarkers, ThinkingStep,
+};
 
 /// Crystallized response from the observer chain
 #[derive(Debug, Clone)]
