@@ -7,12 +7,22 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
     ? '' // Localhost: same origin
     : 'https://jessy-xlow.onrender.com'; // Production: Render.com backend
 
+// WebSocket URL
+const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'ws://localhost:8080/api/ws'
+    : 'wss://jessy-xlow.onrender.com/api/ws';
+
 // DOM elements
 const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
 const sendButton = document.getElementById('sendButton');
 const chatMessages = document.getElementById('chatMessages');
 const dimensionList = document.getElementById('dimensionList');
+
+// WebSocket client
+let jessyWs = null;
+let tokenRenderer = null;
+let useWebSocket = true; // Try WebSocket first, fallback to HTTP
 
 // Cognitive Layer names mapping
 const cognitiveLayerNames = {
@@ -38,6 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check health
     checkHealth();
+
+    // Initialize WebSocket connection
+    initializeWebSocket();
+
+    // Add connection status indicator
+    addConnectionStatusIndicator();
 
     // Log session info
     console.log('🌐 Connected to global JESSY session');
@@ -70,10 +86,20 @@ chatForm.addEventListener('submit', async (e) => {
     // Disable input while processing
     setInputEnabled(false);
 
-    // Add loading indicator
+    // Try WebSocket first, fallback to HTTP
+    if (useWebSocket && jessyWs && jessyWs.isConnected()) {
+        // Send via WebSocket for real-time streaming
+        jessyWs.sendMessage(message);
+    } else {
+        // Fallback to HTTP POST
+        await sendMessageHTTP(message);
+    }
+});
+
+// Send message via HTTP (fallback)
+async function sendMessageHTTP(message) {
     const loadingId = addLoadingIndicator();
 
-    // Send message to API
     try {
         const response = await fetch(`${API_BASE_URL}/api/chat`, {
             method: 'POST',
@@ -103,14 +129,13 @@ chatForm.addEventListener('submit', async (e) => {
 
     } catch (error) {
         console.error('Error:', error);
-        // Remove loading indicator
         removeLoadingIndicator(loadingId);
         addMessage('error', `Error: ${error.message}`);
     } finally {
         setInputEnabled(true);
         messageInput.focus();
     }
-});
+}
 
 // Add message to chat
 function addMessage(role, content) {
@@ -250,6 +275,133 @@ function formatMarkdown(text) {
     html = html.replace(/\n/g, '<br>');
 
     return html;
+}
+
+// Initialize WebSocket connection
+function initializeWebSocket() {
+    console.log('🔌 Initializing WebSocket connection...');
+    
+    // Create token renderer
+    tokenRenderer = new TokenRenderer(chatMessages);
+    
+    // Create WebSocket client
+    jessyWs = new JessyWebSocket(WS_URL, {
+        userId: null, // Anonymous for now
+        sessionId: sessionId,
+        maxReconnectAttempts: 5,
+        reconnectDelay: 1000,
+        
+        // Token streaming callback
+        onToken: (content, tokenType) => {
+            tokenRenderer.appendToken(content, tokenType);
+        },
+        
+        // Thinking marker callback
+        onThinkingMarker: (markerType, content) => {
+            tokenRenderer.showThinkingMarker(markerType, content);
+        },
+        
+        // Stage transition callback
+        onStageTransition: (fromStage, toStage) => {
+            tokenRenderer.showStageTransition(fromStage, toStage);
+        },
+        
+        // Typing indicator callback
+        onTyping: (isTyping) => {
+            if (isTyping) {
+                showTypingIndicator();
+            } else {
+                hideTypingIndicator();
+            }
+        },
+        
+        // Completion callback
+        onComplete: (completedSessionId) => {
+            sessionId = completedSessionId;
+            tokenRenderer.completeMessage();
+            setInputEnabled(true);
+            messageInput.focus();
+            console.log('✅ Response complete');
+        },
+        
+        // Error callback
+        onError: (error) => {
+            console.error('❌ WebSocket error:', error);
+            addMessage('error', `WebSocket error: ${error.message}`);
+            // Fallback to HTTP
+            useWebSocket = false;
+            updateConnectionStatus('disconnected');
+        },
+        
+        // Connection status callback
+        onConnectionChange: (connected) => {
+            updateConnectionStatus(connected ? 'connected' : 'disconnected');
+            if (connected) {
+                console.log('✅ WebSocket connected');
+                useWebSocket = true;
+            } else {
+                console.log('❌ WebSocket disconnected');
+            }
+        }
+    });
+    
+    // Connect
+    jessyWs.connect();
+}
+
+// Add connection status indicator to page
+function addConnectionStatusIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'connectionStatus';
+    indicator.className = 'connection-status connecting';
+    indicator.textContent = '⚡ Connecting...';
+    document.body.appendChild(indicator);
+}
+
+// Update connection status
+function updateConnectionStatus(status) {
+    const indicator = document.getElementById('connectionStatus');
+    if (!indicator) return;
+    
+    indicator.className = `connection-status ${status}`;
+    
+    switch (status) {
+        case 'connected':
+            indicator.textContent = '🟢 WebSocket Connected';
+            break;
+        case 'disconnected':
+            indicator.textContent = '🔴 Disconnected (HTTP Fallback)';
+            break;
+        case 'connecting':
+            indicator.textContent = '⚡ Connecting...';
+            break;
+    }
+}
+
+// Show typing indicator
+let typingIndicatorElement = null;
+function showTypingIndicator() {
+    if (typingIndicatorElement) return;
+    
+    typingIndicatorElement = document.createElement('div');
+    typingIndicatorElement.id = 'typingIndicator';
+    typingIndicatorElement.className = 'ws-typing-indicator';
+    typingIndicatorElement.innerHTML = `
+        <span></span>
+        <span></span>
+        <span></span>
+    `;
+    
+    chatMessages.appendChild(typingIndicatorElement);
+    scrollToBottom();
+}
+
+// Hide typing indicator
+function hideTypingIndicator() {
+    if (typingIndicatorElement) {
+        typingIndicatorElement.remove();
+        typingIndicatorElement = null;
+    }
 }
 
 // Example queries for demo

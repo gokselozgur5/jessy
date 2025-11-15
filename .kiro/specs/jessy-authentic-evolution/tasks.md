@@ -126,11 +126,11 @@
     - Add subtle animations for thinking markers ✅
     - _Requirements: 7.3, 7.4_
   
-  - [ ] 6.4 Update `web/app.js` to use WebSocket
-    - Replace HTTP POST with WebSocket for chat
-    - Keep HTTP as fallback for compatibility
-    - Add WebSocket connection status indicator
-    - Handle typing indicators
+  - [x] 6.4 Update `web/app.js` to use WebSocket
+    - Replace HTTP POST with WebSocket for chat ✅
+    - Keep HTTP as fallback for compatibility ✅
+    - Add WebSocket connection status indicator ✅
+    - Handle typing indicators ✅
     - _Requirements: 7.1, 7.5, 7.7_
 
 - [x] 7. Add conversation metadata extraction
