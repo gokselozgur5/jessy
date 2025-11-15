@@ -91,15 +91,18 @@ pub struct JessyWebSocket {
     user_id: Option<String>,
     /// Session ID for this conversation
     session_id: Option<String>,
+    /// Application state for orchestrator access
+    app_state: std::sync::Arc<crate::api::AppState>,
 }
 
 impl JessyWebSocket {
-    pub fn new() -> Self {
+    pub fn new(app_state: std::sync::Arc<crate::api::AppState>) -> Self {
         Self {
             id: Uuid::new_v4(),
             hb: Instant::now(),
             user_id: None,
             session_id: None,
+            app_state,
         }
     }
 
@@ -195,55 +198,72 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                         // Send typing indicator
                         self.send_message(ctx, WsMessage::Typing { is_typing: true });
                         
-                        // TODO: Process through consciousness orchestrator with streaming
-                        // For now, send test response to validate WebSocket flow
-                        // This will be replaced with actual orchestrator integration in next step
-                        
-                        // Clone necessary data for async processing
+                        // Process through consciousness orchestrator with streaming
                         let message_clone = message.clone();
+                        let user_id_clone = user_id.clone();
                         let session_id_clone = self.session_id.clone();
+                        let app_state = self.app_state.clone();
                         let addr = ctx.address();
                         
                         // Spawn async task to process message
                         let fut = async move {
-                            // Simulate processing delay
-                            tokio::time::sleep(Duration::from_millis(500)).await;
-                            
-                            // Test response for now
-                            let response = format!(
-                                "I received your message: \"{}\". WebSocket is connected! 🎉\n\n\
-                                Next: wire up AppState to access the consciousness orchestrator.",
-                                message_clone
-                            );
-                            
-                            // Send stage transition
+                            // Send stage transition: Navigation
                             addr.do_send(StreamToken {
                                 message: WsMessage::StageTransition {
-                                    from_stage: "Navigation".to_string(),
-                                    to_stage: "Response".to_string(),
+                                    from_stage: "Receiving".to_string(),
+                                    to_stage: "Navigation".to_string(),
                                 },
                             });
                             
-                            // Stream response word by word
-                            for word in response.split_whitespace() {
-                                addr.do_send(StreamToken {
-                                    message: WsMessage::Token {
-                                        content: format!("{} ", word),
-                                        token_type: TokenType::Normal,
-                                    },
-                                });
-                                tokio::time::sleep(Duration::from_millis(80)).await;
+                            // Process through orchestrator
+                            let mut orchestrator = app_state.orchestrator.lock().await;
+                            
+                            // Build conversation history (empty for now - TODO: load from session)
+                            let conversation = vec![];
+                            
+                            match orchestrator.process(&message_clone, user_id_clone.as_deref(), conversation).await {
+                                Ok(response_data) => {
+                                    // Send stage transition: Response
+                                    addr.do_send(StreamToken {
+                                        message: WsMessage::StageTransition {
+                                            from_stage: "Processing".to_string(),
+                                            to_stage: "Response".to_string(),
+                                        },
+                                    });
+                                    
+                                    // Stream response word by word with natural rhythm
+                                    for word in response_data.final_response.split_whitespace() {
+                                        addr.do_send(StreamToken {
+                                            message: WsMessage::Token {
+                                                content: format!("{} ", word),
+                                                token_type: TokenType::Normal,
+                                            },
+                                        });
+                                        tokio::time::sleep(Duration::from_millis(80)).await;
+                                    }
+                                    
+                                    // Send completion
+                                    addr.do_send(StreamToken {
+                                        message: WsMessage::Typing { is_typing: false },
+                                    });
+                                    addr.do_send(StreamToken {
+                                        message: WsMessage::Complete {
+                                            session_id: session_id_clone.unwrap_or_default(),
+                                        },
+                                    });
+                                }
+                                Err(e) => {
+                                    tracing::error!("Orchestrator processing failed: {}", e);
+                                    addr.do_send(StreamToken {
+                                        message: WsMessage::Error {
+                                            message: format!("Processing failed: {}", e),
+                                        },
+                                    });
+                                    addr.do_send(StreamToken {
+                                        message: WsMessage::Typing { is_typing: false },
+                                    });
+                                }
                             }
-                            
-                            // Send completion
-                            addr.do_send(StreamToken {
-                                message: WsMessage::Typing { is_typing: false },
-                            });
-                            addr.do_send(StreamToken {
-                                message: WsMessage::Complete {
-                                    session_id: session_id_clone.unwrap_or_default(),
-                                },
-                            });
                         };
                         
                         actix_web::rt::spawn(fut);
@@ -278,10 +298,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
 pub async fn websocket_handler(
     req: HttpRequest,
     stream: web::Payload,
+    app_state: web::Data<crate::api::AppState>,
 ) -> Result<HttpResponse, Error> {
     tracing::info!("WebSocket upgrade request from {:?}", req.peer_addr());
     
-    let ws = JessyWebSocket::new();
+    let ws = JessyWebSocket::new(app_state.into_inner());
     let resp = ws::start(ws, &req, stream)?;
     
     Ok(resp)
