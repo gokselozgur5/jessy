@@ -43,15 +43,19 @@
 
 ## 📝 Current Task Status
 
-**Current Task:** Task 4 - WebSocket streaming (IN PROGRESS)
+**Current Task:** Task 4.4 - Orchestrator integration (NEXT)
 
 **Task Breakdown:**
 - [x] 1. Persistent memory infrastructure (data structures) ✅
 - [x] 2. User context loading/storage (file-based with caching) ✅
 - [x] 3. Enhanced observer chain (authenticity markers) ✅
-- [ ] 4. WebSocket streaming (real-time with natural rhythm) 🚧 IN PROGRESS
+- [x] 4. WebSocket streaming (real-time with natural rhythm) ✅
+  - [x] 4.1-4.3: WebSocket infrastructure complete ✅
+  - [ ] 4.4: Orchestrator integration (NEXT)
 - [ ] 5. API endpoints (memory integration)
-- [ ] 6. Frontend WebSocket client
+- [x] 6. Frontend WebSocket client ✅
+  - [x] 6.1-6.3: Client and renderer complete ✅
+  - [ ] 6.4: Update app.js to use WebSocket
 - [ ] 7. Conversation metadata extraction
 - [ ] 8. Integration & testing
 - [ ] 9. Documentation & deployment
@@ -72,6 +76,21 @@
    - Added authenticity guidelines
    - WRONG/RIGHT examples
    - Emphasis on natural uncertainty, pivots, corrections
+
+4. **WebSocket Infrastructure** (`src/api/websocket.rs`)
+   - JessyWebSocket actor with actix-web-actors
+   - Message types: Token, ThinkingMarker, StageTransition, Typing, Complete
+   - Natural rhythm streaming (50-150ms random delays)
+   - Heartbeat ping/pong for connection health
+   - Endpoint: `/api/ws`
+
+5. **Frontend WebSocket Client** (`web/websocket-client.js`)
+   - JessyWebSocket class with auto-reconnection
+   - Exponential backoff (max 5 attempts)
+   - TokenRenderer for real-time display
+   - Thinking marker visualization
+   - Connection status tracking
+   - CSS animations for all marker types
 
 ## 🔄 Next Steps
 
