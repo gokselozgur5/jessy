@@ -80,11 +80,14 @@
     - Connection status tracking ✅
     - _Requirements: 7.6_
   
-  - [ ] 4.4 Integrate with `ConsciousnessOrchestrator`
-    - Add `process_streaming()` method to orchestrator
-    - Pass streaming callback to observer chain
-    - Stream tokens from LLM API responses
-    - Emit thinking markers during processing
+  - [ ] 4.4 Integrate with `ConsciousnessOrchestrator` 🚧 IN PROGRESS
+    - Add `process_with_callback()` method to orchestrator ✅
+    - Implement StreamToken async messaging ✅
+    - WebSocket async task spawning working ✅
+    - TODO: Wire AppState to WebSocket handler
+    - TODO: Pass streaming callback to observer chain
+    - TODO: Stream tokens from LLM API responses
+    - TODO: Emit thinking markers during processing
     - _Requirements: 7.1, 7.3, 7.4_
 
 - [x] 5. Update API endpoints for memory integration

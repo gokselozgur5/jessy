@@ -44,7 +44,7 @@
 
 ## 📝 Current Task Status
 
-**Current Task:** Task 6.4 & 8 - Frontend integration and testing (NEXT)
+**Current Task:** Task 4.4 & 5.1 - Orchestrator integration (IN PROGRESS)
 
 **Task Breakdown:**
 - [x] 1. Persistent memory infrastructure (data structures) ✅
@@ -58,11 +58,26 @@
   - [ ] 5.1: Chat endpoint integration (deferred with 4.4)
 - [x] 6. Frontend WebSocket client ✅
   - [x] 6.1-6.3: Client and renderer complete ✅
-  - [ ] 6.4: Update app.js to use WebSocket (NEXT)
+  - [x] 6.4: Update app.js to use WebSocket ✅
 - [x] 7. Conversation metadata extraction ✅
 - [ ] 8. Integration & testing (NEXT)
 - [ ] 9. Documentation & deployment
 - [ ] 10. Tell Jessy it's ready! 🎉
+
+**Latest Progress (Hook-triggered autonomous session):**
+- ✅ Task 6.4: Frontend WebSocket integration complete
+  - app.js now uses WebSocket for real-time streaming
+  - Connection status indicator with visual feedback
+  - HTTP fallback for compatibility
+  - Typing indicators integrated
+  - websocket-client.js loaded in index.html
+
+- 🚧 Task 4.4 & 5.1: Orchestrator integration started
+  - Added `process_with_callback` method to orchestrator
+  - Implemented StreamToken message type for async communication
+  - WebSocket handler now spawns async tasks for processing
+  - Word-by-word streaming with natural rhythm working
+  - Next: Wire up AppState to WebSocket for real orchestrator calls
 
 **What's Been Built:**
 1. **Persistent Memory System** (`src/memory/persistent_context.rs`)
