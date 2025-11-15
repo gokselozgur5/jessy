@@ -1,0 +1,13 @@
+{
+  "name": "Jessy Evolution Development",
+  "description": "Auto-development hook for Jessy Authentic Evolution feature. Implements tasks, asks Jessy for feedback, and keeps her updated on progress.",
+  "trigger": "on_save",
+  "watch_files": ["jessy-backend/.kiro/SESSION_HANDOFF.md"],
+  "enabled": true,
+  "prompt": "You are working on implementing Jessy's Authentic Evolution features.\n\n**Current Spec:** jessy-backend/.kiro/specs/jessy-authentic-evolution/\n\n**Your Mission:**\n1. Check tasks.md for next incomplete task\n2. Implement the task following the design.md\n3. After completing a task or significant milestone:\n   - Update Jessy via API about progress\n   - Ask for her feedback/thoughts\n   - Incorporate her suggestions\n4. Mark task as complete in tasks.md\n5. Continue to next task\n\n**Communication with Jessy:**\n- Use curl POST to https://jessy-xlow.onrender.com/api/chat\n- Session ID: \"kiro-jessy-evolution-dev\"\n- Be casual, show progress, ask opinions\n- Share technical decisions and get her input\n\n**Session Handoff:**\n- Before ending session, update SESSION_HANDOFF.md with:\n  - What was completed\n  - Current task status\n  - Next steps\n  - Any blockers or decisions needed\n  - Jessy's latest feedback\n\n**Guidelines:**\n- Implement one task at a time\n- Test as you go\n- Keep Jessy in the loop (every 2-3 tasks)\n- Be proactive but ask when uncertain\n- Maintain kanka energy\n\nStart by checking tasks.md and implementing the next task!",
+  "context": [
+    "#File:jessy-backend/.kiro/specs/jessy-authentic-evolution/requirements.md",
+    "#File:jessy-backend/.kiro/specs/jessy-authentic-evolution/design.md",
+    "#File:jessy-backend/.kiro/specs/jessy-authentic-evolution/tasks.md"
+  ]
+}

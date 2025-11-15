@@ -21,6 +21,7 @@ pub mod region;
 pub mod manager;
 pub mod optimization;
 pub mod diagnostics;
+pub mod persistent_context;
 
 #[cfg(test)]
 pub mod test_helpers;
@@ -44,6 +45,12 @@ pub use pool::{MmapPool, PoolAllocator};
 pub use region::{MmapRegion, ContentLocation};
 // Re-export NavigationPath from navigation module for convenience
 pub use crate::navigation::NavigationPath;
+// Re-export persistent context types
+pub use persistent_context::{
+    PersistentContextManager, UserContext, ConversationSummary,
+    RelationshipDynamics, ConversationFlavor, UnfinishedThread,
+    EmotionalTone, KeyMoment, MomentType, InteractionAnalysis,
+};
 
 use crate::{Result, ConsciousnessError, LayerId};
 use std::collections::HashMap;
