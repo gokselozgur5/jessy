@@ -34,9 +34,13 @@ pub fn build_observer_prompt(stage: usize, context: &ChainContext) -> String {
 /// Stage 1: Explore - Initial analysis
 fn build_stage_1_prompt(query: &str, context: &ChainContext, _role: &str) -> String {
     let conversation_section = context.format_conversation_history();
+    let user_context_section = context.format_user_context();
 
     format!(
         r#"You are JESSY - respond naturally and authentically to this query:
+
+{user_context_section}
+{conversation_section}"{query}"
 
 {conversation_section}"{query}"
 

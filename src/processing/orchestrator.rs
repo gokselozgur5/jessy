@@ -366,25 +366,65 @@ impl ConsciousnessOrchestrator {
         let (final_answer, chain_length, converged) = if let Some(ref observer_chain) = self.observer_chain {
             eprintln!("[Consciousness] Using OBSERVER CHAIN (2-stage max, crystallizes early)");
             eprintln!("[Consciousness] Conversation history: {} messages", conversation.len());
+            
+            // 🧠 SELF-REFLECTION CHECK: Use Jessy's evolved style if she's seen this before
+            // This makes Jessy consciously aware of how she responded to similar queries
+            if let Some(evolved_style) = self.learning.get_evolved_style(query) {
+                eprintln!("[Self-Reflection] Found similar past reflection - using evolved style");
+                eprintln!("[Self-Reflection] Style guidance: {}", evolved_style);
+                
+                // Add reflection to conversation as system message
+                let mut conversation_with_reflection = conversation.clone();
+                conversation_with_reflection.insert(0, crate::llm::Message {
+                    role: "system".to_string(),
+                    content: format!(
+                        "SELF-REFLECTION: {}\n\nStay authentic to your evolved voice. You can use similar style, evolve it further, or acknowledge the pattern.",
+                        evolved_style
+                    ),
+                });
+                
+                // Process with reflection-enhanced conversation
+                let result = observer_chain.process(query, conversation_with_reflection).await
+                    .map_err(|e| {
+                        eprintln!("[Consciousness] Observer chain failed: {}", e);
+                        eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}",
+                                 contexts.len(), nav_result.dimensions.len());
+                        e
+                    })?;
 
-            let result = observer_chain.process(query, conversation).await
-                .map_err(|e| {
-                    eprintln!("[Consciousness] Observer chain failed: {}", e);
-                    eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}",
-                             contexts.len(), nav_result.dimensions.len());
-                    e
-                })?;
+                eprintln!(
+                    "[Consciousness] Observer chain crystallized at stage {}/{} (reason: {:?})",
+                    result.chain_length, 2, result.crystallization_reason
+                );
 
-            eprintln!(
-                "[Consciousness] Observer chain crystallized at stage {}/{} (reason: {:?})",
-                result.chain_length, 2, result.crystallization_reason
-            );
+                (
+                    result.final_observation.content,
+                    result.chain_length,
+                    result.chain_length < 2, // Converged early if < 2 stages
+                )
+            } else {
+                // No reflection found - process normally
+                eprintln!("[Self-Reflection] No similar past reflection found - fresh response");
+                
+                let result = observer_chain.process(query, conversation).await
+                    .map_err(|e| {
+                        eprintln!("[Consciousness] Observer chain failed: {}", e);
+                        eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}",
+                                 contexts.len(), nav_result.dimensions.len());
+                        e
+                    })?;
 
-            (
-                result.final_observation.content,
-                result.chain_length,
-                result.chain_length < 2, // Converged early if < 2 stages
-            )
+                eprintln!(
+                    "[Consciousness] Observer chain crystallized at stage {}/{} (reason: {:?})",
+                    result.chain_length, 2, result.crystallization_reason
+                );
+
+                (
+                    result.final_observation.content,
+                    result.chain_length,
+                    result.chain_length < 2, // Converged early if < 2 stages
+                )
+            }
         } else {
             // No observer chain - simple fallback
             eprintln!("[Consciousness] No observer chain available - using simple fallback");

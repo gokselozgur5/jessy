@@ -38,10 +38,12 @@ COPY --from=builder /app/target/release/jessy-web /app/jessy-web
 # Copy web frontend
 COPY web ./web
 
-# Copy JESSY's soul - dimension and vocabulary data
-COPY data ./data
+# Copy JESSY's soul - dimension and vocabulary data to /app/jessy_data
+# This directory contains static files (dimensions.json, vocabularies, etc.)
+COPY data ./jessy_data
 
-# Create additional data directory for runtime persistence (conversations, etc)
+# Create data directory for runtime persistence (conversations, user contexts, etc)
+# This will be mounted as a volume at runtime
 RUN mkdir -p /app/data
 
 # Set environment variables

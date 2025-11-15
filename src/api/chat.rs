@@ -7,7 +7,7 @@ use crate::{
     navigation::DimensionSelector,
     memory::MmapManager,
     llm::{LLMManager, LLMConfig, Message},
-    conversation::{ConversationHistory, ConversationStore, DimensionalState, MessageRole},
+    conversation::{ConversationHistory, ConversationStore, DimensionalState, MessageRole, MetadataExtractor},
     processing::ConsciousnessOrchestrator,
 };
 use std::sync::Arc;
@@ -61,21 +61,30 @@ impl AppState {
         };
         let llm = LLMManager::new(llm_config.clone())?;
 
-        let data_dir = std::path::PathBuf::from("./data");
+        // Get data directories from environment
+        let runtime_data_dir = std::env::var("RUNTIME_DATA_DIR").unwrap_or_else(|_| "./data".to_string());
+        let jessy_data_dir = std::env::var("JESSY_DATA_DIR").unwrap_or_else(|_| "./data".to_string());
+        
+        let data_dir = std::path::PathBuf::from(&runtime_data_dir);
         std::fs::create_dir_all(&data_dir)?;
         let store = ConversationStore::new(data_dir.join("web_conversations.json"))?;
 
         // Initialize ConsciousnessOrchestrator with full 3-tier memory system
         eprintln!("[AppState] Initializing ConsciousnessOrchestrator with 3-tier memory...");
+        eprintln!("[AppState] Runtime data dir: {}", runtime_data_dir);
+        eprintln!("[AppState] JESSY data dir: {}", jessy_data_dir);
 
         // Load dimension registry
         // Try cognitive_layers.json first (new format with layers), fallback to dimensions.json
-        let (config_data, config_path) = if std::path::Path::new("data/cognitive_layers.json").exists() {
-            let cognitive_data = std::fs::read_to_string("data/cognitive_layers.json")
+        let cognitive_layers_path = format!("{}/cognitive_layers.json", jessy_data_dir);
+        let dimensions_path = format!("{}/dimensions.json", jessy_data_dir);
+        
+        let (config_data, config_path) = if std::path::Path::new(&cognitive_layers_path).exists() {
+            let cognitive_data = std::fs::read_to_string(&cognitive_layers_path)
                 .map_err(|e| format!("Failed to read cognitive_layers.json: {}", e))?;
 
             // cognitive_layers.json only has layers, need to merge with dimensions metadata
-            let dimensions_data = std::fs::read_to_string("data/dimensions.json")
+            let dimensions_data = std::fs::read_to_string(&dimensions_path)
                 .map_err(|e| format!("Failed to read dimensions.json: {}", e))?;
 
             // Parse both
@@ -113,7 +122,7 @@ impl AppState {
 
         let navigation = Arc::new(NavigationSystem::new(registry, memory_manager.clone())?);
 
-        let orchestrator = ConsciousnessOrchestrator::with_llm(
+        let mut orchestrator = ConsciousnessOrchestrator::with_llm(
             navigation,
             memory_manager.clone(),
             llm_config
@@ -121,9 +130,16 @@ impl AppState {
 
         eprintln!("[AppState] ✅ ConsciousnessOrchestrator initialized with learning system");
 
+        // Initialize self-reflection system
+        let reflection_path = std::path::PathBuf::from(&runtime_data_dir).join("self_reflections");
+        if let Err(e) = orchestrator.learning_mut().init_self_reflection(reflection_path) {
+            eprintln!("[AppState] Failed to initialize self-reflection: {}", e);
+        }
+
         // Initialize persistent context manager
+        let user_contexts_path = format!("{}/user_contexts", runtime_data_dir);
         let context_manager = crate::memory::PersistentContextManager::new(
-            std::path::PathBuf::from("data/user_contexts"),
+            std::path::PathBuf::from(&user_contexts_path),
             100,  // max_cache_size
             30,   // retention_days
         )?;
@@ -225,11 +241,56 @@ async fn process_chat_message(
 
     eprintln!("[Chat API] Processing with {} messages in conversation history", messages.len());
 
+    // Step 2.5: Load user context if user_id provided
+    if let Some(uid) = user_id {
+        let context_manager = data.context_manager.lock().await;
+        match context_manager.load_user_context(uid).await {
+            Ok(user_context) => {
+                eprintln!("[Chat API] ✅ Loaded context for user {}: {} conversations", 
+                    uid, user_context.conversations.len());
+                
+                // Add user context as system message at the beginning
+                if !user_context.conversations.is_empty() {
+                    let context_summary = format!(
+                        "User Context: You've had {} previous conversations with this user. Recent topics: {}. Communication style: {:?}.",
+                        user_context.conversations.len(),
+                        user_context.conversations.iter()
+                            .rev()
+                            .take(3)
+                            .flat_map(|c| c.topics.iter())
+                            .take(5)
+                            .cloned()
+                            .collect::<Vec<_>>()
+                            .join(", "),
+                        user_context.relationship_dynamics.communication_style
+                    );
+                    
+                    eprintln!("[Chat API] Adding user context to prompt: {}", context_summary);
+                    
+                    messages.insert(0, Message {
+                        role: "system".to_string(),
+                        content: context_summary,
+                    });
+                }
+            }
+            Err(e) => {
+                eprintln!("[Chat API] ⚠️ Failed to load user context: {}", e);
+            }
+        }
+    }
+
     // Step 3: Process through ConsciousnessOrchestrator (full pipeline with learning)
     let mut orchestrator = data.orchestrator.lock().await;
     let orchestrator_result = orchestrator.process(message, user_id, messages).await?;
 
     let selection_duration = start.elapsed();
+    
+    // Step 3.5: Self-reflection - Jessy observes her own response (conscious learning)
+    // This is where Jessy becomes aware of what she said and learns from it
+    orchestrator.learning_mut().reflect_on_response(message, &orchestrator_result.final_response);
+    
+    // Save reflections periodically
+    let _ = orchestrator.learning_mut().save_reflections();
 
     // Step 4: Extract response and metadata
     let response = orchestrator_result.final_response;
@@ -257,6 +318,53 @@ async fn process_chat_message(
         dimensional_state.contexts_loaded,
         selection_duration.as_millis()
     );
+    
+    // Step 8: Save conversation to user context (if user_id provided) - BEFORE returning response
+    if let Some(uid) = user_id {
+        let manager = data.context_manager.lock().await;
+        
+        // Load or create user context
+        let mut context = manager.load_user_context(uid).await
+            .unwrap_or_else(|_| crate::memory::UserContext::new(uid.to_string()));
+        
+        // Extract metadata from conversation
+        use crate::conversation::MetadataExtractor;
+        let extractor = MetadataExtractor::new();
+        let conversation_text = format!("User: {}\nJessy: {}", message, response);
+        let metadata = extractor.extract_metadata(&conversation_text, uid);
+        
+        // Add conversation summary with extracted metadata
+        context.conversations.push(crate::memory::ConversationSummary {
+            session_id: uuid::Uuid::new_v4().to_string(),
+            timestamp: chrono::Utc::now(),
+            emotional_tone: metadata.emotional_tone,
+            key_moments: metadata.key_moments,
+            topics: metadata.topics.into_iter().map(|(topic, _)| topic).collect(),
+            message_count: 2,  // User + Jessy
+        });
+        
+        // Update relationship dynamics based on metadata
+        if metadata.emotional_tone == crate::memory::EmotionalTone::Playful {
+            // Update humor style in conversation flavor
+            if context.conversation_flavor.humor_style.is_none() {
+                context.conversation_flavor.humor_style = Some(crate::memory::HumorStyle::Playful);
+            }
+        }
+        
+        // Save updated context
+        eprintln!("[Chat API] Attempting to save context for user {} with {} conversations", 
+            uid, context.conversations.len());
+        
+        match manager.save_user_context(&context).await {
+            Ok(_) => {
+                eprintln!("[Chat API] ✅ Successfully saved conversation for user {} with {} total conversations", 
+                    uid, context.conversations.len());
+            }
+            Err(e) => {
+                eprintln!("[Chat API] ❌ Failed to save user context: {}", e);
+            }
+        }
+    }
 
     Ok((response, dimensional_state))
 }

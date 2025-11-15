@@ -88,6 +88,7 @@ pub use self::proto_dimension_manager::ProtoDimensionManager;
 pub use self::shared_layer::{SharedLayer, SharedLayerManager, SharedLayerStats};
 pub use self::user_layer::{UserLayer, UserLayerManager, UserLayerStats};
 pub use self::pattern_cache::{PatternCache, PatternCacheConfig, CachedResponse, PatternCacheStats};
+pub use self::self_reflection::{SelfReflectionSystem, ReflectedResponse, SelfAnalysis, ResponseTone};
 
 // Module declarations
 mod observation;
@@ -98,6 +99,7 @@ mod circular_buffer;
 mod memory_tracker;
 mod pattern_detector;
 mod proto_dimension_manager;
+mod self_reflection;
 mod crystallizer;
 mod crystallization_queue;
 mod synesthetic_learner;
@@ -256,6 +258,7 @@ pub struct LearningSystem {
     crystallization_queue: Option<crystallization_queue::CrystallizationQueue>,
     synesthetic_learner: synesthetic_learner::SynestheticLearner,
     pattern_cache: pattern_cache::PatternCache,
+    self_reflection: Option<self_reflection::SelfReflectionSystem>,  // Jessy's self-awareness
     metrics: LearningMetrics,
 }
 
@@ -297,6 +300,7 @@ impl LearningSystem {
             crystallization_queue: None, // Will be initialized with crystallizer
             synesthetic_learner,
             pattern_cache,
+            self_reflection: None,  // Will be initialized with storage path
             metrics: LearningMetrics::default(),
         }
     }
@@ -317,6 +321,43 @@ impl LearningSystem {
         self.crystallization_queue = Some(queue);
 
         eprintln!("[Learning] Crystallizer and background queue initialized");
+    }
+
+    /// Initialize self-reflection system
+    ///
+    /// This enables Jessy to observe and learn from her own responses.
+    pub fn init_self_reflection(&mut self, storage_path: std::path::PathBuf) -> Result<()> {
+        let reflection_system = self_reflection::SelfReflectionSystem::new(storage_path)?;
+        self.self_reflection = Some(reflection_system);
+        eprintln!("[Learning] Self-reflection system initialized");
+        Ok(())
+    }
+
+    /// Reflect on Jessy's own response (conscious learning)
+    ///
+    /// This is where Jessy becomes aware of her own responses and learns from them.
+    pub fn reflect_on_response(&mut self, query: &str, response: &str) -> Option<ReflectedResponse> {
+        if let Some(ref mut reflection) = self.self_reflection {
+            Some(reflection.reflect_on_response(query, response))
+        } else {
+            None
+        }
+    }
+
+    /// Get evolved response style based on past reflections
+    ///
+    /// Returns guidance on how Jessy has responded to similar queries before.
+    pub fn get_evolved_style(&self, query: &str) -> Option<String> {
+        self.self_reflection.as_ref()
+            .and_then(|r| r.get_evolved_style(query))
+    }
+
+    /// Save self-reflections to disk
+    pub fn save_reflections(&self) -> Result<()> {
+        if let Some(ref reflection) = self.self_reflection {
+            reflection.save_reflections()?;
+        }
+        Ok(())
     }
 
     /// Enqueue proto-dimension for background crystallization
