@@ -66,6 +66,7 @@ pub mod observer_chain;
 pub mod learning;
 pub mod security;
 pub mod processing;
+pub mod consciousness;  // Jessy's internal state (energy, mood, curiosity)
 pub mod ffi;
 pub mod llm;
 pub mod config;

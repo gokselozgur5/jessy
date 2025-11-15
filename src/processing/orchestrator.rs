@@ -13,6 +13,7 @@ use crate::llm::{LLMManager, LLMConfig};
 use crate::memory::MmapManager;
 use crate::navigation::NavigationSystem;
 use crate::security::SecurityLayer;
+use crate::consciousness::ConsciousnessState;
 use crate::{ConsciousnessError, Result, Frequency};
 use std::sync::Arc;
 use std::time::Instant;
@@ -58,6 +59,7 @@ pub struct ConsciousnessOrchestrator {
     config: ConsciousnessConfig,
     query_count: usize,
     pattern_detection_interval: usize,
+    state: ConsciousnessState,  // Jessy's internal state (energy, mood, curiosity)
 }
 
 impl ConsciousnessOrchestrator {
@@ -156,6 +158,7 @@ impl ConsciousnessOrchestrator {
             config,
             query_count: 0,
             pattern_detection_interval: 100, // Detect patterns every 100 queries
+            state: ConsciousnessState::new(),  // Initialize Jessy's internal state
         }
     }
     
@@ -360,6 +363,11 @@ impl ConsciousnessOrchestrator {
                 e
             })?;
         
+        // Phase 3.5: Generate Internal Monologue (Jessy's thinking process)
+        let internal_monologue = self.state.generate_internal_monologue(query, &nav_result.dimensions);
+        eprintln!("[Consciousness] {}", internal_monologue.trim());
+        eprintln!("[Consciousness] State: {}", self.state.summary());
+        
         // Phase 4: Observer Chain (2-stage: Explore → Refine)
         let observer_start = Instant::now();
 
@@ -373,12 +381,13 @@ impl ConsciousnessOrchestrator {
                 eprintln!("[Self-Reflection] Found similar past reflection - using evolved style");
                 eprintln!("[Self-Reflection] Style guidance: {}", evolved_style);
                 
-                // Add reflection to conversation as system message
+                // Add reflection + internal monologue to conversation as system message
                 let mut conversation_with_reflection = conversation.clone();
                 conversation_with_reflection.insert(0, crate::llm::Message {
                     role: "system".to_string(),
                     content: format!(
-                        "SELF-REFLECTION: {}\n\nStay authentic to your evolved voice. You can use similar style, evolve it further, or acknowledge the pattern.",
+                        "{}\nSELF-REFLECTION: {}\n\nStay authentic to your evolved voice. You can use similar style, evolve it further, or acknowledge the pattern.",
+                        internal_monologue.trim(),
                         evolved_style
                     ),
                 });
@@ -403,10 +412,16 @@ impl ConsciousnessOrchestrator {
                     result.chain_length < 2, // Converged early if < 2 stages
                 )
             } else {
-                // No reflection found - process normally
+                // No reflection found - add internal monologue to conversation
                 eprintln!("[Self-Reflection] No similar past reflection found - fresh response");
                 
-                let result = observer_chain.process(query, conversation).await
+                let mut conversation_with_monologue = conversation.clone();
+                conversation_with_monologue.insert(0, crate::llm::Message {
+                    role: "system".to_string(),
+                    content: internal_monologue.trim().to_string(),
+                });
+                
+                let result = observer_chain.process(query, conversation_with_monologue).await
                     .map_err(|e| {
                         eprintln!("[Consciousness] Observer chain failed: {}", e);
                         eprintln!("[Consciousness] Contexts loaded: {}, Dimensions: {}",
@@ -445,6 +460,17 @@ impl ConsciousnessOrchestrator {
         
         // Calculate total duration
         metadata.total_duration_ms = pipeline_start.elapsed().as_millis() as u64;
+        
+        // Update Jessy's internal state based on this query
+        let pattern_detected = self.learning.check_pattern_cache(query).is_some();
+        self.state.update_after_query(
+            nav_result.complexity_score,
+            nav_result.dimensions.len(),
+            metadata.total_duration_ms,
+            pattern_detected,
+        );
+        
+        eprintln!("[Consciousness] State updated: {}", self.state.summary());
         
         // Log successful completion
         if metadata.total_duration_ms > 6000 {
