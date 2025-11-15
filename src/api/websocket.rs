@@ -195,24 +195,23 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                         // Send typing indicator
                         self.send_message(ctx, WsMessage::Typing { is_typing: true });
                         
-                        // Process through consciousness orchestrator
+                        // TODO: Process through consciousness orchestrator with streaming
+                        // For now, send test response to validate WebSocket flow
+                        // This will be replaced with actual orchestrator integration in next step
+                        
                         // Clone necessary data for async processing
                         let message_clone = message.clone();
-                        let user_id_clone = user_id.clone();
                         let session_id_clone = self.session_id.clone();
                         let addr = ctx.address();
                         
                         // Spawn async task to process message
                         let fut = async move {
-                            // TODO: Get AppState from somewhere - for now use test response
-                            // This will be properly integrated when we wire up AppState to WebSocket
-                            
                             // Simulate processing delay
                             tokio::time::sleep(Duration::from_millis(500)).await;
                             
                             // Test response for now
                             let response = format!(
-                                "I received your message: \"{}\". WebSocket is connected to the handler! 🎉\n\n\
+                                "I received your message: \"{}\". WebSocket is connected! 🎉\n\n\
                                 Next: wire up AppState to access the consciousness orchestrator.",
                                 message_clone
                             );
