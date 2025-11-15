@@ -5,12 +5,12 @@ let sessionId = 'global-jessy-session';
 // API Base URL - auto-detect environment
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? '' // Localhost: same origin
-    : 'https://jessy-xlow.onrender.com'; // Production: Render.com backend
+    : 'https://jessy-backend.fly.dev'; // Production: Fly.io backend
 
 // WebSocket URL
 const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'ws://localhost:8080/api/ws'
-    : 'wss://jessy-xlow.onrender.com/api/ws';
+    : 'wss://jessy-backend.fly.dev/api/ws';
 
 // DOM elements
 const chatForm = document.getElementById('chatForm');
@@ -156,7 +156,7 @@ function addMessage(role, content) {
         messageDiv.innerHTML = `
             <div class="flex justify-start">
                 <div class="max-w-3xl">
-                    <div class="px-4 py-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-gray-100">
+                    <div class="px-4 py-3 bg-purple-900 bg-opacity-20 border border-purple-500/30 rounded-lg text-purple-100">
                         ${formatMarkdown(content)}
                     </div>
                 </div>
@@ -245,10 +245,7 @@ function removeLoadingIndicator(loadingId) {
 
 // Scroll to bottom of chat
 function scrollToBottom() {
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-    });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Escape HTML to prevent XSS

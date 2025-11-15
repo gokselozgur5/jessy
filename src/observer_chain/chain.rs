@@ -57,7 +57,23 @@ impl ObserverChain {
         query: impl Into<String>,
         conversation: Vec<crate::llm::Message>,
     ) -> Result<CrystallizedResponse> {
+        self.process_with_user_context(query, conversation, None, None).await
+    }
+    
+    /// Process with user context awareness
+    pub async fn process_with_user_context(
+        &self,
+        query: impl Into<String>,
+        conversation: Vec<crate::llm::Message>,
+        user_id: Option<String>,
+        user_context_summary: Option<String>,
+    ) -> Result<CrystallizedResponse> {
         let mut context = ChainContext::from_query_with_conversation(query, conversation);
+        
+        // Add user context if provided
+        if let (Some(uid), Some(summary)) = (user_id, user_context_summary) {
+            context = context.with_user_context(uid, summary);
+        }
 
         for stage in 1..=self.max_stages {
             // Observer step: Generate observation

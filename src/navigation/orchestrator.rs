@@ -133,11 +133,17 @@ impl NavigationSystem {
             eprintln!("[NavigationSystem] ✅ Loaded {} UserLayers from disk", user_layer_manager.total_layer_count());
         }
 
+        // Get vocabulary paths from environment (for Fly.io deployment)
+        let data_dir = std::env::var("JESSY_DATA_DIR").unwrap_or_else(|_| "data".to_string());
+        let emotional_path = format!("{}/emotional.txt", data_dir);
+        let technical_path = format!("{}/technical.txt", data_dir);
+        let stopwords_path = format!("{}/stopwords.txt", data_dir);
+
         Ok(Self {
             query_analyzer: QueryAnalyzer::new(
-                "data/emotional.txt",
-                "data/technical.txt",
-                "data/stopwords.txt",
+                &emotional_path,
+                &technical_path,
+                &stopwords_path,
             )?,
             parallel_scanner: ParallelScanner::new(registry.clone(), config.clone()),
             path_selector: PathSelector::new(),

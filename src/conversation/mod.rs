@@ -13,9 +13,10 @@ pub mod metadata;
 
 pub use persistence::ConversationStore;
 pub use metadata::{
-    MetadataExtractor, ConversationMetadata, EmotionalTone,
-    KeyMoment, KeyMomentType, UnfinishedThread,
+    MetadataExtractor, ConversationMetadata, ExtractedMetadata, UnfinishedThread,
 };
+// Re-export from memory module
+pub use crate::memory::{EmotionalTone, KeyMoment, MomentType};
 
 /// Conversation history for multi-turn chat
 #[derive(Debug, Clone, Serialize, Deserialize)]

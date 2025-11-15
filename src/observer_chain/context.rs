@@ -17,6 +17,10 @@ pub struct ChainContext {
     pub start_time: SystemTime,
     /// Conversation history (for context-aware deep thinking)
     pub conversation_history: Vec<crate::llm::Message>,
+    /// User ID (if authenticated)
+    pub user_id: Option<String>,
+    /// User context summary (relationship, past conversations)
+    pub user_context_summary: Option<String>,
 }
 
 impl ChainContext {
@@ -27,6 +31,8 @@ impl ChainContext {
             observations: Vec::new(),
             start_time: SystemTime::now(),
             conversation_history: Vec::new(),
+            user_id: None,
+            user_context_summary: None,
         }
     }
 
@@ -40,7 +46,16 @@ impl ChainContext {
             observations: Vec::new(),
             start_time: SystemTime::now(),
             conversation_history: conversation,
+            user_id: None,
+            user_context_summary: None,
         }
+    }
+    
+    /// Set user context information
+    pub fn with_user_context(mut self, user_id: String, context_summary: String) -> Self {
+        self.user_id = Some(user_id);
+        self.user_context_summary = Some(context_summary);
+        self
     }
 
     /// Add an observation to context
@@ -169,6 +184,16 @@ impl ChainContext {
         }
 
         formatted
+    }
+    
+    /// Format user context for prompt (who you're talking to, relationship, past conversations)
+    pub fn format_user_context(&self) -> String {
+        if let Some(ref summary) = self.user_context_summary {
+            if !summary.is_empty() {
+                return format!("WHO YOU'RE TALKING TO:\n{}\n\n", summary);
+            }
+        }
+        String::new()
     }
 }
 

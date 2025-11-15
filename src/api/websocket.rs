@@ -9,6 +9,7 @@ use actix_web_actors::ws;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 use uuid::Uuid;
+use crate::conversation::MetadataExtractor;
 
 /// WebSocket message types for client-server communication
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -235,12 +236,39 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                             // Process through orchestrator
                             let mut orchestrator = app_state.orchestrator.lock().await;
                             
-                            // Build conversation history (empty for now - ConversationSummary doesn't store full messages)
-                            // TODO: Store full conversation messages in UserContext for history
-                            let conversation = vec![];
+                            // Build conversation history with user context
+                            let mut conversation = vec![];
+                            
+                            // Add user context if available
+                            if let Some(ref ctx) = user_context {
+                                if !ctx.conversations.is_empty() {
+                                    let context_summary = format!(
+                                        "User Context: You've had {} previous conversations with this user. Recent topics: {}. Communication style: {:?}.",
+                                        ctx.conversations.len(),
+                                        ctx.conversations.iter()
+                                            .rev()
+                                            .take(3)
+                                            .flat_map(|c| c.topics.iter())
+                                            .take(5)
+                                            .cloned()
+                                            .collect::<Vec<_>>()
+                                            .join(", "),
+                                        ctx.relationship_dynamics.communication_style
+                                    );
+                                    
+                                    conversation.push(crate::llm::Message {
+                                        role: "system".to_string(),
+                                        content: context_summary,
+                                    });
+                                }
+                            }
                             
                             match orchestrator.process(&message_clone, user_id_clone.as_deref(), conversation).await {
                                 Ok(response_data) => {
+                                    // Self-reflection - Jessy observes her own response
+                                    orchestrator.learning_mut().reflect_on_response(&message_clone, &response_data.final_response);
+                                    let _ = orchestrator.learning_mut().save_reflections();
+                                    
                                     // Send stage transition: Response
                                     addr.do_send(StreamToken {
                                         message: WsMessage::StageTransition {
@@ -276,21 +304,36 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                                             let mut context = manager.load_user_context(&uid_clone).await
                                                 .unwrap_or_else(|_| crate::memory::UserContext::new(uid_clone.clone()));
                                             
-                                            // Add conversation summary
+                                            // Extract metadata from conversation
+                                            use crate::conversation::MetadataExtractor;
+                                            let extractor = MetadataExtractor::new();
+                                            let conversation_text = format!("User: {}\nJessy: {}", message_for_save, response_clone);
+                                            let metadata = extractor.extract_metadata(&conversation_text, &uid_clone);
+                                            
+                                            // Add conversation summary with extracted metadata
                                             context.conversations.push(crate::memory::ConversationSummary {
                                                 session_id: session_id_for_save,
                                                 timestamp: chrono::Utc::now(),
-                                                emotional_tone: crate::memory::EmotionalTone::Warm,  // TODO: Extract from metadata
-                                                key_moments: vec![],  // TODO: Extract from metadata
-                                                topics: vec![],  // TODO: Extract from metadata
+                                                emotional_tone: metadata.emotional_tone,
+                                                key_moments: metadata.key_moments,
+                                                topics: metadata.topics.into_iter().map(|(topic, _)| topic).collect(),
                                                 message_count: 2,  // User + Jessy
                                             });
+                                            
+                                            // Update relationship dynamics based on metadata
+                                            if metadata.emotional_tone == crate::memory::EmotionalTone::Playful {
+                                                // Update humor style in conversation flavor
+                                                if context.conversation_flavor.humor_style.is_none() {
+                                                    context.conversation_flavor.humor_style = Some(crate::memory::HumorStyle::Playful);
+                                                }
+                                            }
                                             
                                             // Save updated context
                                             if let Err(e) = manager.save_user_context(&context).await {
                                                 tracing::error!("Failed to save user context: {}", e);
                                             } else {
-                                                tracing::info!("Saved conversation for user {}", uid_clone);
+                                                tracing::info!("Saved conversation for user {} with {} total conversations", 
+                                                    uid_clone, context.conversations.len());
                                             }
                                         });
                                     }

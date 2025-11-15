@@ -1,0 +1,38 @@
+# fly.toml app configuration file generated for jessy-backend on 2025-11-15T11:08:02+03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'jessy-backend'
+primary_region = 'fra'
+
+[build]
+
+[env]
+  RUNTIME_DATA_DIR = "/app/data"
+  JESSY_DATA_DIR = "/app/jessy_data"
+
+# Volume mount temporarily disabled for debugging
+# [[mounts]]
+#   source = 'data'
+#   destination = '/app/data'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+  [[http_service.checks]]
+    grace_period = "60s"
+    interval = "30s"
+    method = "GET"
+    timeout = "10s"
+    path = "/api/health"
+
+[[vm]]
+  memory = '4gb'
+  cpu_kind = 'shared'
+  cpus = 2
