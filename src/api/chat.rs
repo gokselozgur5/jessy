@@ -43,6 +43,7 @@ pub struct AppState {
     pub conversations: Arc<Mutex<std::collections::HashMap<String, ConversationHistory>>>,
     pub orchestrator: Arc<Mutex<ConsciousnessOrchestrator>>,  // Full pipeline with 3-tier memory & learning
     pub context_manager: Arc<Mutex<crate::memory::PersistentContextManager>>,  // User context persistence
+    pub emotional_memory: Arc<Mutex<crate::memory::EmotionalMemoryManager>>,  // Full conversation + emotional memory
 }
 
 impl AppState {
@@ -146,6 +147,14 @@ impl AppState {
 
         eprintln!("[AppState] ✅ PersistentContextManager initialized");
 
+        // Initialize emotional memory manager
+        let emotional_memory_path = format!("{}/emotional_memory", runtime_data_dir);
+        let emotional_memory = crate::memory::EmotionalMemoryManager::new(
+            std::path::PathBuf::from(&emotional_memory_path)
+        )?;
+
+        eprintln!("[AppState] ✅ EmotionalMemoryManager initialized");
+
         Ok(Self {
             selector,
             memory_manager,
@@ -154,6 +163,7 @@ impl AppState {
             conversations: Arc::new(Mutex::new(std::collections::HashMap::new())),
             orchestrator: Arc::new(Mutex::new(orchestrator)),
             context_manager: Arc::new(Mutex::new(context_manager)),
+            emotional_memory: Arc::new(Mutex::new(emotional_memory)),
         })
     }
 }
@@ -187,6 +197,15 @@ pub async fn chat(
             // Save conversation
             if let Err(e) = data.store.save_history(&conversation) {
                 eprintln!("⚠️ Failed to save conversation: {}", e);
+            }
+            
+            // Save full emotional memory (async, non-blocking)
+            let orchestrator = data.orchestrator.lock().await;
+            let state = orchestrator.state().clone();
+            drop(orchestrator); // Release lock
+            
+            if let Err(e) = save_emotional_memory(&data, &conversation, &session_id, req.user_id.as_deref(), &state).await {
+                eprintln!("⚠️ Failed to save emotional memory: {}", e);
             }
 
             HttpResponse::Ok().json(ChatResponse {
@@ -367,6 +386,68 @@ async fn process_chat_message(
     }
 
     Ok((response, dimensional_state))
+}
+
+/// Save full conversation to emotional memory (called from chat endpoint)
+async fn save_emotional_memory(
+    data: &AppState,
+    conversation: &ConversationHistory,
+    session_id: &str,
+    user_id: Option<&str>,
+    orchestrator_state: &crate::consciousness::ConsciousnessState,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let Some(uid) = user_id else {
+        return Ok(()); // Skip if no user_id
+    };
+    
+    let emotional_memory = data.emotional_memory.lock().await;
+    
+    // Convert conversation to ConversationRecord
+    let messages: Vec<crate::memory::MessageRecord> = conversation.messages.iter().map(|msg| {
+        crate::memory::MessageRecord {
+            role: match msg.role {
+                crate::conversation::MessageRole::User => "user".to_string(),
+                crate::conversation::MessageRole::Assistant => "assistant".to_string(),
+            },
+            content: msg.content.clone(),
+            timestamp: msg.timestamp,
+            dimensions_activated: msg.dimensions.clone(),
+            jessy_mood: Some(format!("{:?}", orchestrator_state.mood())),
+            jessy_energy: Some(orchestrator_state.energy_level),
+            emotional_tone: None, // TODO: Extract from metadata
+        }
+    }).collect();
+    
+    let record = crate::memory::ConversationRecord {
+        session_id: session_id.to_string(),
+        user_id: uid.to_string(),
+        started_at: conversation.messages.first().map(|m| m.timestamp).unwrap_or_else(chrono::Utc::now),
+        ended_at: Some(chrono::Utc::now()),
+        messages,
+        emotional_arc: crate::memory::EmotionalArc {
+            start_tone: "neutral".to_string(), // TODO: Detect from first messages
+            end_tone: "satisfied".to_string(), // TODO: Detect from last messages
+            peak_moments: vec![],
+            overall_energy: orchestrator_state.energy_level,
+        },
+        key_moments: vec![],
+        energy_pattern: crate::memory::EnergyPattern {
+            average_energy: orchestrator_state.energy_level,
+            peak_energy: orchestrator_state.energy_level,
+            low_energy: orchestrator_state.energy_level,
+            energy_trajectory: vec![],
+        },
+    };
+    
+    // Save conversation record
+    emotional_memory.save_conversation(&record).await?;
+    
+    // Update aggregated emotional memory
+    emotional_memory.update_emotional_memory(&record).await?;
+    
+    eprintln!("[Chat API] ✅ Saved full emotional memory for session {}", session_id);
+    
+    Ok(())
 }
 
 /// Fallback dimension selection using simple keyword matching

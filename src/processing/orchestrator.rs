@@ -674,6 +674,11 @@ impl ConsciousnessOrchestrator {
         self.pattern_detection_interval
     }
     
+    /// Get current consciousness state
+    pub fn state(&self) -> &ConsciousnessState {
+        &self.state
+    }
+    
     /// Enhance query with synesthetic keyword associations
     ///
     /// Uses learned keyword associations to expand the query with related terms

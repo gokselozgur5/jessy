@@ -22,6 +22,7 @@ pub mod manager;
 pub mod optimization;
 pub mod diagnostics;
 pub mod persistent_context;
+pub mod emotional_memory;
 
 #[cfg(test)]
 pub mod test_helpers;
@@ -52,6 +53,13 @@ pub use persistent_context::{
     EmotionalTone, KeyMoment, MomentType, InteractionAnalysis,
     EnergyLevel, FormalityLevel, CommunicationStyle, HumorStyle,
     ThreadPriority,
+};
+// Re-export emotional memory types
+pub use emotional_memory::{
+    EmotionalMemoryManager, ConversationRecord, MessageRecord,
+    EmotionalArc, KeyMoment as EmotionalKeyMoment, EnergyPattern,
+    EmotionalMemory, CommunicationPatterns, SharedReference,
+    InsideJoke, RelationshipDynamics as EmotionalRelationshipDynamics,
 };
 
 use crate::{Result, ConsciousnessError, LayerId};
