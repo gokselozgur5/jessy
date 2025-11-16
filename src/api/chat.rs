@@ -176,13 +176,45 @@ pub async fn chat(
     // Get or create session ID
     let session_id = req.session_id.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-    // Clone conversation for processing (minimal lock time)
+    // Load conversation from emotional memory or create new
     let mut conversation = {
         let mut conversations = data.conversations.lock().await;
-        conversations
-            .entry(session_id.clone())
-            .or_insert_with(ConversationHistory::new)
-            .clone()
+        
+        if let Some(conv) = conversations.get(&session_id) {
+            // Already in memory
+            conv.clone()
+        } else if let Some(uid) = req.user_id.as_deref() {
+            // Try loading from emotional memory (persistent across restarts)
+            let emotional_memory = data.emotional_memory.lock().await;
+            match emotional_memory.load_conversation(uid, &session_id).await {
+                Ok(record) => {
+                    eprintln!("[Chat API] 📂 Loaded conversation {} from emotional memory ({} messages)", 
+                             session_id, record.messages.len());
+                    
+                    // Convert ConversationRecord back to ConversationHistory
+                    let mut conv = ConversationHistory::new();
+                    for msg_record in record.messages {
+                        if msg_record.role == "user" {
+                            conv.add_user_message(msg_record.content, msg_record.dimensions_activated);
+                        } else {
+                            conv.add_assistant_message(msg_record.content);
+                        }
+                    }
+                    
+                    conversations.insert(session_id.clone(), conv.clone());
+                    conv
+                }
+                Err(_) => {
+                    // New conversation
+                    eprintln!("[Chat API] 📝 Creating new conversation {}", session_id);
+                    ConversationHistory::new()
+                }
+            }
+        } else {
+            // No user_id, can't load from disk
+            eprintln!("[Chat API] 📝 Creating new conversation {} (no user_id)", session_id);
+            ConversationHistory::new()
+        }
     }; // Lock released here
 
     // Process message (no lock held during LLM call)
