@@ -69,4 +69,4 @@ training/venv*/
 *.safetensors
 *.pt
 *.pth
-*.bin
+*.bin.kiro/specs/
