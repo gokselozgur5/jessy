@@ -12,10 +12,9 @@ primary_region = 'fra'
   RUNTIME_DATA_DIR = "/app/data"
   JESSY_DATA_DIR = "/app/jessy_data"
 
-# Volume mount temporarily disabled for debugging
-# [[mounts]]
-#   source = 'data'
-#   destination = '/app/data'
+[[mounts]]
+  source = 'data'
+  destination = '/app/data'
 
 [http_service]
   internal_port = 8080
