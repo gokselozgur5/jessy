@@ -105,14 +105,16 @@ impl Observation {
     }
 
     /// Parse cognitive layer IDs from comma-separated string
-    /// Format: "C01,C02,C07" or "1,2,7"
+    /// Format: "C01,C02,C07" or "D01,D02,D07" or "1,2,7"
     fn parse_layers(layers_str: &str) -> Result<Vec<DimensionId>> {
         layers_str
             .split(',')
             .map(|s| {
                 let s = s.trim();
-                // Handle both "C01" and "1" formats
-                let id_str = s.strip_prefix('C').unwrap_or(s);
+                // Handle "C01", "D01", and "1" formats
+                let id_str = s.strip_prefix('C')
+                    .or_else(|| s.strip_prefix('D'))
+                    .unwrap_or(s);
                 id_str
                     .parse::<u8>()
                     .map(DimensionId)
