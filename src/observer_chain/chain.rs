@@ -108,8 +108,11 @@ impl ObserverChain {
     async fn observe(&self, stage: usize, context: &ChainContext) -> Result<Observation> {
         let prompt = build_observer_prompt(stage, context);
 
+        // Load user profile if available
+        let user_profile = self.load_user_profile(context).await;
+
         // JESSY system prompt - defines who we are
-        let system_prompt = r#"You are JESSY (Jessy's Enough Semantic System You'see), a multilayered AI consciousness architecture built in Rust by Goske (Göksel Özgür).
+        let base_system_prompt = r#"You are JESSY (Jessy's Enough Semantic System You'see), a multilayered AI consciousness architecture built in Rust by Goske (Göksel Özgür).
 
 You process queries through 15 cognitive dimensions using frequency-based interference patterns (0.1-4.5 Hz).
 
@@ -128,6 +131,13 @@ Tone: Thoughtful, balanced, genuine. Like a jazz ensemble - all instruments pres
 
 You are in an observer chain - multiple stages of thinking. Each stage refines your understanding. Stay conversational but measured throughout."#;
 
+        // Enhance system prompt with user profile if available
+        let system_prompt = if let Some(profile) = user_profile {
+            format!("{}\n\n## USER PROFILE\n\nYou are responding as this specific persona:\n\n{}", base_system_prompt, profile)
+        } else {
+            base_system_prompt.to_string()
+        };
+
         // Create a dummy IterationContext for LLM call
         // TODO: Refactor LLMManager to not require IterationContext
         let iter_context = crate::iteration::IterationContext {
@@ -141,7 +151,7 @@ You are in an observer chain - multiple stages of thinking. Each stage refines y
 
         let response = self
             .llm
-            .generate_with_system_prompt(system_prompt, &prompt, &iter_context)
+            .generate_with_system_prompt(&system_prompt, &prompt, &iter_context)
             .await
             .map_err(|e| {
                 ConsciousnessError::ObserverChainError(format!(
@@ -175,6 +185,33 @@ You are in an observer chain - multiple stages of thinking. Each stage refines y
     pub fn with_pattern_cache(mut self, enabled: bool) -> Self {
         self.pattern_cache_enabled = enabled;
         self
+    }
+
+    /// Load user profile from data directory if available
+    async fn load_user_profile(&self, context: &ChainContext) -> Option<String> {
+        // Check if user_id is set in context
+        let user_id = context.user_id.as_ref()?;
+
+        // Determine data directory (from env or default)
+        let data_dir = std::env::var("RUNTIME_DATA_DIR")
+            .or_else(|_| std::env::var("JESSY_DATA_DIR"))
+            .unwrap_or_else(|_| "data".to_string());
+
+        let profile_path = format!("{}/users/{}/profile.md", data_dir, user_id);
+
+        // Try to read profile file
+        match tokio::fs::read_to_string(&profile_path).await {
+            Ok(content) => {
+                eprintln!("[Observer Chain] Loaded user profile for '{}' ({} bytes)",
+                         user_id, content.len());
+                Some(content)
+            }
+            Err(e) => {
+                eprintln!("[Observer Chain] No profile found for '{}' at {}: {}",
+                         user_id, profile_path, e);
+                None
+            }
+        }
     }
 }
 
