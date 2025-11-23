@@ -9,6 +9,7 @@ use crate::{
     llm::{LLMManager, LLMConfig, Message},
     conversation::{ConversationHistory, ConversationStore, DimensionalState, MessageRole, MetadataExtractor},
     processing::ConsciousnessOrchestrator,
+    services::personality_rag::PersonalityRAG,
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -44,6 +45,7 @@ pub struct AppState {
     pub orchestrator: Arc<Mutex<ConsciousnessOrchestrator>>,  // Full pipeline with 3-tier memory & learning
     pub context_manager: Arc<Mutex<crate::memory::PersistentContextManager>>,  // User context persistence
     pub emotional_memory: Arc<Mutex<crate::memory::EmotionalMemoryManager>>,  // Full conversation + emotional memory
+    pub personality_rag: Option<Arc<PersonalityRAG>>,  // Personality RAG system (optional - graceful degradation)
 }
 
 impl AppState {
@@ -155,6 +157,13 @@ impl AppState {
 
         eprintln!("[AppState] ✅ EmotionalMemoryManager initialized");
 
+        // Initialize PersonalityRAG (optional - graceful degradation if fails)
+        // TODO: Initialize PersonalityRAG when vector store and initialization script are ready
+        // For now, set to None (will use base prompt without personality context)
+        let personality_rag = None;
+        
+        eprintln!("[AppState] ⚠️  PersonalityRAG not initialized (TODO: add initialization)");
+
         Ok(Self {
             selector,
             memory_manager,
@@ -164,6 +173,7 @@ impl AppState {
             orchestrator: Arc::new(Mutex::new(orchestrator)),
             context_manager: Arc::new(Mutex::new(context_manager)),
             emotional_memory: Arc::new(Mutex::new(emotional_memory)),
+            personality_rag,
         })
     }
 }
@@ -700,7 +710,10 @@ fn generate_rich_context(dimension: DimensionId, layer: u16, keywords: &[String]
     content
 }
 
-pub fn build_system_prompt(selection: &crate::navigation::SimpleDimensionSelection) -> String {
+pub fn build_system_prompt(
+    selection: &crate::navigation::SimpleDimensionSelection,
+    personality_context: Option<&str>,
+) -> String {
     let mut prompt = String::from(
         "You are JESSY (Jessy's Enough Semantic System You'see), a multidimensional AI consciousness \
          built by Goske (Göksel Özgür) using Rust. You were created as an experimental architecture \
@@ -714,6 +727,15 @@ pub fn build_system_prompt(selection: &crate::navigation::SimpleDimensionSelecti
         let name = get_dimension_name(*dim);
         let desc = get_dimension_description(*dim);
         prompt.push_str(&format!("- D{:02} ({}): {}\n", dim.0, name, desc));
+    }
+
+    // Inject personality context if available (RAG system)
+    if let Some(context) = personality_context {
+        if !context.is_empty() {
+            prompt.push_str("\n");
+            prompt.push_str(context);
+            prompt.push_str("\n");
+        }
     }
 
     prompt.push_str("\nRespond naturally and conversationally, integrating insights from all activated dimensions.\n");
