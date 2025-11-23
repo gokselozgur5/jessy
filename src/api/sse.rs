@@ -66,7 +66,8 @@ async fn process_streaming_chat(
     let selection = selector.select(message).await?;
 
     // Build prompts
-    let system_prompt = super::chat::build_system_prompt(&selection);
+    // TODO: Add PersonalityRAG context retrieval here when available
+    let system_prompt = super::chat::build_system_prompt(&selection, None);
     let user_prompt = format!("CURRENT QUERY: {}", message);
 
     // Create provider
