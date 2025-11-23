@@ -55,6 +55,8 @@ impl Observation {
         let mut layers = Vec::new();
         let mut content = String::new();
         let mut in_content = false;
+        let mut found_confidence = false;
+        let mut found_layers = false;
 
         for line in response.lines() {
             let line = line.trim();
@@ -65,10 +67,12 @@ impl Observation {
                         .trim()
                         .parse()
                         .unwrap_or(0.5);
+                    found_confidence = true;
                 }
             } else if line.starts_with("LAYERS:") {
                 if let Some(layers_str) = line.strip_prefix("LAYERS:") {
                     layers = Self::parse_layers(layers_str)?;
+                    found_layers = true;
                 }
             } else if line.starts_with("CONTENT:") {
                 in_content = true;
@@ -80,7 +84,21 @@ impl Observation {
 
         if content.is_empty() {
             // Fallback: treat entire response as content
-            content = response;
+            content = response.clone();
+            eprintln!("[Observation Parse] WARNING: No CONTENT: marker found, using full response as content");
+        }
+
+        // DEBUG: Log parsing results
+        eprintln!("[Observation Parse] Stage {}: confidence={} (found: {}), layers={:?} (found: {}), content_len={}",
+                 stage, confidence, found_confidence, layers, found_layers, content.len());
+
+        if !found_confidence {
+            eprintln!("[Observation Parse] WARNING: No CONFIDENCE: marker found in LLM response, using default 0.5");
+        }
+
+        if !found_layers {
+            eprintln!("[Observation Parse] WARNING: No LAYERS: marker found in LLM response, defaulting to empty");
+            eprintln!("[Observation Parse] Response preview: {}", response.chars().take(200).collect::<String>());
         }
 
         Ok(Self::new(stage, layers, content.trim().to_string(), confidence))

@@ -81,6 +81,7 @@ NEVER use:
 
 Respond in this format:
 CONFIDENCE: 0.XX
+LAYERS: C01,C02 (list 1-3 most relevant cognitive layers from C01-C15)
 CONTENT:
 Your natural response here..."#
     )
@@ -106,6 +107,7 @@ Stay authentic, stay brief if possible, and don't slip into analytical mode.
 
 Respond in this format:
 CONFIDENCE: 0.XX
+LAYERS: C01,C02 (list 1-3 most relevant cognitive layers)
 CONTENT:
 Your refined (but still natural) response..."#
     )
@@ -131,6 +133,7 @@ Keep it conversational, keep it you.
 
 Respond in this format:
 CONFIDENCE: 0.XX
+LAYERS: C01,C02 (list 1-3 most relevant cognitive layers)
 CONTENT:
 Your integrated (still natural) response..."#
     )
@@ -154,6 +157,7 @@ No need to be fancy - just be real and complete.
 
 Respond in this format:
 CONFIDENCE: 0.XX
+LAYERS: C01,C02 (list 1-3 most relevant cognitive layers)
 CONTENT:
 Your final response..."#
     )
