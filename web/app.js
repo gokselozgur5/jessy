@@ -283,7 +283,7 @@ function initializeWebSocket() {
     
     // Create WebSocket client
     jessyWs = new JessyWebSocket(WS_URL, {
-        userId: null, // Anonymous for now
+        userId: 'goksel', // Göksel persona profile
         sessionId: sessionId,
         maxReconnectAttempts: 5,
         reconnectDelay: 1000,
