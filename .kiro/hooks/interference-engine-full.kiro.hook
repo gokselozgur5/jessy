@@ -6,7 +6,7 @@
   "when": {
     "type": "fileEdited",
     "patterns": [
-      ".kiro/specs/*/tasks.md"
+      ".kiro/specs/personality-rag/tasks.md"
     ]
   },
   "then": {

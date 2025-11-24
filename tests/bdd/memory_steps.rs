@@ -5,7 +5,7 @@
 //! memory manager behavior in a human-readable format.
 
 use cucumber::{given, then, when, World};
-use jessy::memory::{MmapManager, MemoryStats};
+use jessy::memory::{MmapManager, manager::MemoryStats};
 use jessy::{DimensionId, ConsciousnessError};
 use std::time::Instant;
 use std::path::PathBuf;
