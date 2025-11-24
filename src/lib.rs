@@ -73,6 +73,11 @@ pub mod config;
 pub mod conversation;
 pub mod api;
 
+// RAG system modules
+pub mod models;
+pub mod services;
+pub mod utils;
+
 use std::collections::HashMap;
 use thiserror::Error;
 
