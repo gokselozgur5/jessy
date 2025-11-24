@@ -68,8 +68,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Failed to load dimensions.json: {}", e))?;
     let registry = Arc::new(jessy::navigation::DimensionRegistry::load_dimensions(&dimensions_json)?);
     
-    let navigation = Arc::new(NavigationSystem::new(registry.clone())?);
     let memory = Arc::new(MmapManager::new(config.limits.memory_limit_mb)?);
+    let navigation = Arc::new(NavigationSystem::new(registry.clone(), memory.clone())?);
     
     // Initialize stub layers for all dimensions
     println!("   - Creating placeholder layers for all dimensions");
@@ -150,7 +150,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("🤔 JESSY is thinking...\n");
         
         let start = std::time::Instant::now();
-        match orchestrator.process(&query).await {
+        match orchestrator.process(&query, None, vec![]).await {
             Ok(response) => {
                 let duration = start.elapsed();
                 println!("🌟 JESSY:\n\n{}\n", response.final_response);
@@ -206,7 +206,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         
         let start = std::time::Instant::now();
         
-        match orchestrator.process(query).await {
+        match orchestrator.process(query, None, vec![]).await {
             Ok(response) => {
                 let duration = start.elapsed();
                 

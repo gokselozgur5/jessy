@@ -64,7 +64,7 @@ async fn main() -> std::io::Result<()> {
 
     // Initialize application state (includes context manager)
     let app_state = web::Data::new(
-        AppState::new(api_key.clone())
+        AppState::new(api_key.clone()).await
             .expect("Failed to initialize application state")
     );
 

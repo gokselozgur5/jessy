@@ -49,7 +49,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(api_key: String) -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new(api_key: String) -> Result<Self, Box<dyn std::error::Error>> {
         use crate::navigation::{NavigationSystem, DimensionRegistry};
 
         let selector = DimensionSelector::new(api_key.clone());
@@ -157,12 +157,21 @@ impl AppState {
 
         eprintln!("[AppState] ✅ EmotionalMemoryManager initialized");
 
+        // Wrap orchestrator in Arc<Mutex<>> early for RAG initialization
+        let orchestrator_arc = Arc::new(Mutex::new(orchestrator));
+
         // Initialize PersonalityRAG (optional - graceful degradation if fails)
-        // TODO: Initialize PersonalityRAG when vector store and initialization script are ready
-        // For now, set to None (will use base prompt without personality context)
-        let personality_rag = None;
-        
-        eprintln!("[AppState] ⚠️  PersonalityRAG not initialized (TODO: add initialization)");
+        eprintln!("[AppState] 🧠 Initializing PersonalityRAG...");
+        let personality_rag = match initialize_personality_rag(orchestrator_arc.clone(), &runtime_data_dir).await {
+            Ok(rag) => {
+                eprintln!("[AppState] ✅ PersonalityRAG initialized successfully");
+                Some(Arc::new(rag))
+            }
+            Err(e) => {
+                eprintln!("[AppState] ⚠️  PersonalityRAG initialization failed: {}. Continuing without personality context (graceful degradation).", e);
+                None
+            }
+        };
 
         Ok(Self {
             selector,
@@ -170,7 +179,7 @@ impl AppState {
             llm,
             store,
             conversations: Arc::new(Mutex::new(std::collections::HashMap::new())),
-            orchestrator: Arc::new(Mutex::new(orchestrator)),
+            orchestrator: orchestrator_arc,
             context_manager: Arc::new(Mutex::new(context_manager)),
             emotional_memory: Arc::new(Mutex::new(emotional_memory)),
             personality_rag,
@@ -885,4 +894,63 @@ pub async fn reset_conversations(data: web::Data<AppState>) -> impl Responder {
             "file_deleted": false,
         }))
     }
+}
+
+/// Initialize PersonalityRAG system from personality files
+///
+/// Graceful degradation: Returns error if initialization fails, allowing AppState
+/// to continue without personality context (base prompt only)
+async fn initialize_personality_rag(
+    orchestrator_arc: Arc<Mutex<ConsciousnessOrchestrator>>,
+    runtime_data_dir: &str,
+) -> Result<PersonalityRAG, Box<dyn std::error::Error>> {
+    use crate::services::vector_store::VectorStore;
+
+    // Initialize vector store (in-memory Qdrant for now)
+    let vector_store_path = format!("{}/qdrant", runtime_data_dir);
+    std::fs::create_dir_all(&vector_store_path)?;
+
+    let vector_store = Arc::new(VectorStore::new(&vector_store_path).await?);
+
+    // TODO: For now, use a placeholder orchestrator since RAG uses dummy embeddings
+    // When real embedding model is integrated, replace this with actual orchestrator reference
+    //
+    // TEMPORARY SOLUTION: Create a minimal placeholder Arc by loading minimal dimensions
+    // This works because generate_embeddings_batch() in personality_rag.rs currently uses
+    // deterministic hash-based dummy embeddings and doesn't actually call orchestrator methods
+    use crate::navigation::{NavigationSystem, DimensionRegistry};
+
+    // Create minimal valid dimension registry (1 dimension with empty layers)
+    let minimal_dimensions_json = r#"{"dimensions":[{"id":1,"name":"Placeholder"}],"layers":[]}"#;
+    let placeholder_registry = Arc::new(
+        DimensionRegistry::load_dimensions(minimal_dimensions_json)
+            .map_err(|e| format!("Failed to create placeholder registry: {}", e))?
+    );
+
+    let placeholder_memory = Arc::new(MmapManager::new(1)?);
+    let placeholder_nav = Arc::new(NavigationSystem::new(placeholder_registry, placeholder_memory.clone())?);
+    let placeholder_orch = Arc::new(ConsciousnessOrchestrator::new(
+        placeholder_nav,
+        placeholder_memory
+    ));
+
+    // Create PersonalityRAG instance
+    let rag = PersonalityRAG::new(
+        vector_store,
+        placeholder_orch,
+        5,  // top_k: retrieve 5 most relevant chunks
+    );
+
+    // Personality file paths (uploaded via SCP to /app/data/personality/)
+    let kiro_path = format!("{}/personality/realkiro.md", runtime_data_dir);
+    let goksel_path = format!("{}/personality/gokselclaude.md", runtime_data_dir);
+
+    eprintln!("[RAG Init] Reading personality files from:");
+    eprintln!("  - Kiro: {}", kiro_path);
+    eprintln!("  - Göksel: {}", goksel_path);
+
+    // Initialize RAG from files (chunks → embeddings → Qdrant)
+    rag.initialize_from_files(&kiro_path, &goksel_path).await?;
+
+    Ok(rag)
 }
