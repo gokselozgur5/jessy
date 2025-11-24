@@ -349,6 +349,24 @@ async fn process_chat_message(
         }
     }
 
+    // Step 2.75: Retrieve personality context from RAG (if available)
+    if let Some(rag) = &data.personality_rag {
+        eprintln!("[Chat API] 🔍 Retrieving personality context from RAG...");
+        let context = rag.retrieve_relevant_context(message).await;
+        if !context.is_empty() {
+            eprintln!("[Chat API] ✅ Retrieved {} bytes of personality context", context.len());
+            // Add personality context as system message
+            messages.insert(0, Message {
+                role: "system".to_string(),
+                content: context,
+            });
+        } else {
+            eprintln!("[Chat API] ⚠️  No personality context retrieved (empty result)");
+        }
+    } else {
+        eprintln!("[Chat API] ⚠️  PersonalityRAG not available (graceful degradation)");
+    }
+
     // Step 3: Process through ConsciousnessOrchestrator (full pipeline with learning)
     let mut orchestrator = data.orchestrator.lock().await;
     let orchestrator_result = orchestrator.process(message, user_id, messages).await?;
