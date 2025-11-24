@@ -16,10 +16,6 @@ primary_region = 'fra'
   source = 'data'
   destination = '/app/data'
 
-[[mounts]]
-  source = 'jessy_personality'
-  destination = '/app/personality'
-
 [http_service]
   internal_port = 8080
   force_https = true
