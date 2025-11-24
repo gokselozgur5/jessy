@@ -1,7 +1,7 @@
 # Multi-stage build for JESSY - Context-Aware AI Assistant
 # Stage 1: Build
-# Updated: 2025-01-03 - Invalidate cache for conversation fix
-FROM rust:1.83-slim as builder
+# Updated: 2025-11-24 - Use nightly Rust for qdrant-client unstable features
+FROM rustlang/rust:nightly-slim as builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
