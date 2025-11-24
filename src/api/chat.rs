@@ -9,8 +9,8 @@ use crate::{
     llm::{LLMManager, LLMConfig, Message},
     conversation::{ConversationHistory, ConversationStore, DimensionalState, MessageRole, MetadataExtractor},
     processing::ConsciousnessOrchestrator,
-    services::personality_rag::PersonalityRAG,
 };
+use crate::services::personality_rag::PersonalityRAG;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
