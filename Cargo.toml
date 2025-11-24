@@ -43,6 +43,9 @@ pyo3 = { version = "0.21", features = ["extension-module"], optional = true }
 reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1"
 
+# Vector database for RAG
+qdrant-client = "1.11"
+
 # Pattern matching
 regex = "1.10"
 
@@ -92,6 +95,10 @@ path = "src/bin/jessy-web.rs"
 [[bin]]
 name = "initialize_mmap"
 path = "scripts/initialize_mmap.rs"
+
+[[bin]]
+name = "initialize_rag"
+path = "src/bin/initialize_rag.rs"
 
 [[example]]
 name = "interference_demo"
