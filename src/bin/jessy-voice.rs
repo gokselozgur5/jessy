@@ -75,7 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
     let llm_config = LLMConfig {
         provider: "anthropic".to_string(),
-        model: "claude-3-5-sonnet-20241022".to_string(), 
+        model: "claude-3-5-sonnet-20240620".to_string(), // Stable version
         api_key,
         timeout_secs: 30,
         max_retries: 3,
