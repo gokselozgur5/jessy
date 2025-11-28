@@ -11,14 +11,16 @@ use crate::{
     processing::ConsciousnessOrchestrator,
 };
 use crate::services::personality_rag::PersonalityRAG;
+use crate::sherpa::{SherpaRecognizer, SherpaTts};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatRequest {
-    pub message: String,
+    pub message: Option<String>, // Make message optional as audio might be the primary input
     pub session_id: Option<String>,
     pub user_id: Option<String>,
+    pub audio_base64: Option<String>, // New field for base64 encoded audio
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -28,6 +30,8 @@ pub struct ChatResponse {
     pub dimensions_activated: Vec<u32>,
     pub selection_duration_ms: u64,
     pub contexts_loaded: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub audio_base64: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -45,14 +49,43 @@ pub struct AppState {
     pub orchestrator: Arc<Mutex<ConsciousnessOrchestrator>>,  // Full pipeline with 3-tier memory & learning
     pub context_manager: Arc<Mutex<crate::memory::PersistentContextManager>>,  // User context persistence
     pub emotional_memory: Arc<Mutex<crate::memory::EmotionalMemoryManager>>,  // Full conversation + emotional memory
-    pub personality_rag: Option<Arc<PersonalityRAG>>,  // Personality RAG system (optional - graceful degradation)
+    pub personality_rag: Option<Arc<PersonalityRAG>>,
+    pub stt: Option<Arc<SherpaRecognizer>>,
+    pub tts: Option<Arc<SherpaTts>>,  // Personality RAG system (optional - graceful degradation)
 }
 
 impl AppState {
     pub async fn new(api_key: String) -> Result<Self, Box<dyn std::error::Error>> {
         use crate::navigation::{NavigationSystem, DimensionRegistry};
 
+        
+        // Initialize Voice Systems (Sherpa-ONNX)
+        eprintln!("[AppState] 🎤 Initializing Voice Systems...");
+        
+        let stt = match SherpaRecognizer::new() {
+            Some(r) => {
+                eprintln!("[AppState] ✅ STT (Hearing) Online");
+                Some(Arc::new(r))
+            },
+            None => {
+                eprintln!("[AppState] ⚠️ STT Initialization Failed (Check models)");
+                None
+            }
+        };
+
+        let tts = match SherpaTts::new() {
+            Some(t) => {
+                eprintln!("[AppState] ✅ TTS (Voice) Online");
+                Some(Arc::new(t))
+            },
+            None => {
+                eprintln!("[AppState] ⚠️ TTS Initialization Failed (Check models)");
+                None
+            }
+        };
+
         let selector = DimensionSelector::new(api_key.clone());
+
         let memory_manager = Arc::new(MmapManager::new(280)?);
 
         let llm_config = LLMConfig {
@@ -182,8 +215,11 @@ impl AppState {
             orchestrator: orchestrator_arc,
             context_manager: Arc::new(Mutex::new(context_manager)),
             emotional_memory: Arc::new(Mutex::new(emotional_memory)),
-            personality_rag,
+                        personality_rag,
+            stt,
+            tts,
         })
+
     }
 }
 
@@ -194,6 +230,62 @@ pub async fn chat(
 ) -> impl Responder {
     // Get or create session ID
     let session_id = req.session_id.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+    let mut user_message = String::new();
+
+    // If audio_base64 is provided, process it with STT
+    if let Some(audio_base64) = req.audio_base64.clone() {
+        eprintln!("[Chat API] 🎤 Received audio input, decoding and transcribing...");
+        if let Some(stt) = &data.stt {
+            match base64::decode(&audio_base64) {
+                Ok(audio_bytes) => {
+                    // Create a temporary file for the audio
+                    let temp_audio_path = format!("/tmp/{}.wav", uuid::Uuid::new_v4());
+                    match tokio::fs::write(&temp_audio_path, &audio_bytes).await {
+                        Ok(_) => {
+                            match stt.decode_audio(&temp_audio_path) {
+                                Ok(transcribed_text) => {
+                                    user_message = transcribed_text;
+                                    eprintln!("[Chat API] 📝 Transcribed audio: \"{}\"", user_message);
+                                }
+                                Err(e) => {
+                                    eprintln!("[Chat API] ❌ STT transcription failed: {}", e);
+                                    let _ = tokio::fs::remove_file(&temp_audio_path).await;
+                                    return HttpResponse::InternalServerError().json(ErrorResponse {
+                                        error: format!("STT transcription failed: {}", e),
+                                    });
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("[Chat API] ❌ Failed to write temporary audio file: {}", e);
+                            return HttpResponse::InternalServerError().json(ErrorResponse {
+                                error: format!("Failed to write temporary audio file: {}", e),
+                            });
+                        }
+                    }
+                    let _ = tokio::fs::remove_file(&temp_audio_path).await;
+                }
+                Err(e) => {
+                    eprintln!("[Chat API] ❌ Base64 decode failed for audio: {}", e);
+                    return HttpResponse::InternalServerError().json(ErrorResponse {
+                        error: format!("Base64 decode failed for audio: {}", e),
+                    });
+                }
+            }
+        } else {
+            eprintln!("[Chat API] ⚠️ STT service not initialized, cannot process audio.");
+            return HttpResponse::BadRequest().json(ErrorResponse {
+                error: "STT service not available.".to_string(),
+            });
+        }
+    } else if let Some(msg) = req.message.clone() {
+        user_message = msg;
+    } else {
+        return HttpResponse::BadRequest().json(ErrorResponse {
+            error: "No message or audio provided.".to_string(),
+        });
+    }
 
     // Load conversation from emotional memory or create new
     let mut conversation = {
@@ -237,7 +329,7 @@ pub async fn chat(
     }; // Lock released here
 
     // Process message (no lock held during LLM call)
-    match process_chat_message(&req.message, req.user_id.as_deref(), &mut conversation, &data).await {
+    match process_chat_message(&user_message, req.user_id.as_deref(), &mut conversation, &data).await {
         Ok((response, dimensional_state)) => {
             // Update conversation in state (short lock)
             {
@@ -259,12 +351,30 @@ pub async fn chat(
                 eprintln!("⚠️ Failed to save emotional memory: {}", e);
             }
 
+            let mut audio_base64: Option<String> = None;
+            if let Some(tts) = &data.tts {
+                eprintln!("[Chat API] 🗣️ Generating audio response...");
+                match tts.generate_audio(&response) {
+                    Ok(audio_bytes) => {
+                        audio_base64 = Some(base64::encode(audio_bytes));
+                        eprintln!("[Chat API] ✅ Audio response generated and base64 encoded.");
+                    }
+                    Err(e) => {
+                        eprintln!("[Chat API] ❌ TTS audio generation failed: {}", e);
+                        // Continue without audio if TTS fails
+                    }
+                }
+            } else {
+                eprintln!("[Chat API] ⚠️ TTS service not initialized, skipping audio response.");
+            }
+
             HttpResponse::Ok().json(ChatResponse {
                 response,
                 session_id,
                 dimensions_activated: dimensional_state.activated_dimensions.iter().map(|d| d.0 as u32).collect(),
                 selection_duration_ms: dimensional_state.selection_duration_ms,
                 contexts_loaded: dimensional_state.contexts_loaded,
+                audio_base64,
             })
         }
         Err(e) => {

@@ -8,52 +8,29 @@ license = "AGPL-3.0"
 repository = "https://github.com/gokselozgur5/jessy"
 
 [dependencies]
-# Memory management
 memmap2 = "0.9"
 libc = "0.2"
-
-# Async runtime
 tokio = { version = "1.0", features = ["full"] }
 futures = "0.3"
-
-# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
-
-# Error handling
 thiserror = "1.0"
 anyhow = "1.0"
-
-# Collections and utilities
 hashbrown = "0.14"
 bitvec = "1.0"
 uuid = { version = "1.0", features = ["v4"] }
 rand = "0.8"
-
-# Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-appender = "0.2"
-
-# Python bindings (v0.21+ supports Python 3.13)
 pyo3 = { version = "0.21", features = ["extension-module"], optional = true }
-
-# HTTP client for LLM APIs
 reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1"
-
-# Vector database for RAG
 qdrant-client = "=1.10.0"
-
-# Pattern matching
 regex = "1.10"
-
-# Cryptography for unlock system
 sha2 = "0.10"
 base64 = "0.21"
-
-# HTTP server
 actix = "0.13"
 actix-web = "4.4"
 actix-web-actors = "4.2"
@@ -62,15 +39,10 @@ actix-files = "0.6"
 actix-cors = "0.7"
 env_logger = "0.11"
 mime = "0.3"
-
-# Time handling
 chrono = { version = "0.4", features = ["serde"] }
-
-# Numerical operations
 ndarray = "0.15"
-
-# Terminal control
 crossterm = "0.27"
+hound = "3.5"
 
 [features]
 default = []
@@ -98,72 +70,16 @@ path = "scripts/initialize_mmap.rs"
 
 [[bin]]
 name = "initialize_rag"
-path = "src/bin/initialize_rag.rs"
+path = "scripts/initialize_rag.rs"
 
 [[example]]
-name = "interference_demo"
-path = "examples/interference_demo.rs"
+name = "simple_stt"
+path = "examples/simple_stt.rs"
 
 [[example]]
-name = "learning_demo"
-path = "examples/learning_demo.rs"
+name = "simple_tts"
+path = "examples/simple_tts.rs"
 
-[[example]]
-name = "jessy_unlock_demo"
-path = "examples/jessy_unlock_demo.rs"
-
-[[example]]
-name = "jessy_unlock_v2_demo"
-path = "examples/jessy_unlock_v2_demo.rs"
-
-[[example]]
-name = "jessy_session_demo"
-path = "examples/jessy_session_demo.rs"
-
-[[example]]
-name = "jessy_interactive"
-path = "examples/jessy_interactive.rs"
-
-[[example]]
-name = "llm_dimension_selector_demo"
-path = "examples/llm_dimension_selector_demo.rs"
-
-[[example]]
-name = "llm_iterative_demo"
-path = "examples/llm_iterative_demo.rs"
-
-[[example]]
-name = "llm_chat_demo"
-path = "examples/llm_chat_demo.rs"
-
-[[example]]
-name = "llm_interactive_full"
-path = "examples/llm_interactive_full.rs"
-
-[[bench]]
-name = "memory_benchmarks"
-harness = false
-
-[[bench]]
-name = "dimension_benchmarks"
-harness = false
-
-[[bench]]
-name = "navigation_benchmarks"
-harness = false
-
-[[bench]]
-name = "interference_benchmarks"
-path = "benches/interference_benchmarks.rs"
-harness = false
-
-[dev-dependencies]
-cucumber = "0.21"
-criterion = { version = "0.5", features = ["html_reports"] }
-tempfile = "3.8"
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
+[build-dependencies]
+bindgen = "0.69"
+cc = "1.0"
