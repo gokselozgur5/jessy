@@ -45,7 +45,8 @@ impl SherpaTts {
     pub fn generate(&self, text: &str) -> Option<Vec<f32>> {
         unsafe {
             let text_c = CString::new(text).ok()?;
-            let audio = SherpaOnnxOfflineTtsGenerate(self.tts, text_c.as_ptr(), 0, 1.0);
+            // Speed 0.9 (slower) might sound less "screechy"
+            let audio = SherpaOnnxOfflineTtsGenerate(self.tts, text_c.as_ptr(), 0, 0.9);
             
             if audio.is_null() {
                 return None;

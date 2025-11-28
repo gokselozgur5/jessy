@@ -100,12 +100,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // START RECORDING
             
             // 1. Interrupt playback
-            if let Some(sink) = GLOBAL_SINK.lock().unwrap().as_ref() {
-                if !sink.empty() {
-                    sink.stop();
-                    // Re-create sink
-                    *GLOBAL_SINK.lock().unwrap() = Some(Sink::try_new(&stream_handle).unwrap());
-                    println!("🛑 Interrupted.");
+            {
+                let mut sink_lock = GLOBAL_SINK.lock().unwrap();
+                if let Some(sink) = sink_lock.as_ref() {
+                    if !sink.empty() {
+                        // Stop current sink logic (rodio sink stop pauses)
+                        // Replacing it is the surest way to clear queue
+                        *sink_lock = Some(Sink::try_new(&stream_handle).unwrap());
+                        println!("🛑 Interrupted.");
+                    }
                 }
             }
 
