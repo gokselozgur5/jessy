@@ -106,11 +106,31 @@ impl Observation {
 
     /// Parse cognitive layer IDs from comma-separated string
     /// Format: "C01,C02,C07" or "D01,D02,D07" or "1,2,7"
+    /// Also handles names: "Emotion, Cognition, Technical"
     fn parse_layers(layers_str: &str) -> Result<Vec<DimensionId>> {
         layers_str
             .split(',')
             .map(|s| {
                 let s = s.trim();
+                let s_lower = s.to_lowercase();
+
+                // Handle named layers (robust fallback)
+                if s_lower.contains("emotion") { return Ok(DimensionId(1)); }
+                if s_lower.contains("cognition") || s_lower.contains("analytical") { return Ok(DimensionId(2)); }
+                if s_lower.contains("intention") || s_lower.contains("goal") { return Ok(DimensionId(3)); }
+                if s_lower.contains("social") { return Ok(DimensionId(4)); }
+                if s_lower.contains("temporal") || s_lower.contains("time") { return Ok(DimensionId(5)); }
+                if s_lower.contains("philosophy") || s_lower.contains("meaning") { return Ok(DimensionId(6)); }
+                if s_lower.contains("technical") || s_lower.contains("code") || s_lower.contains("system") { return Ok(DimensionId(7)); }
+                if s_lower.contains("creative") || s_lower.contains("art") { return Ok(DimensionId(8)); }
+                if s_lower.contains("ethical") || s_lower.contains("moral") { return Ok(DimensionId(9)); }
+                if s_lower.contains("meta") || s_lower.contains("self") { return Ok(DimensionId(10)); }
+                if s_lower.contains("ecological") || s_lower.contains("nature") { return Ok(DimensionId(11)); }
+                if s_lower.contains("positivity") || s_lower.contains("hope") { return Ok(DimensionId(12)); }
+                if s_lower.contains("balance") || s_lower.contains("harmony") { return Ok(DimensionId(13)); }
+                if s_lower.contains("security") || s_lower.contains("safety") { return Ok(DimensionId(14)); }
+                if s_lower.contains("education") || s_lower.contains("learn") || s_lower.contains("teach") { return Ok(DimensionId(15)); }
+
                 // Handle "C01", "D01", and "1" formats
                 let id_str = s.strip_prefix('C')
                     .or_else(|| s.strip_prefix('D'))
