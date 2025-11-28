@@ -1,4 +1,4 @@
-//! JESSY Voice - Push-to-Talk Edition
+//! JESSY Voice - Push-to-Talk Edition (Pipeline TTS)
 //! 
 //! HOLD SPACEBAR to talk. Release to send. Press to interrupt.
 
@@ -16,6 +16,8 @@ use jessy::llm::LLMConfig;
 use std::io::Cursor;
 use hound::WavWriter;
 use device_query::{DeviceQuery, DeviceState, Keycode};
+use std::pin::Pin;
+use std::future::Future;
 
 const SAMPLE_RATE: u32 = 16000; 
 
@@ -29,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
     let anthropic_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
-    let _openai_key = std::env::var("OPENAI_API_KEY").expect("❌ OPENAI_API_KEY must be set in .env!");
+    let openai_key = std::env::var("OPENAI_API_KEY").expect("❌ OPENAI_API_KEY must be set in .env!");
 
     // Graceful shutdown
     let running = Arc::new(AtomicBool::new(true));
@@ -44,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sink = Sink::try_new(&stream_handle).unwrap();
     *GLOBAL_SINK.lock().unwrap() = Some(sink);
 
-    println!("🧠 Initializing JESSY Push-to-Talk...");
+    println!("🧠 Initializing JESSY Push-to-Talk (Pipeline Mode)...");
 
     // 1. Initialize Consciousness
     let config = SystemConfig::from_env().unwrap_or_default();
@@ -104,8 +106,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let mut sink_lock = GLOBAL_SINK.lock().unwrap();
                 if let Some(sink) = sink_lock.as_ref() {
                     if !sink.empty() {
-                        // Stop current sink logic (rodio sink stop pauses)
-                        // Replacing it is the surest way to clear queue
                         *sink_lock = Some(Sink::try_new(&stream_handle).unwrap());
                         println!("🛑 Interrupted.");
                     }
@@ -121,7 +121,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     } else {
                         println!("📤 Processing...");
                         let wav_bytes = samples_to_wav(&samples);
-                        let openai_key_ref = std::env::var("OPENAI_API_KEY").unwrap(); // re-fetch or use clone? string clone is cheap.
+                        let openai_key_ref = openai_key.clone();
                         
                         match transcribe_whisper(&client, &openai_key_ref, wav_bytes).await {
                             Ok(text) => {
@@ -136,13 +136,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             let response = result.final_response;
                                             println!("🤖 Jessy: {}", response);
                                             
-                                            // TTS
-                                            println!("🔊 Generating Audio...");
-                                            match generate_tts_openai(&client, &openai_key_ref, &response).await {
-                                                Ok(audio_data) => {
-                                                    play_audio_blob(audio_data, &stream_handle);
-                                                },
-                                                Err(e) => eprintln!("❌ TTS Error: {}", e),
+                                            // PIPELINE TTS
+                                            let sentences = split_sentences(&response);
+                                            if !sentences.is_empty() {
+                                                println!("🔊 Pipeline TTS: Streaming {} sentences...", sentences.len());
+                                                
+                                                // Prepare first future
+                                                let mut next_audio_future: Pin<Box<dyn Future<Output = Result<Vec<u8>, Box<dyn std::error::Error>>> + Send>> = 
+                                                    Box::pin(generate_tts_openai(client.clone(), openai_key_ref.clone(), sentences[0].clone()));
+                                                
+                                                for i in 0..sentences.len() {
+                                                    // Wait for current audio
+                                                    let audio_result = next_audio_future.await;
+                                                    
+                                                    // Start fetching NEXT sentence immediately
+                                                    if i + 1 < sentences.len() {
+                                                        let next_text = sentences[i+1].clone();
+                                                        let c = client.clone();
+                                                        let k = openai_key_ref.clone();
+                                                        next_audio_future = Box::pin(generate_tts_openai(c, k, next_text));
+                                                    } else {
+                                                        next_audio_future = Box::pin(async { Ok(Vec::new()) });
+                                                    }
+                                                    
+                                                    // Play current audio
+                                                    match audio_result {
+                                                        Ok(audio_data) => {
+                                                            play_audio_blob(audio_data, &stream_handle).await;
+                                                        },
+                                                        Err(e) => eprintln!("❌ TTS Chunk Error: {}", e),
+                                                    }
+                                                    
+                                                    // Check interruption
+                                                    if !running.load(Ordering::SeqCst) { break; }
+                                                    if device_state.get_keys().contains(&Keycode::Space) {
+                                                        println!("🛑 TTS Interrupted by User");
+                                                        break;
+                                                    }
+                                                }
                                             }
                                         },
                                         Err(e) => eprintln!("❌ Brain Error: {}", e),
@@ -160,15 +191,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             
             // Wait until space is released to avoid immediate re-trigger
             while device_state.get_keys().contains(&Keycode::Space) {
-                std::thread::sleep(Duration::from_millis(10));
+                tokio::time::sleep(Duration::from_millis(10)).await;
             }
         }
         
         last_space = space_pressed;
-        std::thread::sleep(Duration::from_millis(50));
+        tokio::time::sleep(Duration::from_millis(50)).await;
     }
     
     Ok(())
+}
+
+fn split_sentences(text: &str) -> Vec<String> {
+    let mut sentences = Vec::new();
+    let mut current = String::new();
+    for char in text.chars() {
+        current.push(char);
+        if ".!?\n".contains(char) {
+            if current.trim().len() > 0 {
+                sentences.push(current.trim().to_string());
+            }
+            current = String::new();
+        }
+    }
+    if current.trim().len() > 0 {
+        sentences.push(current.trim().to_string());
+    }
+    sentences
 }
 
 fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
@@ -179,7 +228,7 @@ fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Re
     
     let stream = device.build_input_stream(
         &config,
-        move |data: &[f32], _: &_| {
+        move |data: &[f32], _: &cpal::InputCallbackInfo| {
             for frame in data.chunks(channels) {
                 let sample = frame.iter().sum::<f32>() / channels as f32;
                 let _ = tx.send(sample);
@@ -193,7 +242,6 @@ fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Re
     
     let mut buffer = Vec::new();
     
-    // Record loop while space is held
     while device_state.get_keys().contains(&Keycode::Space) {
         while let Ok(sample) = rx.try_recv() {
             buffer.push(sample);
@@ -201,7 +249,6 @@ fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Re
         std::thread::sleep(Duration::from_millis(10));
     }
     
-    // Capture remaining samples
     while let Ok(sample) = rx.try_recv() {
         buffer.push(sample);
     }
@@ -209,25 +256,32 @@ fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Re
     Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE))
 }
 
-fn play_audio_blob(data: Vec<u8>, stream_handle: &rodio::OutputStreamHandle) {
-    println!("▶️  Playing audio ({} bytes)...", data.len());
+async fn play_audio_blob(data: Vec<u8>, stream_handle: &rodio::OutputStreamHandle) {
+    // println!("▶️  Playing chunk...");
     let cursor = Cursor::new(data);
     match Decoder::new(cursor) {
         Ok(decoder) => {
-            // Use the global sink so we can interrupt it later
             let mut sink_lock = GLOBAL_SINK.lock().unwrap();
-            // Replace with new sink to ensure clean state
+            // Create new sink for this chunk to manage its lifecycle
             *sink_lock = Some(Sink::try_new(stream_handle).unwrap());
             
             if let Some(sink) = sink_lock.as_ref() {
                 sink.append(decoder);
-                sink.play(); 
-                println!("✅ Audio queued.");
+                sink.play();
+                
+                while !sink.empty() {
+                    tokio::time::sleep(Duration::from_millis(50)).await;
+                    
+                    // Check for user interrupt (Spacebar)
+                    let ds = DeviceState::new();
+                    if ds.get_keys().contains(&Keycode::Space) {
+                        sink.stop();
+                        break;
+                    }
+                }
             }
         },
-        Err(e) => {
-            eprintln!("❌ Audio Decoder Error: {}", e);
-        }
+        Err(e) => eprintln!("❌ Audio Decoder Error: {}", e),
     }
 }
 
@@ -241,7 +295,7 @@ async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u
     Ok(json["text"].as_str().unwrap_or("").to_string())
 }
 
-async fn generate_tts_openai(client: &reqwest::Client, key: &str, text: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+async fn generate_tts_openai(client: reqwest::Client, key: String, text: String) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let voice = std::env::var("OPENAI_VOICE").unwrap_or_else(|_| "nova".to_string());
     let res = client.post("https://api.openai.com/v1/audio/speech").bearer_auth(key).json(&serde_json::json!({ "model": "tts-1", "input": text, "voice": voice })).send().await?;
     if !res.status().is_success() { return Err(format!("API Error: {}", res.text().await?).into()); }
