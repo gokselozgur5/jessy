@@ -16,8 +16,15 @@ const WS_URL = window.location.hostname === 'localhost' || window.location.hostn
 const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
 const sendButton = document.getElementById('sendButton');
+const micButton = document.getElementById('micButton');
+const audioPlayer = document.getElementById('audioPlayer');
 const chatMessages = document.getElementById('chatMessages');
 const dimensionList = document.getElementById('dimensionList');
+
+// Audio recording state
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
 
 // WebSocket client
 let jessyWs = null;
@@ -92,24 +99,94 @@ chatForm.addEventListener('submit', async (e) => {
         jessyWs.sendMessage(message);
     } else {
         // Fallback to HTTP POST
-        await sendMessageHTTP(message);
+        await sendMessageHTTP({ message });
     }
 });
 
+// Handle microphone click
+if (micButton) {
+    micButton.addEventListener('click', async () => {
+        if (!isRecording) {
+            // Start recording
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = async () => {
+                        const base64Audio = reader.result.split(',')[1]; // Remove "data:audio/wav;base64,"
+                        
+                        addMessage('user', '🎤 Audio Message sent');
+                        setInputEnabled(false);
+                        await sendMessageHTTP({ audio_base64: base64Audio });
+                    };
+                    
+                    // Stop all tracks
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                micButton.classList.add('bg-red-600', 'animate-pulse');
+                micButton.innerHTML = `
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
+                    </svg>
+                `; // Stop icon
+                messageInput.placeholder = "Recording... (Click mic to stop)";
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+
+            } catch (err) {
+                console.error("Error accessing microphone:", err);
+                alert("Could not access microphone. Please ensure you have given permission.");
+            }
+        } else {
+            // Stop recording
+            mediaRecorder.stop();
+            isRecording = false;
+            micButton.classList.remove('bg-red-600', 'animate-pulse');
+            micButton.innerHTML = `
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                </svg>
+            `; // Mic icon
+            messageInput.placeholder = "Ask me anything...";
+            // Input re-enabled by sendMessageHTTP finally block
+        }
+    });
+}
+
 // Send message via HTTP (fallback)
-async function sendMessageHTTP(message) {
+async function sendMessageHTTP(payload) {
+    const message = typeof payload === 'string' ? payload : payload.message;
+    const audioBase64 = typeof payload === 'object' ? payload.audio_base64 : null;
+    
     const loadingId = addLoadingIndicator();
 
     try {
+        const body = {
+            session_id: sessionId
+        };
+        
+        if (message) body.message = message;
+        if (audioBase64) body.audio_base64 = audioBase64;
+
         const response = await fetch(`${API_BASE_URL}/api/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                message,
-                session_id: sessionId
-            })
+            body: JSON.stringify(body)
         });
 
         if (!response.ok) {
@@ -124,6 +201,12 @@ async function sendMessageHTTP(message) {
         // Add assistant response
         addMessage('assistant', data.response);
 
+        // Play audio response if available
+        if (data.audio_base64 && audioPlayer) {
+            audioPlayer.src = `data:audio/wav;base64,${data.audio_base64}`;
+            audioPlayer.play().catch(e => console.error("Audio playback failed:", e));
+        }
+
         // Update cognitive layer state
         updateDimensionalState(data.dimensions_activated, data.selection_duration_ms, data.contexts_loaded);
 
@@ -133,7 +216,7 @@ async function sendMessageHTTP(message) {
         addMessage('error', `Error: ${error.message}`);
     } finally {
         setInputEnabled(true);
-        messageInput.focus();
+        if (!isRecording) messageInput.focus();
     }
 }
 
