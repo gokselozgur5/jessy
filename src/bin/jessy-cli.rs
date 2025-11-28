@@ -13,6 +13,9 @@ use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load environment variables from .env
+    dotenv::dotenv().ok();
+
     // Check for command-line arguments
     let args: Vec<String> = std::env::args().collect();
     let single_query = if args.len() > 1 {

@@ -13,6 +13,9 @@ use tokio::sync::Mutex;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // Load environment variables from .env
+    dotenv::dotenv().ok();
+
     // Initialize logging
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
