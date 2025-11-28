@@ -5,6 +5,7 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 use rodio::{OutputStream, Sink, buffer::SamplesBuffer};
 use jessy::sherpa::{SherpaRecognizer, SherpaTts};
@@ -21,6 +22,15 @@ const SILENCE_DURATION_MS: u128 = 1500; // 1.5 seconds of silence to stop
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
+    
+    // Graceful shutdown setup
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        println!("\n🛑 Stopping JESSY Voice...");
+        r.store(false, Ordering::SeqCst);
+    })?;
+
     println!("🧠 Initializing JESSY Voice System...");
 
     // 1. Initialize Consciousness System (Orchestrator)
@@ -29,8 +39,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Load dimensions
     let dimensions_path = if std::path::Path::new("data/cognitive_layers.json").exists() {
-        // Simple merge logic not implemented here, using simple fallback or new loader
-        // For simplicity, assume legacy dimensions.json or updated loader in lib
         "data/dimensions.json"
     } else {
         "data/dimensions.json"
@@ -41,13 +49,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         
     let registry = Arc::new(jessy::navigation::DimensionRegistry::load_dimensions(&dimensions_data)?);
     let memory = Arc::new(MmapManager::new(config.limits.memory_limit_mb)?);
-    let navigation = Arc::new(NavigationSystem::new(registry, memory.clone())?);
+    let navigation = Arc::new(NavigationSystem::new(registry.clone(), memory.clone())?);
+    
+    // Initialize stub layers for all dimensions (Fix for "Layer not found")
+    println!("   - Creating placeholder layers for all dimensions");
+    for dim_id in 1..=14 {
+        let dimension_id = jessy::DimensionId(dim_id);
+        if let Some(dim_meta) = registry.get_dimension(dimension_id) {
+            if let Some(root_layer) = registry.get_root_layer(dimension_id) {
+                let stub_content = format!(
+                    "Dimension: {}\nFrequency: {:.2} Hz\nKeywords: {}\n",
+                    dim_meta.name,
+                    root_layer.frequency,
+                    root_layer.keywords.join(", ")
+                );
+                
+                if let Err(e) = memory.create_proto_dimension(dimension_id, stub_content.into_bytes()) {
+                    eprintln!("⚠️  Warning: Failed to create stub for dimension {}: {}", dim_id, e);
+                }
+            }
+        }
+    }
     
     // LLM Setup
     let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
     let llm_config = LLMConfig {
         provider: "anthropic".to_string(),
-        model: "claude-3-5-sonnet-20241022".to_string(), // Hardcoded for voice speed preference
+        model: "claude-3-5-sonnet-20241022".to_string(), 
         api_key,
         timeout_secs: 30,
         max_retries: 3,
@@ -73,11 +101,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   (Silence for 1.5s triggers processing)");
 
     // Main Loop
-    loop {
+    while running.load(Ordering::SeqCst) {
         // 3. Record Audio
         // --------------------------------------------------------------
-        let samples = record_audio(&input_device)?;
+        let samples = record_audio(&input_device, running.clone())?;
         
+        if !running.load(Ordering::SeqCst) { break; }
         if samples.len() < (SAMPLE_RATE as usize) / 2 {
             continue; // Too short, ignore
         }
@@ -99,7 +128,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             
             // 5. Process (Brain)
             // --------------------------------------------------------------
-            // Create dummy messages history
             let messages = vec![]; 
             
             match orchestrator.process(text, Some("voice-user"), messages).await {
@@ -107,10 +135,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let response = result.final_response;
                     println!("🤖 Jessy: {}", response);
                     
+                    if !running.load(Ordering::SeqCst) { break; }
+
                     // 6. Speak (TTS)
                     // --------------------------------------------------------------
                     if let Some(audio_samples) = tts.generate(&response) {
-                        play_audio(&audio_samples);
+                        play_audio(&audio_samples, running.clone());
                     } else {
                         eprintln!("❌ TTS failed to generate audio");
                     }
@@ -125,17 +155,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         
         println!("\n🎤 Listening...");
     }
+    
+    println!("👋 Goodbye!");
+    Ok(())
 }
 
-fn record_audio(device: &cpal::Device) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
+fn record_audio(device: &cpal::Device, running: Arc<AtomicBool>) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
     let config: cpal::StreamConfig = device.default_input_config()?.into();
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
     
     let (tx, rx) = mpsc::channel();
-    
-    // We need to handle different sample formats and resampling
-    // For simplicity, we assume f32 and just decimate if sample rate is high
-    // or just capture and let STT handle it (Sherpa expects 16k, so we MUST resample if not 16k)
     
     let stream_sample_rate = config.sample_rate.0;
     let target_sample_rate = SAMPLE_RATE;
@@ -144,7 +173,6 @@ fn record_audio(device: &cpal::Device) -> Result<Vec<f32>, Box<dyn std::error::E
     let stream = device.build_input_stream(
         &config,
         move |data: &[f32], _: &_| {
-            // Simple mono mix + send
             for frame in data.chunks(channels) {
                 let sample = frame.iter().sum::<f32>() / channels as f32;
                 let _ = tx.send(sample);
@@ -158,53 +186,42 @@ fn record_audio(device: &cpal::Device) -> Result<Vec<f32>, Box<dyn std::error::E
 
     let mut buffer = Vec::new();
     let mut is_speaking = false;
-    let mut silence_start = Instant::now();
     let mut last_speech = Instant::now();
     
-    // Energy calculation window (e.g. 50ms)
     let window_size = (stream_sample_rate / 20) as usize; 
     let mut window = Vec::with_capacity(window_size);
 
-    loop {
-        // Collect samples from channel
-        // We read as much as available
+    while running.load(Ordering::SeqCst) {
         while let Ok(sample) = rx.try_recv() {
             window.push(sample);
             if window.len() >= window_size {
-                // Calculate RMS
                 let rms = (window.iter().map(|x| x * x).sum::<f32>() / window.len() as f32).sqrt();
                 
                 if rms > VAD_THRESHOLD {
                     if !is_speaking {
-                        print!("🎙️ "); // Visual indicator
+                        print!("🎙️ "); 
                         use std::io::Write;
                         std::io::stdout().flush().unwrap();
                     }
                     is_speaking = true;
                     last_speech = Instant::now();
                 } else if is_speaking {
-                    // Silence after speech
                     if last_speech.elapsed().as_millis() > SILENCE_DURATION_MS {
-                        // Stop recording
-                        // Add the window to buffer and break
                         buffer.extend_from_slice(&window);
                         return Ok(resample(&buffer, stream_sample_rate, target_sample_rate));
                     }
                 }
                 
-                // If buffer getting too huge (e.g. > 30s), force stop or ring buffer?
-                // For now, just append
                 buffer.extend_from_slice(&window);
                 window.clear();
             }
         }
-        
-        // Small sleep to prevent CPU spin
         std::thread::sleep(Duration::from_millis(10));
     }
+    
+    Ok(Vec::new())
 }
 
-// Very basic nearest-neighbor/linear resampling
 fn resample(input: &[f32], input_rate: u32, target_rate: u32) -> Vec<f32> {
     if input_rate == target_rate {
         return input.to_vec();
@@ -224,14 +241,21 @@ fn resample(input: &[f32], input_rate: u32, target_rate: u32) -> Vec<f32> {
     output
 }
 
-fn play_audio(samples: &[f32]) {
+fn play_audio(samples: &[f32], running: Arc<AtomicBool>) {
+    if !running.load(Ordering::SeqCst) { return; }
+    
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
     
-    // Sherpa TTS output is usually 22050Hz or 16000Hz mono f32
-    // We assume 22050Hz for VITS models (amy-low)
     let source = SamplesBuffer::new(1, 22050, samples);
-    
     sink.append(source);
-    sink.sleep_until_end();
+    
+    // Wait nicely checking running state
+    while !sink.empty() {
+        if !running.load(Ordering::SeqCst) {
+            sink.stop();
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
 }
