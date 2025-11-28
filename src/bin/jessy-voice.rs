@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
     let anthropic_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
-    let openai_key = std::env::var("OPENAI_API_KEY").expect("❌ OPENAI_API_KEY must be set in .env!");
+    let _openai_key = std::env::var("OPENAI_API_KEY").expect("❌ OPENAI_API_KEY must be set in .env!");
 
     // Initialize Global Audio Output
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
@@ -83,22 +83,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut last_space = false;
 
-    loop {
+    // Main loop
+    while running.load(Ordering::SeqCst) {
         let keys = device_state.get_keys();
         let space_pressed = keys.contains(&Keycode::Space);
 
         if space_pressed && !last_space {
             // START RECORDING
+            
             // 1. Interrupt playback
             if let Some(sink) = GLOBAL_SINK.lock().unwrap().as_ref() {
                 if !sink.empty() {
                     sink.stop();
-                    // Re-create sink because stop() kills it usually? 
-                    // rodio::Sink::stop() clears queue but keeps sink alive?
-                    // Actually stop() pauses. clear() clears.
-                    // rodio::Sink doesn't have clear(). stop() is deprecated/pause.
-                    // We will just create a new one next time or let it empty.
-                    // Actually, creating a new Sink is safest for instant cut.
+                    // Re-create sink
                     *GLOBAL_SINK.lock().unwrap() = Some(Sink::try_new(&stream_handle).unwrap());
                     println!("🛑 Interrupted.");
                 }
@@ -110,49 +107,50 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Ok(samples) => {
                     if samples.len() < 8000 { // < 0.5s
                         println!("⚠️ Too short.");
-                        last_space = false; // Reset state
-                        // Wait until space release to avoid loop
-                        while device_state.get_keys().contains(&Keycode::Space) {
-                            std::thread::sleep(Duration::from_millis(10));
-                        }
-                        continue;
-                    }
-
-                    println!("📤 Processing...");
-                    let wav_bytes = samples_to_wav(&samples);
-                    
-                    match transcribe_whisper(&client, &openai_key, wav_bytes).await {
-                        Ok(text) => {
-                            let text = text.trim();
-                            if !text.is_empty() {
-                                println!("🗣️  You: {}", text);
-                                
-                                // Process
-                                let messages = vec![];
-                                match orchestrator.process(text, Some("voice-user"), messages).await {
-                                    Ok(result) => {
-                                        let response = result.final_response;
-                                        println!("🤖 Jessy: {}", response);
-                                        
-                                        // TTS
-                                        match generate_tts_openai(&client, &openai_key, &response).await {
-                                            Ok(audio_data) => {
-                                                play_audio_blob(audio_data, &stream_handle);
-                                            },
-                                            Err(e) => eprintln!("❌ TTS Error: {}", e),
-                                        }
+                    } else {
+                        println!("📤 Processing...");
+                        let wav_bytes = samples_to_wav(&samples);
+                        let openai_key_ref = std::env::var("OPENAI_API_KEY").unwrap(); // re-fetch or use clone? string clone is cheap.
+                        
+                        match transcribe_whisper(&client, &openai_key_ref, wav_bytes).await {
+                            Ok(text) => {
+                                let text = text.trim();
+                                if !text.is_empty() {
+                                    println!("🗣️  You: {}", text);
+                                    
+                                    // Process
+                                    let messages = vec![];
+                                    match orchestrator.process(text, Some("voice-user"), messages).await {
+                                        Ok(result) => {
+                                            let response = result.final_response;
+                                            println!("🤖 Jessy: {}", response);
+                                            
+                                            // TTS
+                                            println!("🔊 Generating Audio...");
+                                            match generate_tts_openai(&client, &openai_key_ref, &response).await {
+                                                Ok(audio_data) => {
+                                                    play_audio_blob(audio_data, &stream_handle);
+                                                },
+                                                Err(e) => eprintln!("❌ TTS Error: {}", e),
+                                            }
+                                        },
+                                        Err(e) => eprintln!("❌ Brain Error: {}", e),
                                     }
-                                    Err(e) => eprintln!("❌ Brain Error: {}", e),
                                 }
-                            }
-                        },
-                        Err(e) => eprintln!("❌ STT Error: {}", e),
+                            },
+                            Err(e) => eprintln!("❌ STT Error: {}", e),
+                        }
                     }
                 },
                 Err(e) => eprintln!("❌ Mic Error: {}", e),
             }
             
             println!("\n🔘 HOLD SPACEBAR to talk...");
+            
+            // Wait until space is released to avoid immediate re-trigger
+            while device_state.get_keys().contains(&Keycode::Space) {
+                std::thread::sleep(Duration::from_millis(10));
+            }
         }
         
         last_space = space_pressed;
@@ -199,25 +197,26 @@ fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Re
 }
 
 fn play_audio_blob(data: Vec<u8>, stream_handle: &rodio::OutputStreamHandle) {
+    println!("▶️  Playing audio ({} bytes)...", data.len());
     let cursor = Cursor::new(data);
-    if let Ok(decoder) = Decoder::new(cursor) {
-        // Use the global sink so we can interrupt it later
-        let mut sink_lock = GLOBAL_SINK.lock().unwrap();
-        // Replace with new sink to ensure clean state
-        *sink_lock = Some(Sink::try_new(stream_handle).unwrap());
-        
-        if let Some(sink) = sink_lock.as_ref() {
-            sink.append(decoder);
-            sink.play(); // Ensure it plays
-            // We DON'T sleep here. We return to main loop so we can check for Spacebar interrupt.
+    match Decoder::new(cursor) {
+        Ok(decoder) => {
+            // Use the global sink so we can interrupt it later
+            let mut sink_lock = GLOBAL_SINK.lock().unwrap();
+            // Replace with new sink to ensure clean state
+            *sink_lock = Some(Sink::try_new(stream_handle).unwrap());
+            
+            if let Some(sink) = sink_lock.as_ref() {
+                sink.append(decoder);
+                sink.play(); 
+                println!("✅ Audio queued.");
+            }
+        },
+        Err(e) => {
+            eprintln!("❌ Audio Decoder Error: {}", e);
         }
     }
 }
-
-// ... (Reuse existing helpers: transcribe_whisper, generate_tts_openai, samples_to_wav, resample) ...
-// I will include them to be safe as replace replaces the whole file content if I use write_file or big match
-// Since I'm using `replace` with `new_string` and `old_string`, I need to be careful.
-// I'll use `write_file` to overwrite the whole file cleanly with the new logic.
 
 async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u8>) -> Result<String, Box<dyn std::error::Error>> {
     use reqwest::multipart;
