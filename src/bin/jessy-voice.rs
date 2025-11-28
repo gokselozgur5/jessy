@@ -162,12 +162,14 @@ async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u
 
 // OpenAI TTS API
 async fn generate_tts_openai(client: &reqwest::Client, key: &str, text: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let voice = std::env::var("OPENAI_VOICE").unwrap_or_else(|_| "nova".to_string());
+    
     let res = client.post("https://api.openai.com/v1/audio/speech")
         .bearer_auth(key)
         .json(&serde_json::json!({
             "model": "tts-1",
             "input": text,
-            "voice": "nova" // 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'
+            "voice": voice
         }))
         .send()
         .await?;
@@ -201,11 +203,12 @@ fn samples_to_wav(samples: &[f32]) -> Vec<u8> {
 }
 
 fn record_audio(device: &cpal::Device, running: Arc<AtomicBool>) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
-    // ... Same VAD logic as before, simplified ...
     let config: cpal::StreamConfig = device.default_input_config()?.into();
     let (tx, rx) = mpsc::channel();
     
+    let stream_sample_rate = config.sample_rate.0;
     let channels = config.channels as usize;
+    
     let stream = device.build_input_stream(
         &config,
         move |data: &[f32], _: &_| {
@@ -223,13 +226,13 @@ fn record_audio(device: &cpal::Device, running: Arc<AtomicBool>) -> Result<Vec<f
     let mut buffer = Vec::new();
     let mut is_speaking = false;
     let mut last_speech = Instant::now();
-    let window_size = (config.sample_rate.0 as usize / 20); // 50ms
-    let mut window = Vec::with_capacity(window_size);
+    let window_size = (stream_sample_rate / 20); // 50ms
+    let mut window = Vec::with_capacity(window_size as usize);
     
     while running.load(Ordering::SeqCst) {
         while let Ok(sample) = rx.try_recv() {
             window.push(sample);
-            if window.len() >= window_size {
+            if window.len() >= window_size as usize {
                 let rms = (window.iter().map(|x| x * x).sum::<f32>() / window.len() as f32).sqrt();
                 
                 if rms > VAD_THRESHOLD {
@@ -243,7 +246,7 @@ fn record_audio(device: &cpal::Device, running: Arc<AtomicBool>) -> Result<Vec<f
                 } else if is_speaking {
                     if last_speech.elapsed().as_millis() > SILENCE_DURATION_MS {
                         buffer.extend_from_slice(&window);
-                        return Ok(buffer); // Raw samples (device rate), Whisper handles most rates
+                        return Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE)); // Resample before returning
                     }
                 }
                 buffer.extend_from_slice(&window);
@@ -251,12 +254,36 @@ fn record_audio(device: &cpal::Device, running: Arc<AtomicBool>) -> Result<Vec<f
             }
         }
         // Cap max duration to avoid memory boom (e.g. 30s)
-        if buffer.len() > 48000 * 30 { break; } 
+        if buffer.len() > (SAMPLE_RATE as usize) * 30 { 
+            eprintln!("\n⚠️ Max recording duration reached (30s). Processing audio.");
+            return Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE)); // Resample and return
+        }
         std::thread::sleep(Duration::from_millis(10));
     }
-    Ok(buffer)
+    
+    // If loop ends by Ctrl+C, process whatever was recorded
+    Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE)) // Resample and return
 }
 
+// Basic nearest-neighbor/linear resampling
+fn resample(input: &[f32], input_rate: u32, target_rate: u32) -> Vec<f32> {
+    if input_rate == target_rate {
+        return input.to_vec();
+    }
+    
+    let ratio = input_rate as f32 / target_rate as f32;
+    let target_len = (input.len() as f32 / ratio) as usize;
+    let mut output = Vec::with_capacity(target_len);
+    
+    for i in 0..target_len {
+        let index = (i as f32 * ratio) as usize;
+        if index < input.len() {
+            output.push(input[index]);
+        }
+    }
+    
+    output
+}
 fn play_audio_stream(data: Vec<u8>, running: Arc<AtomicBool>) {
     if !running.load(Ordering::SeqCst) { return; }
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
@@ -267,7 +294,7 @@ fn play_audio_stream(data: Vec<u8>, running: Arc<AtomicBool>) {
         sink.append(decoder);
         while !sink.empty() {
             if !running.load(Ordering::SeqCst) { sink.stop(); break; }
-            std::thread::sleep(Duration::from_millis(100));
+            std::thread::sleep(Duration::from_millis(10)); // Check more frequently
         }
     } else {
         eprintln!("Failed to decode MP3 data from OpenAI");
