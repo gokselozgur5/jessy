@@ -11,6 +11,8 @@ repository = "https://github.com/gokselozgur5/jessy"
 memmap2 = "0.9"
 libc = "0.2"
 dotenv = "0.15"
+cpal = "0.15"
+rodio = "0.17"
 tokio = { version = "1.0", features = ["full"] }
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
