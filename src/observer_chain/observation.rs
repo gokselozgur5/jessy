@@ -111,12 +111,13 @@ impl Observation {
         layers_str
             .split(',')
             .map(|s| {
-                let s = s.trim();
-                let s_lower = s.to_lowercase();
+                // Clean up string: remove parentheses and content within
+                let s_clean = s.split('(').next().unwrap_or(s).trim();
+                let s_lower = s.to_lowercase(); // Use original for name matching just in case, or s_clean? s_clean is safer for "C02 (Ling)" -> "C02"
 
                 // Handle named layers (robust fallback)
                 if s_lower.contains("emotion") { return Ok(DimensionId(1)); }
-                if s_lower.contains("cognition") || s_lower.contains("analytical") { return Ok(DimensionId(2)); }
+                if s_lower.contains("cognition") || s_lower.contains("analytical") || s_lower.contains("linguistic") || s_lower.contains("language") { return Ok(DimensionId(2)); }
                 if s_lower.contains("intention") || s_lower.contains("goal") { return Ok(DimensionId(3)); }
                 if s_lower.contains("social") { return Ok(DimensionId(4)); }
                 if s_lower.contains("temporal") || s_lower.contains("time") { return Ok(DimensionId(5)); }
@@ -132,9 +133,9 @@ impl Observation {
                 if s_lower.contains("education") || s_lower.contains("learn") || s_lower.contains("teach") { return Ok(DimensionId(15)); }
 
                 // Handle "C01", "D01", and "1" formats
-                let id_str = s.strip_prefix('C')
-                    .or_else(|| s.strip_prefix('D'))
-                    .unwrap_or(s);
+                let id_str = s_clean.strip_prefix('C')
+                    .or_else(|| s_clean.strip_prefix('D'))
+                    .unwrap_or(s_clean);
                 id_str
                     .parse::<u8>()
                     .map(DimensionId)
