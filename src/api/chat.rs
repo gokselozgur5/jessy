@@ -239,32 +239,38 @@ pub async fn chat(
         if let Some(stt) = &data.stt {
             match base64::decode(&audio_base64) {
                 Ok(audio_bytes) => {
-                    // Create a temporary file for the audio
-                    let temp_audio_path = format!("/tmp/{}.wav", uuid::Uuid::new_v4());
-                    match tokio::fs::write(&temp_audio_path, &audio_bytes).await {
-                        Ok(_) => {
-                            match stt.decode_audio(&temp_audio_path) {
-                                Ok(transcribed_text) => {
-                                    user_message = transcribed_text;
-                                    eprintln!("[Chat API] 📝 Transcribed audio: \"{}\"", user_message);
-                                }
-                                Err(e) => {
-                                    eprintln!("[Chat API] ❌ STT transcription failed: {}", e);
-                                    let _ = tokio::fs::remove_file(&temp_audio_path).await;
-                                    return HttpResponse::InternalServerError().json(ErrorResponse {
-                                        error: format!("STT transcription failed: {}", e),
-                                    });
+                    // Process audio directly from memory
+                    let cursor = std::io::Cursor::new(audio_bytes);
+                    match hound::WavReader::new(cursor) {
+                        Ok(mut reader) => {
+                            // Convert samples to f32 and normalize
+                            // Assuming 16-bit PCM input for now. TODO: Support other formats
+                            let samples: Vec<f32> = reader.samples::<i16>()
+                                .filter_map(Result::ok)
+                                .map(|s| s as f32 / 32768.0)
+                                .collect();
+                            
+                            if samples.is_empty() {
+                                eprintln!("[Chat API] ⚠️ Audio file contained no samples.");
+                            } else {
+                                match stt.decode(&samples) {
+                                    Some(transcribed_text) => {
+                                        user_message = transcribed_text;
+                                        eprintln!("[Chat API] 📝 Transcribed audio: \"{}\"", user_message);
+                                    }
+                                    None => {
+                                        eprintln!("[Chat API] ⚠️ STT returned no text.");
+                                    }
                                 }
                             }
                         }
                         Err(e) => {
-                            eprintln!("[Chat API] ❌ Failed to write temporary audio file: {}", e);
-                            return HttpResponse::InternalServerError().json(ErrorResponse {
-                                error: format!("Failed to write temporary audio file: {}", e),
+                             eprintln!("[Chat API] ❌ Failed to parse WAV: {}", e);
+                             return HttpResponse::BadRequest().json(ErrorResponse {
+                                error: format!("Invalid WAV audio: {}", e),
                             });
                         }
                     }
-                    let _ = tokio::fs::remove_file(&temp_audio_path).await;
                 }
                 Err(e) => {
                     eprintln!("[Chat API] ❌ Base64 decode failed for audio: {}", e);
@@ -354,14 +360,38 @@ pub async fn chat(
             let mut audio_base64: Option<String> = None;
             if let Some(tts) = &data.tts {
                 eprintln!("[Chat API] 🗣️ Generating audio response...");
-                match tts.generate_audio(&response) {
-                    Ok(audio_bytes) => {
-                        audio_base64 = Some(base64::encode(audio_bytes));
-                        eprintln!("[Chat API] ✅ Audio response generated and base64 encoded.");
+                match tts.generate(&response) {
+                    Some(samples) => {
+                        // Encode raw samples to WAV container
+                        let spec = hound::WavSpec {
+                            channels: 1,
+                            sample_rate: 22050, // Standard for many VITS models
+                            bits_per_sample: 32,
+                            sample_format: hound::SampleFormat::Float,
+                        };
+                        
+                        let mut buffer = std::io::Cursor::new(Vec::new());
+                        let mut success = false;
+                        
+                        if let Ok(mut writer) = hound::WavWriter::new(&mut buffer, spec) {
+                             for sample in samples {
+                                 if writer.write_sample(sample).is_err() {
+                                     eprintln!("[Chat API] ❌ Failed to write sample to WAV buffer");
+                                     break;
+                                 }
+                             }
+                             if writer.finalize().is_ok() {
+                                 success = true;
+                             }
+                        }
+                        
+                        if success {
+                             audio_base64 = Some(base64::encode(buffer.into_inner()));
+                             eprintln!("[Chat API] ✅ Audio response generated and base64 encoded.");
+                        }
                     }
-                    Err(e) => {
-                        eprintln!("[Chat API] ❌ TTS audio generation failed: {}", e);
-                        // Continue without audio if TTS fails
+                    None => {
+                        eprintln!("[Chat API] ❌ TTS failed to generate audio.");
                     }
                 }
             } else {

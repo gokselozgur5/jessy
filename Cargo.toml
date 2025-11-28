@@ -68,10 +68,6 @@ path = "src/bin/jessy-web.rs"
 name = "initialize_mmap"
 path = "scripts/initialize_mmap.rs"
 
-[[bin]]
-name = "initialize_rag"
-path = "scripts/initialize_rag.rs"
-
 [[example]]
 name = "simple_stt"
 path = "examples/simple_stt.rs"

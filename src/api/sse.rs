@@ -40,8 +40,10 @@ pub async fn chat_stream(
     let api_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
 
     actix_web::rt::spawn(async move {
-        if let Err(e) = process_streaming_chat(&message, &session_id, &api_key, tx).await {
-            eprintln!("Error processing streaming chat: {}", e);
+        // Process streaming chat
+        let msg_str = message.as_deref().unwrap_or("");
+        if let Err(e) = process_streaming_chat(msg_str, &session_id, &api_key, tx).await {
+            eprintln!("SSE Error: {}", e);
         }
     });
 
