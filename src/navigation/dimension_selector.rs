@@ -10,6 +10,7 @@ use super::NavigationError;
 use serde::{Deserialize, Serialize};
 
 /// Cognitive layer selector using LLM for intent-based selection
+#[derive(Clone)]
 pub struct DimensionSelector {
     api_key: String,
     model: String,
