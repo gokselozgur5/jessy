@@ -14,6 +14,7 @@ dotenv = "0.15"
 cpal = "0.15"
 rodio = "0.17"
 ctrlc = "3.4"
+device_query = "2.1.0"
 tokio = { version = "1.0", features = ["full"] }
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
@@ -29,7 +30,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-appender = "0.2"
 pyo3 = { version = "0.21", features = ["extension-module"], optional = true }
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", features = ["json", "multipart"] }
 async-trait = "0.1"
 qdrant-client = "=1.10.0"
 regex = "1.10"

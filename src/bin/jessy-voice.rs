@@ -1,8 +1,6 @@
-//! JESSY Voice - Cloud Hybrid Edition
+//! JESSY Voice - Push-to-Talk Edition
 //! 
-//! STT: OpenAI Whisper (Multi-lingual, Mix)
-//! Brain: Anthropic Claude (Fast)
-//! TTS: OpenAI TTS (High Quality)
+//! HOLD SPACEBAR to talk. Release to send. Press to interrupt.
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::sync::mpsc;
@@ -17,33 +15,31 @@ use jessy::memory::MmapManager;
 use jessy::llm::LLMConfig;
 use std::io::Cursor;
 use hound::WavWriter;
+use device_query::{DeviceQuery, DeviceState, Keycode};
 
-const SAMPLE_RATE: u32 = 16000; // Whisper handles 16k well
-const VAD_THRESHOLD: f32 = 0.01; // More sensitive (was 0.015)
-const SILENCE_DURATION_MS: u128 = 2500; // Allow 2.5s pause (was 1.5s) 
+const SAMPLE_RATE: u32 = 16000; 
+
+// Global sink for interruption
+lazy_static::lazy_static! {
+    static ref GLOBAL_SINK: Arc<Mutex<Option<Sink>>> = Arc::new(Mutex::new(None));
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
-    // Check keys
     let anthropic_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
-    let openai_key = std::env::var("OPENAI_API_KEY").expect("❌ OPENAI_API_KEY must be set in .env for high-quality voice!");
+    let openai_key = std::env::var("OPENAI_API_KEY").expect("❌ OPENAI_API_KEY must be set in .env!");
 
-    // Graceful shutdown
-    let running = Arc::new(AtomicBool::new(true));
-    let r = running.clone();
-    ctrlc::set_handler(move || {
-        println!("\n🛑 Stopping JESSY Voice...");
-        r.store(false, Ordering::SeqCst);
-    })?;
+    // Initialize Global Audio Output
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let sink = Sink::try_new(&stream_handle).unwrap();
+    *GLOBAL_SINK.lock().unwrap() = Some(sink);
 
-    println!("🧠 Initializing JESSY Voice System (Cloud Edition)...");
+    println!("🧠 Initializing JESSY Push-to-Talk...");
 
     // 1. Initialize Consciousness
     let config = SystemConfig::from_env().unwrap_or_default();
-    
-    // Load dimensions stub logic
     let dimensions_data = include_str!("../../data/dimensions.json").to_string();
     let registry = Arc::new(jessy::navigation::DimensionRegistry::load_dimensions(&dimensions_data)?);
     let memory = Arc::new(MmapManager::new(config.limits.memory_limit_mb)?);
@@ -74,138 +70,99 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         llm_config
     )?;
 
-    // Audio Setup
+    // Audio Input Setup
     println!("🔊 Initializing Audio Device...");
     let host = cpal::default_host();
     let input_device = host.default_input_device().expect("No input device found");
     let client = reqwest::Client::new();
+    let device_state = DeviceState::new();
 
-    println!("✅ JESSY Cloud Voice is ready! (Turkish/English Mix Supported)");
-    println!("   (Silence for 1.5s triggers processing)");
+    println!("\n✅ JESSY PTT Ready!");
+    println!("🔘 HOLD SPACEBAR to talk.");
+    println!("   (Release to send. Press to interrupt.)\n");
 
-    while running.load(Ordering::SeqCst) {
-        // 2. Record
-        let samples = record_audio(&input_device, running.clone())?;
-        if !running.load(Ordering::SeqCst) { break; }
-        if samples.is_empty() { continue; }
+    let mut last_space = false;
 
-        // 3. Transcribe (Whisper)
-        print!("👂 Listening (Whisper)... "); 
-        use std::io::Write;
-        std::io::stdout().flush()?;
-        
-        // Convert to WAV bytes
-        let wav_bytes = samples_to_wav(&samples);
-        
-        match transcribe_whisper(&client, &openai_key, wav_bytes).await {
-            Ok(text) => {
-                if text.trim().is_empty() { continue; }
-                println!("\n🗣️  You: {}", text);
-                
-                // 4. Process
-                let messages = vec![]; 
-                match orchestrator.process(&text, Some("voice-user"), messages).await {
-                    Ok(result) => {
-                        let response = result.final_response;
-                        println!("🤖 Jessy: {}", response);
-                        
-                        if !running.load(Ordering::SeqCst) { break; }
+    loop {
+        let keys = device_state.get_keys();
+        let space_pressed = keys.contains(&Keycode::Space);
 
-                        // 5. Speak (OpenAI TTS)
-                        print!("🔊 Generating HD Audio... ");
-                        std::io::stdout().flush()?;
-                        match generate_tts_openai(&client, &openai_key, &response).await {
-                            Ok(audio_data) => {
-                                println!("Done.");
-                                play_audio_stream(audio_data, running.clone());
-                            },
-                            Err(e) => eprintln!("\n❌ TTS Error: {}", e),
-                        }
-                    }
-                    Err(e) => eprintln!("❌ Processing Error: {}", e),
+        if space_pressed && !last_space {
+            // START RECORDING
+            // 1. Interrupt playback
+            if let Some(sink) = GLOBAL_SINK.lock().unwrap().as_ref() {
+                if !sink.empty() {
+                    sink.stop();
+                    // Re-create sink because stop() kills it usually? 
+                    // rodio::Sink::stop() clears queue but keeps sink alive?
+                    // Actually stop() pauses. clear() clears.
+                    // rodio::Sink doesn't have clear(). stop() is deprecated/pause.
+                    // We will just create a new one next time or let it empty.
+                    // Actually, creating a new Sink is safest for instant cut.
+                    *GLOBAL_SINK.lock().unwrap() = Some(Sink::try_new(&stream_handle).unwrap());
+                    println!("🛑 Interrupted.");
                 }
-            },
-            Err(e) => eprintln!("\n❌ Transcription Error: {}", e),
+            }
+
+            println!("🔴 Recording... (Release SPACE to send)");
+            
+            match record_while_pressed(&input_device, &device_state) {
+                Ok(samples) => {
+                    if samples.len() < 8000 { // < 0.5s
+                        println!("⚠️ Too short.");
+                        last_space = false; // Reset state
+                        // Wait until space release to avoid loop
+                        while device_state.get_keys().contains(&Keycode::Space) {
+                            std::thread::sleep(Duration::from_millis(10));
+                        }
+                        continue;
+                    }
+
+                    println!("📤 Processing...");
+                    let wav_bytes = samples_to_wav(&samples);
+                    
+                    match transcribe_whisper(&client, &openai_key, wav_bytes).await {
+                        Ok(text) => {
+                            let text = text.trim();
+                            if !text.is_empty() {
+                                println!("🗣️  You: {}", text);
+                                
+                                // Process
+                                let messages = vec![];
+                                match orchestrator.process(text, Some("voice-user"), messages).await {
+                                    Ok(result) => {
+                                        let response = result.final_response;
+                                        println!("🤖 Jessy: {}", response);
+                                        
+                                        // TTS
+                                        match generate_tts_openai(&client, &openai_key, &response).await {
+                                            Ok(audio_data) => {
+                                                play_audio_blob(audio_data, &stream_handle);
+                                            },
+                                            Err(e) => eprintln!("❌ TTS Error: {}", e),
+                                        }
+                                    }
+                                    Err(e) => eprintln!("❌ Brain Error: {}", e),
+                                }
+                            }
+                        },
+                        Err(e) => eprintln!("❌ STT Error: {}", e),
+                    }
+                },
+                Err(e) => eprintln!("❌ Mic Error: {}", e),
+            }
+            
+            println!("\n🔘 HOLD SPACEBAR to talk...");
         }
         
-        println!("\n🎤 Ready...");
+        last_space = space_pressed;
+        std::thread::sleep(Duration::from_millis(50));
     }
-    
-    Ok(())
 }
 
-// OpenAI Whisper API
-async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u8>) -> Result<String, Box<dyn std::error::Error>> {
-    use reqwest::multipart;
-    
-    let part = multipart::Part::bytes(wav_data)
-        .file_name("audio.wav")
-        .mime_str("audio/wav")?;
-        
-    let form = multipart::Form::new()
-        .part("file", part)
-        .text("model", "whisper-1");
-
-    let res = client.post("https://api.openai.com/v1/audio/transcriptions")
-        .bearer_auth(key)
-        .multipart(form)
-        .send()
-        .await?;
-
-    if !res.status().is_success() {
-        return Err(format!("API Error: {}", res.text().await?).into());
-    }
-
-    let json: serde_json::Value = res.json().await?;
-    Ok(json["text"].as_str().unwrap_or("").to_string())
-}
-
-// OpenAI TTS API
-async fn generate_tts_openai(client: &reqwest::Client, key: &str, text: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let voice = std::env::var("OPENAI_VOICE").unwrap_or_else(|_| "nova".to_string());
-    
-    let res = client.post("https://api.openai.com/v1/audio/speech")
-        .bearer_auth(key)
-        .json(&serde_json::json!({
-            "model": "tts-1",
-            "input": text,
-            "voice": voice
-        }))
-        .send()
-        .await?;
-
-    if !res.status().is_success() {
-        return Err(format!("API Error: {}", res.text().await?).into());
-    }
-
-    let bytes = res.bytes().await?;
-    Ok(bytes.to_vec())
-}
-
-fn samples_to_wav(samples: &[f32]) -> Vec<u8> {
-    let spec = hound::WavSpec {
-        channels: 1,
-        sample_rate: SAMPLE_RATE,
-        bits_per_sample: 16,
-        sample_format: hound::SampleFormat::Int,
-    };
-    
-    let mut cursor = Cursor::new(Vec::new());
-    {
-        let mut writer = WavWriter::new(&mut cursor, spec).unwrap();
-        for &sample in samples {
-            let s = (sample * 32767.0) as i16;
-            writer.write_sample(s).unwrap();
-        }
-        writer.finalize().unwrap();
-    }
-    cursor.into_inner()
-}
-
-fn record_audio(device: &cpal::Device, running: Arc<AtomicBool>) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
+fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
     let config: cpal::StreamConfig = device.default_input_config()?.into();
     let (tx, rx) = mpsc::channel();
-    
     let stream_sample_rate = config.sample_rate.0;
     let channels = config.channels as usize;
     
@@ -224,79 +181,81 @@ fn record_audio(device: &cpal::Device, running: Arc<AtomicBool>) -> Result<Vec<f
     stream.play()?;
     
     let mut buffer = Vec::new();
-    let mut is_speaking = false;
-    let mut last_speech = Instant::now();
-    let window_size = (stream_sample_rate / 20); // 50ms
-    let mut window = Vec::with_capacity(window_size as usize);
     
-    while running.load(Ordering::SeqCst) {
+    // Record loop while space is held
+    while device_state.get_keys().contains(&Keycode::Space) {
         while let Ok(sample) = rx.try_recv() {
-            window.push(sample);
-            if window.len() >= window_size as usize {
-                let rms = (window.iter().map(|x| x * x).sum::<f32>() / window.len() as f32).sqrt();
-                
-                if rms > VAD_THRESHOLD {
-                    if !is_speaking {
-                        print!("🎙️ ");
-                        use std::io::Write;
-                        std::io::stdout().flush()?;
-                        is_speaking = true;
-                    }
-                    last_speech = Instant::now();
-                } else if is_speaking {
-                    if last_speech.elapsed().as_millis() > SILENCE_DURATION_MS {
-                        buffer.extend_from_slice(&window);
-                        return Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE)); // Resample before returning
-                    }
-                }
-                buffer.extend_from_slice(&window);
-                window.clear();
-            }
-        }
-        // Cap max duration to avoid memory boom (e.g. 30s)
-        if buffer.len() > (SAMPLE_RATE as usize) * 30 { 
-            eprintln!("\n⚠️ Max recording duration reached (30s). Processing audio.");
-            return Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE)); // Resample and return
+            buffer.push(sample);
         }
         std::thread::sleep(Duration::from_millis(10));
     }
     
-    // If loop ends by Ctrl+C, process whatever was recorded
-    Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE)) // Resample and return
-}
-
-// Basic nearest-neighbor/linear resampling
-fn resample(input: &[f32], input_rate: u32, target_rate: u32) -> Vec<f32> {
-    if input_rate == target_rate {
-        return input.to_vec();
+    // Capture remaining samples
+    while let Ok(sample) = rx.try_recv() {
+        buffer.push(sample);
     }
     
+    Ok(resample(&buffer, stream_sample_rate, SAMPLE_RATE))
+}
+
+fn play_audio_blob(data: Vec<u8>, stream_handle: &rodio::OutputStreamHandle) {
+    let cursor = Cursor::new(data);
+    if let Ok(decoder) = Decoder::new(cursor) {
+        // Use the global sink so we can interrupt it later
+        let mut sink_lock = GLOBAL_SINK.lock().unwrap();
+        // Replace with new sink to ensure clean state
+        *sink_lock = Some(Sink::try_new(stream_handle).unwrap());
+        
+        if let Some(sink) = sink_lock.as_ref() {
+            sink.append(decoder);
+            sink.play(); // Ensure it plays
+            // We DON'T sleep here. We return to main loop so we can check for Spacebar interrupt.
+        }
+    }
+}
+
+// ... (Reuse existing helpers: transcribe_whisper, generate_tts_openai, samples_to_wav, resample) ...
+// I will include them to be safe as replace replaces the whole file content if I use write_file or big match
+// Since I'm using `replace` with `new_string` and `old_string`, I need to be careful.
+// I'll use `write_file` to overwrite the whole file cleanly with the new logic.
+
+async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u8>) -> Result<String, Box<dyn std::error::Error>> {
+    use reqwest::multipart;
+    let part = multipart::Part::bytes(wav_data).file_name("audio.wav").mime_str("audio/wav")?;
+    let form = multipart::Form::new().part("file", part).text("model", "whisper-1");
+    let res = client.post("https://api.openai.com/v1/audio/transcriptions").bearer_auth(key).multipart(form).send().await?;
+    if !res.status().is_success() { return Err(format!("API Error: {}", res.text().await?).into()); }
+    let json: serde_json::Value = res.json().await?;
+    Ok(json["text"].as_str().unwrap_or("").to_string())
+}
+
+async fn generate_tts_openai(client: &reqwest::Client, key: &str, text: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let voice = std::env::var("OPENAI_VOICE").unwrap_or_else(|_| "nova".to_string());
+    let res = client.post("https://api.openai.com/v1/audio/speech").bearer_auth(key).json(&serde_json::json!({ "model": "tts-1", "input": text, "voice": voice })).send().await?;
+    if !res.status().is_success() { return Err(format!("API Error: {}", res.text().await?).into()); }
+    let bytes = res.bytes().await?;
+    Ok(bytes.to_vec())
+}
+
+fn samples_to_wav(samples: &[f32]) -> Vec<u8> {
+    let spec = hound::WavSpec { channels: 1, sample_rate: SAMPLE_RATE, bits_per_sample: 16, sample_format: hound::SampleFormat::Int };
+    let mut cursor = Cursor::new(Vec::new());
+    {
+        let mut writer = WavWriter::new(&mut cursor, spec).unwrap();
+        for &sample in samples { let s = (sample * 32767.0) as i16; writer.write_sample(s).unwrap(); } 
+        writer.finalize().unwrap();
+    }
+    cursor.into_inner()
+}
+
+fn resample(input: &[f32], input_rate: u32, target_rate: u32) -> Vec<f32> {
+    if input_rate == target_rate { return input.to_vec(); }
     let ratio = input_rate as f32 / target_rate as f32;
     let target_len = (input.len() as f32 / ratio) as usize;
     let mut output = Vec::with_capacity(target_len);
-    
     for i in 0..target_len {
         let index = (i as f32 * ratio) as usize;
-        if index < input.len() {
-            output.push(input[index]);
-        }
+        if index < input.len() { output.push(input[index]); }
     }
-    
     output
-}
-fn play_audio_stream(data: Vec<u8>, running: Arc<AtomicBool>) {
-    if !running.load(Ordering::SeqCst) { return; }
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let sink = Sink::try_new(&stream_handle).unwrap();
-    
-    let cursor = Cursor::new(data);
-    if let Ok(decoder) = Decoder::new(cursor) {
-        sink.append(decoder);
-        while !sink.empty() {
-            if !running.load(Ordering::SeqCst) { sink.stop(); break; }
-            std::thread::sleep(Duration::from_millis(10)); // Check more frequently
-        }
-    } else {
-        eprintln!("Failed to decode MP3 data from OpenAI");
-    }
 }
