@@ -72,6 +72,7 @@ pub mod llm;
 pub mod config;
 pub mod conversation;
 pub mod api;
+pub mod sherpa; // Add Sherpa ONNX module here
 
 // RAG system modules
 pub mod models;
