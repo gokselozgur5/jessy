@@ -124,7 +124,7 @@ impl Observation {
                 if s_lower.contains("technical") || s_lower.contains("code") || s_lower.contains("system") { return Ok(DimensionId(7)); }
                 if s_lower.contains("creative") || s_lower.contains("art") { return Ok(DimensionId(8)); }
                 if s_lower.contains("ethical") || s_lower.contains("moral") { return Ok(DimensionId(9)); }
-                if s_lower.contains("meta") || s_lower.contains("self") { return Ok(DimensionId(10)); }
+                if s_lower.contains("meta") || s_lower.contains("self") || s_lower.contains("authenticity") { return Ok(DimensionId(10)); }
                 if s_lower.contains("ecological") || s_lower.contains("nature") { return Ok(DimensionId(11)); }
                 if s_lower.contains("positivity") || s_lower.contains("hope") { return Ok(DimensionId(12)); }
                 if s_lower.contains("balance") || s_lower.contains("harmony") { return Ok(DimensionId(13)); }

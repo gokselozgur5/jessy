@@ -19,8 +19,8 @@ use std::io::Cursor;
 use hound::WavWriter;
 
 const SAMPLE_RATE: u32 = 16000; // Whisper handles 16k well
-const VAD_THRESHOLD: f32 = 0.015; 
-const SILENCE_DURATION_MS: u128 = 1500; 
+const VAD_THRESHOLD: f32 = 0.01; // More sensitive (was 0.015)
+const SILENCE_DURATION_MS: u128 = 2500; // Allow 2.5s pause (was 1.5s) 
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
