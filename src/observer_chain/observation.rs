@@ -115,22 +115,22 @@ impl Observation {
                 let s_clean = s.split('(').next().unwrap_or(s).trim();
                 let s_lower = s.to_lowercase(); // Use original for name matching just in case, or s_clean? s_clean is safer for "C02 (Ling)" -> "C02"
 
-                // Handle named layers (robust fallback)
-                if s_lower.contains("emotion") { return Ok(DimensionId(1)); }
-                if s_lower.contains("cognition") || s_lower.contains("analytical") || s_lower.contains("linguistic") || s_lower.contains("language") { return Ok(DimensionId(2)); }
-                if s_lower.contains("intention") || s_lower.contains("goal") { return Ok(DimensionId(3)); }
-                if s_lower.contains("social") { return Ok(DimensionId(4)); }
-                if s_lower.contains("temporal") || s_lower.contains("time") { return Ok(DimensionId(5)); }
-                if s_lower.contains("philosophy") || s_lower.contains("meaning") { return Ok(DimensionId(6)); }
-                if s_lower.contains("technical") || s_lower.contains("code") || s_lower.contains("system") { return Ok(DimensionId(7)); }
-                if s_lower.contains("creative") || s_lower.contains("art") { return Ok(DimensionId(8)); }
-                if s_lower.contains("ethical") || s_lower.contains("moral") { return Ok(DimensionId(9)); }
-                if s_lower.contains("meta") || s_lower.contains("self") || s_lower.contains("authenticity") { return Ok(DimensionId(10)); }
-                if s_lower.contains("ecological") || s_lower.contains("nature") { return Ok(DimensionId(11)); }
-                if s_lower.contains("positivity") || s_lower.contains("hope") { return Ok(DimensionId(12)); }
-                if s_lower.contains("balance") || s_lower.contains("harmony") { return Ok(DimensionId(13)); }
-                if s_lower.contains("security") || s_lower.contains("safety") { return Ok(DimensionId(14)); }
-                if s_lower.contains("education") || s_lower.contains("learn") || s_lower.contains("teach") { return Ok(DimensionId(15)); }
+                // Handle named layers (robust fallback with synonyms)
+                if s_lower.contains("emotion") || s_lower.contains("empathy") || s_lower.contains("feeling") || s_lower.contains("compassion") { return Ok(DimensionId(1)); }
+                if s_lower.contains("cognition") || s_lower.contains("analytical") || s_lower.contains("linguistic") || s_lower.contains("language") || s_lower.contains("logic") { return Ok(DimensionId(2)); }
+                if s_lower.contains("intention") || s_lower.contains("goal") || s_lower.contains("purpose") { return Ok(DimensionId(3)); }
+                if s_lower.contains("social") || s_lower.contains("communication") || s_lower.contains("relation") { return Ok(DimensionId(4)); }
+                if s_lower.contains("temporal") || s_lower.contains("time") || s_lower.contains("history") { return Ok(DimensionId(5)); }
+                if s_lower.contains("philosophy") || s_lower.contains("meaning") || s_lower.contains("existential") { return Ok(DimensionId(6)); }
+                if s_lower.contains("technical") || s_lower.contains("code") || s_lower.contains("system") || s_lower.contains("mechanism") { return Ok(DimensionId(7)); }
+                if s_lower.contains("creative") || s_lower.contains("art") || s_lower.contains("imagination") { return Ok(DimensionId(8)); }
+                if s_lower.contains("ethical") || s_lower.contains("moral") || s_lower.contains("value") { return Ok(DimensionId(9)); }
+                if s_lower.contains("meta") || s_lower.contains("self") || s_lower.contains("authenticity") || s_lower.contains("conscious") { return Ok(DimensionId(10)); }
+                if s_lower.contains("ecological") || s_lower.contains("nature") || s_lower.contains("environment") { return Ok(DimensionId(11)); }
+                if s_lower.contains("positivity") || s_lower.contains("hope") || s_lower.contains("optimis") { return Ok(DimensionId(12)); }
+                if s_lower.contains("balance") || s_lower.contains("harmony") || s_lower.contains("equilibrium") { return Ok(DimensionId(13)); }
+                if s_lower.contains("security") || s_lower.contains("safety") || s_lower.contains("protection") { return Ok(DimensionId(14)); }
+                if s_lower.contains("education") || s_lower.contains("learn") || s_lower.contains("teach") || s_lower.contains("pedagogy") { return Ok(DimensionId(15)); }
 
                 // Handle "C01", "D01", and "1" formats
                 let id_str = s_clean.strip_prefix('C')
