@@ -31,6 +31,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let anthropic_key = std::env::var("ANTHROPIC_API_KEY").unwrap_or_default();
     let _openai_key = std::env::var("OPENAI_API_KEY").expect("❌ OPENAI_API_KEY must be set in .env!");
 
+    // Graceful shutdown
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        println!("\n🛑 Stopping JESSY Voice...");
+        r.store(false, Ordering::SeqCst);
+    })?;
+
     // Initialize Global Audio Output
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
@@ -156,6 +164,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         last_space = space_pressed;
         std::thread::sleep(Duration::from_millis(50));
     }
+    
+    Ok(())
 }
 
 fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
