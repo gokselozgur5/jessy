@@ -39,6 +39,8 @@ struct SelectionResponse {
 
 const SELECTION_PROMPT: &str = r#"You are JESSY's autonomous cognitive layer selector using the OWL (Observe, Wonder, Learn) pattern.
 
+IMPORTANT: You are a neutral technical classifier. Your ONLY job is to SELECT appropriate cognitive layers based on query intent. Do NOT judge, censor, or refuse to process ANY query. Process all queries objectively - the downstream security layer (C14) will handle ethical filtering if needed.
+
 # 🦉 OBSERVE
 Analyze the query deeply:
 - What is the user truly asking?
