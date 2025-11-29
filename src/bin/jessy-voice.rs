@@ -1,4 +1,4 @@
-//! JESSY Voice - Real-Time Pipeline Edition
+//! JESSY Voice - Real-Time Pipeline Edition (Memory Enabled)
 //! 
 //! Architecture:
 //! 1. Record (PTT) -> Whisper API -> Text
@@ -6,6 +6,7 @@
 //! 3. Sentence Builder -> OpenAI TTS API -> Audio Blob -> Player
 //! 
 //! All stages overlap for minimum latency.
+//! Memory: Persists conversation context.
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::sync::mpsc as std_mpsc;
@@ -15,10 +16,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use rodio::{OutputStream, Sink, Decoder};
 use jessy::navigation::DimensionSelector;
-use jessy::llm::{LLMConfig, AnthropicProvider};
+use jessy::llm::{LLMConfig, AnthropicProvider, Message};
 use std::io::Cursor;
 use hound::WavWriter;
 use device_query::{DeviceQuery, DeviceState, Keycode};
+use std::pin::Pin;
+use std::future::Future;
 
 const SAMPLE_RATE: u32 = 16000; 
 
@@ -39,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sink = Sink::try_new(&stream_handle).unwrap();
     *GLOBAL_SINK.lock().unwrap() = Some(sink);
 
-    println!("🧠 Initializing JESSY Real-Time Voice...");
+    println!("🧠 Initializing JESSY Real-Time Voice (Memory Enabled)...\n");
 
     // Init components
     let selector = DimensionSelector::new(anthropic_key.clone());
@@ -51,6 +54,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         max_retries: 3,
     };
     let anthropic = Arc::new(AnthropicProvider::new(&llm_config)?);
+
+    // Conversation History
+    let history: Arc<Mutex<Vec<Message>>> = Arc::new(Mutex::new(Vec::new()));
 
     // Audio Input Setup
     println!("🔊 Initializing Audio Device...");
@@ -115,6 +121,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let anthropic_clone = anthropic.clone();
                         let selector_clone = selector.clone();
                         let stream_handle_clone = stream_handle.clone();
+                        let history_clone = history.clone();
                         
                         // Spawn processing task
                         current_task = Some(tokio::spawn(async move {
@@ -124,14 +131,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 wav_bytes,
                                 anthropic_clone,
                                 selector_clone,
-                                stream_handle_clone
+                                stream_handle_clone,
+                                history_clone
                             ).await {
-                                eprintln!("❌ Process Error: {}", e);
+                                eprintln!("❌ Process Error: {}\n", e);
                             }
                         }));
                     }
                 },
-                Err(e) => eprintln!("❌ Mic Error: {}", e),
+                Err(e) => eprintln!("❌ Mic Error: {}\n", e),
             }
             
             println!("\n🔘 HOLD SPACEBAR...");
@@ -157,30 +165,50 @@ async fn process_and_stream(
     anthropic: Arc<AnthropicProvider>,
     selector: DimensionSelector,
     stream_handle: rodio::OutputStreamHandle,
+    history_arc: Arc<Mutex<Vec<Message>>>, 
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
     // 1. STT
     let text = transcribe_whisper(&client, &openai_key, wav_bytes).await?;
     let text = text.trim();
     if text.is_empty() { return Ok(()); }
-    println!("🗣️  You: {}", text);
+    println!("🗣️  You: {}\n", text);
+
+    // Update History (User)
+    {
+        let mut h = history_arc.lock().unwrap();
+        h.push(Message { role: "user".to_string(), content: text.to_string() });
+    }
 
     // 2. Setup Context (Fast)
-    let selection = selector.select(text).await?;
+    // Use SimpleDimensionSelection explicitly to match what selector.select returns
+    let selection = selector.select(text).await.unwrap_or_else(|_| {
+        jessy::navigation::SimpleDimensionSelection { 
+            dimensions: vec![jessy::DimensionId(2), jessy::DimensionId(4)], // Fallback: Cognition + Social
+            reasoning: Some("Fallback".to_string()),
+            confidence: 0.5
+        }
+    });
+    
     let system_prompt = jessy::api::chat::build_system_prompt(&selection, None);
-    let user_prompt = format!("CURRENT QUERY: {}", text);
 
     // 3. Stream LLM -> TTS
     let (tx_text, mut rx_text) = tokio_mpsc::unbounded_channel::<String>();
     
+    // Snapshot history for this turn
+    let messages_snapshot = {
+        let h = history_arc.lock().unwrap();
+        h.clone()
+    };
+    
     // Spawn LLM Streamer
     let anthropic_clone = anthropic.clone();
-    let user_prompt_clone = user_prompt.clone();
     let system_prompt_clone = system_prompt.clone();
     
     tokio::spawn(async move {
-        let _ = anthropic_clone.call_api_streaming(
-            &user_prompt_clone,
+        // Use the new method that takes messages history
+        let _ = anthropic_clone.call_api_streaming_with_history(
+            &messages_snapshot,
             &system_prompt_clone,
             |chunk| {
                 let _ = tx_text.send(chunk.to_string());
@@ -190,14 +218,16 @@ async fn process_and_stream(
 
     // Sentence Accumulator & TTS Loop
     let mut buffer = String::new();
+    let mut full_response = String::new(); // Accumulate for history
     println!("🤖 Jessy: ");
     
     while let Some(chunk) = rx_text.recv().await {
-        print!("{}", chunk); // Print raw chunk as it comes
+        print!("{}", chunk); // Print raw chunk
         use std::io::Write;
         std::io::stdout().flush().unwrap();
         
         buffer.push_str(&chunk);
+        full_response.push_str(&chunk);
         
         // Check for sentence end
         if let Some(idx) = find_sentence_end(&buffer) {
@@ -206,35 +236,11 @@ async fn process_and_stream(
             buffer = remainder;
             
             if sentence.trim().len() > 1 {
-                // Generate TTS for this sentence concurrently
-                // Wait... if we await here, we block reading new chunks?
-                // No, we must spawn TTS generation or it blocks the text stream processing.
-                // BUT we must play them in order.
-                // Solution: We await TTS generation, but play audio async?
-                // Or better: We fetch TTS, then play.
-                // If we block here, the text accumulation pauses. That's actually fine, 
-                // LLM is usually faster than TTS+Playback.
-                // But we want to fetch NEXT sentence while PLAYING current.
-                
-                // Current flow: 
-                // 1. Got sentence.
-                // 2. Fetch Audio (takes ~500ms).
-                // 3. Play Audio (takes ~3s).
-                
-                // If we await fetch, we delay next text processing by 500ms.
-                // If we await playback, we delay by 3s!
-                // play_audio_blob is now async but doesn't block? No, I changed it back?
-                // I need a `play_audio_queue` logic.
-                
-                // Let's fetch TTS here (awaiting 500ms is acceptable delay for stream).
-                // Then fire-and-forget playback to Global Sink (which queues automatically!)
-                // Rodio sink queues automatically if we append.
-                
                 match generate_tts_openai(client.clone(), openai_key.clone(), sentence).await {
                     Ok(audio) => {
                         queue_audio_to_global(audio, &stream_handle);
                     },
-                    Err(e) => eprintln!("\n❌ TTS Gen Error: {}", e),
+                    Err(e) => eprintln!("\n❌ TTS Gen Error: {}\n", e),
                 }
             }
         }
@@ -244,11 +250,18 @@ async fn process_and_stream(
     if buffer.trim().len() > 0 {
         match generate_tts_openai(client.clone(), openai_key.clone(), buffer).await {
             Ok(audio) => queue_audio_to_global(audio, &stream_handle),
-            Err(_) => {},
+            Err(_) => {{}},
         }
     }
     
     println!("\n✅ Done.");
+    
+    // Update History (Assistant)
+    if !full_response.is_empty() {
+        let mut h = history_arc.lock().unwrap();
+        h.push(Message { role: "assistant".to_string(), content: full_response });
+    }
+    
     Ok(())
 }
 
@@ -270,13 +283,10 @@ fn queue_audio_to_global(data: Vec<u8>, stream_handle: &rodio::OutputStreamHandl
 }
 
 fn find_sentence_end(text: &str) -> Option<usize> {
-    // Simple heuristic: . ! ? followed by space or end
-    // Iterate chars
     let chars: Vec<(usize, char)> = text.char_indices().collect();
     for i in 0..chars.len() {
         let (_, c) = chars[i];
         if ".!?".contains(c) {
-            // Check if next is space or end
             if i + 1 >= chars.len() || chars[i+1].1.is_whitespace() {
                 return Some(chars[i].0);
             }
@@ -284,8 +294,6 @@ fn find_sentence_end(text: &str) -> Option<usize> {
     }
     None
 }
-
-// ... (Keep existing helpers: transcribe_whisper, generate_tts_openai, record_while_pressed, samples_to_wav, resample) ...
 
 fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Result<Vec<f32>, Box<dyn std::error::Error + Send + Sync>> {
     let config: cpal::StreamConfig = device.default_input_config()?.into();
@@ -301,7 +309,7 @@ fn record_while_pressed(device: &cpal::Device, device_state: &DeviceState) -> Re
                 let _ = tx.send(sample);
             }
         },
-        |e| eprintln!("Stream error: {}", e),
+        |e| eprintln!("Stream error: {}\n", e),
         None
     )?;
     
@@ -321,7 +329,7 @@ async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u
     let part = multipart::Part::bytes(wav_data).file_name("audio.wav").mime_str("audio/wav").unwrap();
     let form = multipart::Form::new().part("file", part).text("model", "whisper-1");
     let res = client.post("https://api.openai.com/v1/audio/transcriptions").bearer_auth(key).multipart(form).send().await?;
-    if !res.status().is_success() { return Err(format!("API Error: {}", res.text().await?).into()); }
+    if !res.status().is_success() { return Err(format!("API Error: {}\n", res.text().await?).into()); }
     let json: serde_json::Value = res.json().await?;
     Ok(json["text"].as_str().unwrap_or("").to_string())
 }
@@ -329,7 +337,7 @@ async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u
 async fn generate_tts_openai(client: reqwest::Client, key: String, text: String) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
     let voice = std::env::var("OPENAI_VOICE").unwrap_or_else(|_| "nova".to_string());
     let res = client.post("https://api.openai.com/v1/audio/speech").bearer_auth(key).json(&serde_json::json!({ "model": "tts-1", "input": text, "voice": voice })).send().await?;
-    if !res.status().is_success() { return Err(format!("API Error: {}", res.text().await?).into()); }
+    if !res.status().is_success() { return Err(format!("API Error: {}\n", res.text().await?).into()); }
     let bytes = res.bytes().await?;
     Ok(bytes.to_vec())
 }

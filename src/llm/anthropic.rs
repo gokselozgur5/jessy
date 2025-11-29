@@ -361,6 +361,88 @@ impl AnthropicProvider {
 
         Ok(full_text)
     }
+
+    /// Stream API call with full conversation history
+    pub async fn call_api_streaming_with_history<F>(
+        &self,
+        messages: &[Message],
+        system_prompt: &str,
+        mut on_chunk: F,
+    ) -> Result<String>
+    where
+        F: FnMut(&str) + Send,
+    {
+        use futures::StreamExt;
+
+        let request = AnthropicRequest {
+            model: self.model.clone(),
+            max_tokens: 2000,
+            messages: messages.to_vec(),
+            system: system_prompt.to_string(),
+            stream: Some(true),
+        };
+
+        let response = self.client
+            .post("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", &self.api_key)
+            .header("anthropic-version", "2023-06-01")
+            .header("Content-Type", "application/json")
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| crate::ConsciousnessError::LearningError(
+                format!("HTTP request failed: {}", e)
+            ))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(crate::ConsciousnessError::LearningError(
+                format!("API error {}: {}", status, error_text)
+            ));
+        }
+
+        let mut full_text = String::new();
+
+        // Get response body as bytes
+        let bytes = response.bytes().await.map_err(|e| crate::ConsciousnessError::LearningError(
+            format!("Failed to read response: {}", e)
+        ))?;
+
+        // Process SSE stream line by line
+        let text = String::from_utf8_lossy(&bytes);
+        for line in text.lines() {
+            let line = line.trim();
+
+            if line.is_empty() || !line.starts_with("data: ") {
+                continue;
+            }
+
+            let json_str = &line[6..]; // Skip "data: " prefix
+
+            if json_str == "[DONE]" {
+                break;
+            }
+
+            // Parse SSE event
+            if let Ok(event) = serde_json::from_str::<StreamEvent>(json_str) {
+                match event.event_type.as_str() {
+                    "content_block_delta" => {
+                        if let Ok(delta) = serde_json::from_value::<ContentBlockDelta>(event.data["delta"].clone()) {
+                            if let Some(text) = delta.text {
+                                full_text.push_str(&text);
+                                on_chunk(&text);
+                            }
+                        }
+                    }
+                    "message_stop" => break,
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(full_text)
+    }
 }
 
 #[async_trait]
