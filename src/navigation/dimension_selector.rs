@@ -180,7 +180,7 @@ impl DimensionSelector {
 
         let body = serde_json::json!({
             "model": self.model,
-            "max_tokens": 30,  // Reduced: JSON array like [1,2,7] is ~10-20 tokens
+            "max_tokens": 1000,  // Generous limit to avoid truncation issues
             "messages": [{
                 "role": "user",
                 "content": prompt
@@ -215,6 +215,9 @@ impl DimensionSelector {
                 details: format!("JSON parse failed: {}", e),
             })?;
 
+        // Debug: Log full API response
+        eprintln!("[DimensionSelector] 🔍 Full API response: {}", serde_json::to_string_pretty(&json).unwrap_or_default());
+
         // Extract text from Claude response format
         let text = json["content"][0]["text"]
             .as_str()
@@ -222,6 +225,8 @@ impl DimensionSelector {
                 service: "Claude API".to_string(),
                 details: "No text in response".to_string(),
             })?;
+
+        eprintln!("[DimensionSelector] 📝 Extracted text: {:?}", text);
 
         Ok(text.to_string())
     }
