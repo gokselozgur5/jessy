@@ -46,14 +46,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Init components
     let selector = DimensionSelector::new(anthropic_key.clone());
+    // Use GPT-4o for creative mode (more flexible with fiction)
+    let (provider, model, key) = if std::env::var("JESSY_CREATIVE_MODE").unwrap_or_default() == "true" {
+        ("openai".to_string(), "gpt-4o".to_string(), openai_key.clone())
+    } else {
+        ("anthropic".to_string(), "claude-3-5-haiku-20241022".to_string(), anthropic_key.clone())
+    };
+
     let llm_config = LLMConfig {
-        provider: "anthropic".to_string(),
-        model: "claude-3-5-haiku-20241022".to_string(), 
-        api_key: anthropic_key.clone(),
+        provider,
+        model,
+        api_key: key,
         timeout_secs: 30,
         max_retries: 3,
     };
-    let anthropic = Arc::new(AnthropicProvider::new(&llm_config)?);
+
+    // Create appropriate provider based on config
+    let llm_provider = Arc::new(AnthropicProvider::new(&llm_config)?);
 
     // Conversation History
     let history: Arc<Mutex<Vec<Message>>> = Arc::new(Mutex::new(Vec::new()));
@@ -118,7 +127,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let wav_bytes = samples_to_wav(&samples);
                         let openai_key_clone = openai_key.clone();
                         let client_clone = client.clone();
-                        let anthropic_clone = anthropic.clone();
+                        let llm_clone = llm_provider.clone();
                         let selector_clone = selector.clone();
                         let stream_handle_clone = stream_handle.clone();
                         let history_clone = history.clone();
@@ -129,7 +138,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 client_clone, 
                                 openai_key_clone, 
                                 wav_bytes,
-                                anthropic_clone,
+                                llm_clone,
                                 selector_clone,
                                 stream_handle_clone,
                                 history_clone
@@ -162,7 +171,7 @@ async fn process_and_stream(
     client: reqwest::Client,
     openai_key: String,
     wav_bytes: Vec<u8>,
-    anthropic: Arc<AnthropicProvider>,
+    llm: Arc<AnthropicProvider>,
     selector: DimensionSelector,
     stream_handle: rodio::OutputStreamHandle,
     history_arc: Arc<Mutex<Vec<Message>>>, 
@@ -202,12 +211,12 @@ async fn process_and_stream(
     };
     
     // Spawn LLM Streamer
-    let anthropic_clone = anthropic.clone();
+    let llm_clone = llm.clone();
     let system_prompt_clone = system_prompt.clone();
-    
+
     tokio::spawn(async move {
         // Use the new method that takes messages history
-        let _ = anthropic_clone.call_api_streaming_with_history(
+        let _ = llm_clone.call_api_streaming_with_history(
             &messages_snapshot,
             &system_prompt_clone,
             |chunk| {
