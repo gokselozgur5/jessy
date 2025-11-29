@@ -143,12 +143,15 @@ impl DimensionSelector {
         // Parse response
         let dimensions = self.parse_response(&response)?;
 
-        // Validate: at least 1, max 9 dimensions
+        // Fallback if LLM returns nothing (e.g., confusing query)
         if dimensions.is_empty() {
-            return Err(NavigationError::InvalidDimensionCount {
-                count: 0,
-                expected: "1-9".to_string(),
-            }.into());
+            eprintln!("[DimensionSelector] ⚠️ LLM returned no dimensions. Using fallback.");
+            // Fallback to Cognition (2) and Social (4) as safe defaults
+            return Ok(DimensionSelection {
+                dimensions: vec![DimensionId(2), DimensionId(4)],
+                reasoning: Some("Fallback selection due to empty LLM response".to_string()),
+                confidence: 0.5,
+            });
         }
 
         if dimensions.len() > 9 {
