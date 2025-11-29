@@ -243,8 +243,19 @@ impl DimensionSelector {
     fn parse_response(&self, response: &str) -> Result<Vec<DimensionId>, NavigationError> {
         let cleaned = response.trim();
 
+        // Extract just the JSON array if response contains additional text (e.g., "Reasoning:")
+        let json_part = if let Some(idx) = cleaned.find('[') {
+            if let Some(end_idx) = cleaned.find(']') {
+                &cleaned[idx..=end_idx]
+            } else {
+                cleaned
+            }
+        } else {
+            cleaned
+        };
+
         // Try JSON array of numbers first: [1, 7, 9]
-        if let Ok(parsed) = serde_json::from_str::<Vec<u8>>(cleaned) {
+        if let Ok(parsed) = serde_json::from_str::<Vec<u8>>(json_part) {
             let mut layers = Vec::new();
             for num in parsed {
                 if (1..=14).contains(&num) {
@@ -257,7 +268,7 @@ impl DimensionSelector {
         }
 
         // Try JSON array of strings: ["1", "7"] or ["L01", "L07"]
-        if let Ok(parsed) = serde_json::from_str::<Vec<String>>(cleaned) {
+        if let Ok(parsed) = serde_json::from_str::<Vec<String>>(json_part) {
             return self.parse_dimension_strings(&parsed);
         }
 
