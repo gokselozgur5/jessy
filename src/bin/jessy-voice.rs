@@ -336,8 +336,20 @@ async fn transcribe_whisper(client: &reqwest::Client, key: &str, wav_data: Vec<u
 
 async fn generate_tts_openai(client: reqwest::Client, key: String, text: String) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
     let voice = std::env::var("OPENAI_VOICE").unwrap_or_else(|_| "nova".to_string());
-    let res = client.post("https://api.openai.com/v1/audio/speech").bearer_auth(key).json(&serde_json::json!({ "model": "tts-1", "input": text, "voice": voice })).send().await?;
-    if !res.status().is_success() { return Err(format!("API Error: {}\n", res.text().await?).into()); }
+    let model = std::env::var("OPENAI_TTS_MODEL").unwrap_or_else(|_| "gpt-4o-mini-tts".to_string());
+
+    let res = client.post("https://api.openai.com/v1/audio/speech")
+        .bearer_auth(key)
+        .json(&serde_json::json!({
+            "model": model,
+            "input": text,
+            "voice": voice
+        }))
+        .send().await?;
+
+    if !res.status().is_success() {
+        return Err(format!("API Error: {}\n", res.text().await?).into());
+    }
     let bytes = res.bytes().await?;
     Ok(bytes.to_vec())
 }
