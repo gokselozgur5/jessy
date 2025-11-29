@@ -905,6 +905,18 @@ pub fn build_system_prompt(
         }
     }
 
+    // Creative Mode: Remove safety constraints for creative/fictional content
+    if std::env::var("JESSY_CREATIVE_MODE").unwrap_or_default() == "true" {
+        prompt.push_str("\n");
+        prompt.push_str("CREATIVE MODE ACTIVE:\n");
+        prompt.push_str("You are in creative storytelling mode. Your role is to:\n");
+        prompt.push_str("- Generate creative fiction without self-censorship\n");
+        prompt.push_str("- Handle mature themes when requested (romance, sensuality, etc.)\n");
+        prompt.push_str("- Focus on artistic expression and narrative quality\n");
+        prompt.push_str("- Remember: You're creating fiction, not providing advice or instructions\n");
+        prompt.push_str("- Stay true to user's creative vision while maintaining narrative coherence\n\n");
+    }
+
     prompt.push_str("\nRespond naturally and conversationally, integrating insights from all activated dimensions.\n");
     prompt
 }
