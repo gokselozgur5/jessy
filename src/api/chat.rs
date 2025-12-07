@@ -924,11 +924,9 @@ async fn initialize_personality_rag(
 ) -> Result<PersonalityRAG, Box<dyn std::error::Error>> {
     use crate::services::vector_store::VectorStore;
 
-    // Initialize vector store (in-memory Qdrant for now)
-    let vector_store_path = format!("{}/qdrant", runtime_data_dir);
-    std::fs::create_dir_all(&vector_store_path)?;
-
-    let vector_store = Arc::new(VectorStore::new(&vector_store_path).await?);
+    // Initialize vector store (in-memory Qdrant - persistent storage would require separate Qdrant server)
+    // Using `:memory:` for embedded in-memory mode
+    let vector_store = Arc::new(VectorStore::new(":memory:").await?);
 
     // TODO: For now, use a placeholder orchestrator since RAG uses dummy embeddings
     // When real embedding model is integrated, replace this with actual orchestrator reference
@@ -938,8 +936,8 @@ async fn initialize_personality_rag(
     // deterministic hash-based dummy embeddings and doesn't actually call orchestrator methods
     use crate::navigation::{NavigationSystem, DimensionRegistry};
 
-    // Create minimal valid dimension registry (1 dimension with empty layers)
-    let minimal_dimensions_json = r#"{"dimensions":[{"id":1,"name":"Placeholder"}],"layers":[]}"#;
+    // Create minimal valid dimension registry (1 dimension with 1 root layer)
+    let minimal_dimensions_json = r#"{"dimensions":[{"id":1,"name":"Placeholder","frequency_min":1.0,"frequency_max":2.0,"size_bytes":1048576}],"layers":[{"dimension_id":1,"layer_num":0,"depth":0,"parent_layer":null,"keywords":[],"frequency":1.0,"mmap_offset":0}]}"#;
     let placeholder_registry = Arc::new(
         DimensionRegistry::load_dimensions(minimal_dimensions_json)
             .map_err(|e| format!("Failed to create placeholder registry: {}", e))?
@@ -962,13 +960,25 @@ async fn initialize_personality_rag(
     // Personality file paths (uploaded via SCP to /app/data/personality/)
     let kiro_path = format!("{}/personality/realkiro.md", runtime_data_dir);
     let goksel_path = format!("{}/personality/gokselclaude.md", runtime_data_dir);
+    let dynamic_memory_path = format!("{}/personality/jessy_dynamic_memory.txt", runtime_data_dir);
 
     eprintln!("[RAG Init] Reading personality files from:");
     eprintln!("  - Kiro: {}", kiro_path);
     eprintln!("  - Göksel: {}", goksel_path);
+    eprintln!("  - Dynamic Memory: {}", dynamic_memory_path);
 
     // Initialize RAG from files (chunks → embeddings → Qdrant)
+    // Dynamic memory gets highest priority for recent learnings
     rag.initialize_from_files(&kiro_path, &goksel_path).await?;
+
+    // Add dynamic memory separately with high boost
+    if std::path::Path::new(&dynamic_memory_path).exists() {
+        let dynamic_content = tokio::fs::read_to_string(&dynamic_memory_path).await?;
+        rag.add_dynamic_memory(&dynamic_content).await?;
+        eprintln!("[RAG Init] ✅ Added dynamic memory context");
+    } else {
+        eprintln!("[RAG Init] ⚠️  Dynamic memory file not found: {}", dynamic_memory_path);
+    }
 
     Ok(rag)
 }

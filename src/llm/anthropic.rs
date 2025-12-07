@@ -25,6 +25,8 @@ struct AnthropicRequest {
     system: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     stream: Option<bool>,
+    /// Temperature for response diversity (1.0 = maximum diversity, prevents caching)
+    temperature: f32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -198,6 +200,7 @@ impl AnthropicProvider {
             ],
             system: system_prompt.to_string(),
             stream: None,
+            temperature: 1.0, // Maximum diversity to prevent cached responses
         };
 
         self.send_request(request).await
@@ -211,6 +214,7 @@ impl AnthropicProvider {
             messages: messages.to_vec(),
             system: system_prompt.to_string(),
             stream: None,
+            temperature: 1.0, // Maximum diversity to prevent cached responses
         };
 
         self.send_request(request).await
@@ -298,6 +302,7 @@ impl AnthropicProvider {
             ],
             system: system_prompt.to_string(),
             stream: Some(true),
+            temperature: 1.0, // Maximum diversity to prevent cached responses
         };
 
         let response = self.client
@@ -437,6 +442,7 @@ mod tests {
             }],
             system: "Test system prompt".to_string(),
             stream: None,
+            temperature: 1.0,
         };
 
         let json = serde_json::to_string(&request).expect("Failed to serialize");
@@ -444,6 +450,7 @@ mod tests {
         assert!(json.contains("Test message"));
         assert!(json.contains("Test system prompt"));
         assert!(json.contains("max_tokens"));
+        assert!(json.contains("temperature"));
     }
 
     #[test]
@@ -457,6 +464,7 @@ mod tests {
             }],
             system: "System".to_string(),
             stream: Some(true),
+            temperature: 1.0,
         };
 
         let json = serde_json::to_string(&request).expect("Failed to serialize");

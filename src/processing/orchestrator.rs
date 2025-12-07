@@ -383,12 +383,19 @@ impl ConsciousnessOrchestrator {
                 
                 // Add reflection + internal monologue to conversation as system message
                 let mut conversation_with_reflection = conversation.clone();
+                // Add timestamp to bypass API caching
+                let now = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+
                 conversation_with_reflection.insert(0, crate::llm::Message {
                     role: "system".to_string(),
                     content: format!(
-                        "{}\nSELF-REFLECTION: {}\n\nStay authentic to your evolved voice. You can use similar style, evolve it further, or acknowledge the pattern.",
+                        "{}\n\nCONTEXT: You previously responded to similar queries with this style: \"{}\"\n\nCRITICAL: DO NOT copy-paste that previous response. Look at the CONVERSATION HISTORY below - if this exact question was already answered, acknowledge that and BUILD upon it or approach from a different angle. Generate a completely FRESH response that considers the current conversation context.\n\n[Request timestamp: {}]",
                         internal_monologue.trim(),
-                        evolved_style
+                        evolved_style,
+                        now
                     ),
                 });
                 

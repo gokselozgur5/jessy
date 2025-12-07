@@ -24,9 +24,12 @@ pub struct PersonalityChunk {
 pub enum PersonalitySource {
     /// From Kiro's personality file
     Kiro,
-    
+
     /// From Göksel's personality file
     Goksel,
+
+    /// From dynamic memory (runtime learnings, training)
+    DynamicMemory,
 }
 
 impl std::fmt::Display for PersonalitySource {
@@ -34,6 +37,7 @@ impl std::fmt::Display for PersonalitySource {
         match self {
             PersonalitySource::Kiro => write!(f, "Kiro"),
             PersonalitySource::Goksel => write!(f, "Göksel"),
+            PersonalitySource::DynamicMemory => write!(f, "DynamicMemory"),
         }
     }
 }

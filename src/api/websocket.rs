@@ -205,14 +205,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                         let session_id_clone = self.session_id.clone();
                         let app_state = self.app_state.clone();
                         let addr = ctx.address();
-                        
+
                         // Spawn async task to process message
                         let fut = async move {
                             // Load user context if user_id provided
                             let user_context = if let Some(ref uid) = user_id_clone {
                                 match app_state.context_manager.lock().await.load_user_context(uid).await {
                                     Ok(ctx) => {
-                                        tracing::info!("Loaded context for user {}: {} conversations", 
+                                        tracing::info!("Loaded context for user {}: {} conversations",
                                             uid, ctx.conversations.len());
                                         Some(ctx)
                                     }
@@ -224,7 +224,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                             } else {
                                 None
                             };
-                            
+
                             // Send stage transition: Navigation
                             addr.do_send(StreamToken {
                                 message: WsMessage::StageTransition {
@@ -232,14 +232,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                                     to_stage: "Navigation".to_string(),
                                 },
                             });
-                            
+
                             // Process through orchestrator
                             let mut orchestrator = app_state.orchestrator.lock().await;
-                            
-                            // Build conversation history with user context
+
+                            // Build conversation history with user context AND previous messages
                             let mut conversation = vec![];
-                            
-                            // Add user context if available
+
+                            // Add user context if available (long-term memory across sessions)
                             if let Some(ref ctx) = user_context {
                                 if !ctx.conversations.is_empty() {
                                     let context_summary = format!(
@@ -255,11 +255,34 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                                             .join(", "),
                                         ctx.relationship_dynamics.communication_style
                                     );
-                                    
+
                                     conversation.push(crate::llm::Message {
                                         role: "system".to_string(),
                                         content: context_summary,
                                     });
+                                }
+                            }
+
+                            // Load conversation history from current session (short-term memory)
+                            if let Some(ref sid) = session_id_clone {
+                                let conversations = app_state.conversations.lock().await;
+                                if let Some(conv_history) = conversations.get(sid) {
+                                    tracing::info!("Loading {} previous messages from session {}",
+                                        conv_history.messages.len(), sid);
+
+                                    // Convert ConversationHistory messages to LLM messages
+                                    for msg in &conv_history.messages {
+                                        let role = match msg.role {
+                                            crate::conversation::MessageRole::User => "user",
+                                            crate::conversation::MessageRole::Assistant => "assistant",
+                                        };
+                                        conversation.push(crate::llm::Message {
+                                            role: role.to_string(),
+                                            content: msg.content.clone(),
+                                        });
+                                    }
+                                } else {
+                                    tracing::info!("No previous conversation history for session {}", sid);
                                 }
                             }
                             
@@ -268,7 +291,30 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                                     // Self-reflection - Jessy observes her own response
                                     orchestrator.learning_mut().reflect_on_response(&message_clone, &response_data.final_response);
                                     let _ = orchestrator.learning_mut().save_reflections();
-                                    
+
+                                    // Get metadata for conversation tracking
+                                    let dimensional_state = crate::conversation::DimensionalState {
+                                        activated_dimensions: response_data.metadata.dimensions_activated.clone(),
+                                        selection_duration_ms: response_data.metadata.navigation_duration_ms,
+                                        contexts_loaded: response_data.metadata.contexts_loaded,
+                                        frequency_pattern: None,
+                                    };
+
+                                    // Update conversation history in app_state (CRITICAL for memory)
+                                    if let Some(ref sid) = session_id_clone {
+                                        let mut conversations = app_state.conversations.lock().await;
+                                        let conv = conversations.entry(sid.clone()).or_insert_with(crate::conversation::ConversationHistory::new);
+
+                                        // Add user message
+                                        conv.add_user_message(message_clone.clone(), dimensional_state.activated_dimensions.clone());
+
+                                        // Add assistant response
+                                        conv.add_assistant_message_with_state(response_data.final_response.clone(), dimensional_state.clone());
+
+                                        tracing::info!("Updated conversation history for session {}: {} total messages",
+                                            sid, conv.messages.len());
+                                    }
+
                                     // Send stage transition: Response
                                     addr.do_send(StreamToken {
                                         message: WsMessage::StageTransition {
@@ -276,7 +322,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for JessyWebSocket {
                                             to_stage: "Response".to_string(),
                                         },
                                     });
-                                    
+
                                     // Stream response word by word with natural rhythm
                                     for word in response_data.final_response.split_whitespace() {
                                         addr.do_send(StreamToken {

@@ -391,3 +391,32 @@ mod tests {
         assert!(formatted.contains("Test content"));
     }
 }
+
+impl PersonalityRAG {
+    /// Add dynamic memory content with high priority
+    ///
+    /// Chunks and indexes dynamic memory separately to ensure
+    /// it gets retrieved with high priority for recent learnings,
+    /// training data, and runtime context updates.
+    pub async fn add_dynamic_memory(&self, content: &str) -> Result<()> {
+        info!("📝 Adding dynamic memory to RAG...");
+
+        // Chunk dynamic memory with DynamicMemory source
+        let chunks = self.chunker.chunk_markdown(content, PersonalitySource::DynamicMemory);
+        info!("  → Dynamic Memory: {} chunks", chunks.len());
+
+        if chunks.is_empty() {
+            warn!("⚠️  Dynamic memory chunking produced no chunks");
+            return Ok(());
+        }
+
+        // Generate embeddings for all chunks
+        let embeddings = self.generate_embeddings_batch(&chunks).await?;
+
+        // Upsert to vector store with high priority
+        self.vector_store.upsert_chunks(chunks, embeddings).await?;
+
+        info!("✅ Dynamic memory added successfully");
+        Ok(())
+    }
+}
