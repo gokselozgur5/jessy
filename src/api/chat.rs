@@ -936,7 +936,7 @@ async fn initialize_personality_rag(
     use crate::navigation::{NavigationSystem, DimensionRegistry};
 
     // Create minimal valid dimension registry (1 dimension with empty layers)
-    let minimal_dimensions_json = r#"{"dimensions":[{"id":1,"name":"Placeholder"}],"layers":[]}"#;
+    let minimal_dimensions_json = r#"{"dimensions":[{"id":1,"name":"Placeholder","description":"Placeholder dimension","frequency_min":1.0,"frequency_max":2.0}],"layers":[]}"#;
     let placeholder_registry = Arc::new(
         DimensionRegistry::load_dimensions(minimal_dimensions_json)
             .map_err(|e| format!("Failed to create placeholder registry: {}", e))?
