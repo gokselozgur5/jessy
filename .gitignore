@@ -70,3 +70,6 @@ training/venv*/
 *.pt
 *.pth
 *.bin.kiro/specs/
+
+# Sensitive personality files (server-side only, upload via SCP)
+data/personality/

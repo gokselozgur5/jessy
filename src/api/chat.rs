@@ -924,11 +924,8 @@ async fn initialize_personality_rag(
 ) -> Result<PersonalityRAG, Box<dyn std::error::Error>> {
     use crate::services::vector_store::VectorStore;
 
-    // Initialize vector store (in-memory Qdrant for now)
-    let vector_store_path = format!("{}/qdrant", runtime_data_dir);
-    std::fs::create_dir_all(&vector_store_path)?;
-
-    let vector_store = Arc::new(VectorStore::new(&vector_store_path).await?);
+    // Initialize vector store (in-memory for simplicity, no external Qdrant dependency)
+    let vector_store = Arc::new(VectorStore::new(":memory:").await?);
 
     // TODO: For now, use a placeholder orchestrator since RAG uses dummy embeddings
     // When real embedding model is integrated, replace this with actual orchestrator reference
