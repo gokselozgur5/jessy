@@ -46,6 +46,7 @@ pub struct AppState {
     pub context_manager: Arc<Mutex<crate::memory::PersistentContextManager>>,  // User context persistence
     pub emotional_memory: Arc<Mutex<crate::memory::EmotionalMemoryManager>>,  // Full conversation + emotional memory
     pub personality_rag: Option<Arc<PersonalityRAG>>,  // Personality RAG system (optional - graceful degradation)
+    pub conversation_logger: Arc<crate::logging::ConversationLogger>,  // Daily conversation logging for analytics
 }
 
 impl AppState {
@@ -173,6 +174,13 @@ impl AppState {
             }
         };
 
+        // Initialize ConversationLogger for analytics
+        let conversation_logs_path = format!("{}/conversation_logs", runtime_data_dir);
+        let conversation_logger = Arc::new(crate::logging::ConversationLogger::new(
+            std::path::PathBuf::from(&conversation_logs_path)
+        ));
+        eprintln!("[AppState] ✅ ConversationLogger initialized: {}", conversation_logs_path);
+
         Ok(Self {
             selector,
             memory_manager,
@@ -183,6 +191,7 @@ impl AppState {
             context_manager: Arc::new(Mutex::new(context_manager)),
             emotional_memory: Arc::new(Mutex::new(emotional_memory)),
             personality_rag,
+            conversation_logger,
         })
     }
 }
@@ -191,7 +200,13 @@ impl AppState {
 pub async fn chat(
     req: web::Json<ChatRequest>,
     data: web::Data<AppState>,
+    http_req: actix_web::HttpRequest,
 ) -> impl Responder {
+    // Get client IP address
+    let client_ip = http_req.connection_info()
+        .realip_remote_addr()
+        .unwrap_or("unknown")
+        .to_string();
     // Get or create session ID
     let session_id = req.session_id.clone().unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
@@ -258,6 +273,26 @@ pub async fn chat(
             if let Err(e) = save_emotional_memory(&data, &conversation, &session_id, req.user_id.as_deref(), &state).await {
                 eprintln!("⚠️ Failed to save emotional memory: {}", e);
             }
+
+            // Log conversation for analytics (daily logs with IP tracking)
+            let response_clone = response.clone();
+            let logger = data.conversation_logger.clone();
+            let ip_clone = client_ip.clone();
+            let session_clone = session_id.clone();
+            let user_message = req.message.clone();
+            let user_id_opt = req.user_id.clone();
+
+            tokio::spawn(async move {
+                if let Err(e) = logger.log_conversation(
+                    &ip_clone,
+                    &user_message,
+                    &response_clone,
+                    &session_clone,
+                    user_id_opt.as_deref(),
+                ).await {
+                    eprintln!("⚠️ Failed to log conversation: {}", e);
+                }
+            });
 
             HttpResponse::Ok().json(ChatResponse {
                 response,
