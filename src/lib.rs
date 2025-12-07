@@ -77,6 +77,7 @@ pub mod api;
 pub mod models;
 pub mod services;
 pub mod utils;
+pub mod logging;
 
 use std::collections::HashMap;
 use thiserror::Error;
