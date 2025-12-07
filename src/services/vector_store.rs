@@ -9,60 +9,88 @@ use qdrant_client::{
 };
 use tracing::{info, warn};
 
-/// Vector store service for personality chunks using Qdrant
+use super::vector_store_memory::InMemoryVectorStore;
+
+/// Vector store service for personality chunks
+/// Supports both Qdrant (remote) and InMemory (local) backends
 pub struct VectorStore {
-    client: QdrantClient,
-    collection_name: String,
+    backend: VectorStoreBackend,
+}
+
+enum VectorStoreBackend {
+    Qdrant {
+        client: QdrantClient,
+        collection_name: String,
+    },
+    InMemory(InMemoryVectorStore),
 }
 
 impl VectorStore {
     /// Create a new VectorStore instance
+    ///
+    /// Use `:memory:` for in-memory storage (no external dependencies)
+    /// Use a URL like `http://localhost:6334` for Qdrant
     pub async fn new(url: &str) -> Result<Self> {
-        let client = QdrantClient::from_url(url)
-            .build()
-            .context("Failed to create Qdrant client")?;
+        let backend = if url == ":memory:" {
+            info!("🧠 Using in-memory vector store");
+            VectorStoreBackend::InMemory(InMemoryVectorStore::new())
+        } else {
+            info!("🔗 Connecting to Qdrant at {}", url);
+            let client = QdrantClient::from_url(url)
+                .build()
+                .context("Failed to create Qdrant client")?;
 
-        Ok(Self {
-            client,
-            collection_name: "jessy_personality".to_string(),
-        })
+            VectorStoreBackend::Qdrant {
+                client,
+                collection_name: "jessy_personality".to_string(),
+            }
+        };
+
+        Ok(Self { backend })
     }
 
     /// Initialize collection with given vector size
     pub async fn initialize_collection(&self, vector_size: u64) -> Result<()> {
-        // Check if collection exists
-        let collections = self.client.list_collections().await?;
-        let exists = collections
-            .collections
-            .iter()
-            .any(|c| c.name == self.collection_name);
+        match &self.backend {
+            VectorStoreBackend::InMemory(store) => {
+                store.initialize_collection(vector_size).await
+            }
+            VectorStoreBackend::Qdrant { client, collection_name } => {
+                // Check if collection exists
+                let collections = client.list_collections().await?;
+                let exists = collections
+                    .collections
+                    .iter()
+                    .any(|c| c.name == *collection_name);
 
-        if exists {
-            info!("Collection '{}' already exists", self.collection_name);
-            return Ok(());
-        }
+                if exists {
+                    info!("Collection '{}' already exists", collection_name);
+                    return Ok(());
+                }
 
-        // Create collection
-        self.client
-            .create_collection(&CreateCollection {
-                collection_name: self.collection_name.clone(),
-                vectors_config: Some(VectorsConfig {
-                    config: Some(Config::Params(VectorParams {
-                        size: vector_size,
-                        distance: Distance::Cosine.into(),
+                // Create collection
+                client
+                    .create_collection(&CreateCollection {
+                        collection_name: collection_name.clone(),
+                        vectors_config: Some(VectorsConfig {
+                            config: Some(Config::Params(VectorParams {
+                                size: vector_size,
+                                distance: Distance::Cosine.into(),
+                                ..Default::default()
+                            })),
+                        }),
                         ..Default::default()
-                    })),
-                }),
-                ..Default::default()
-            })
-            .await
-            .context("Failed to create Qdrant collection")?;
+                    })
+                    .await
+                    .context("Failed to create Qdrant collection")?;
 
-        info!(
-            "Created collection '{}' with vector size {}",
-            self.collection_name, vector_size
-        );
-        Ok(())
+                info!(
+                    "Created collection '{}' with vector size {}",
+                    collection_name, vector_size
+                );
+                Ok(())
+            }
+        }
     }
 
     /// Upsert personality chunks with embeddings
@@ -71,44 +99,51 @@ impl VectorStore {
         chunks: Vec<PersonalityChunk>,
         embeddings: Vec<Vec<f32>>,
     ) -> Result<()> {
-        if chunks.len() != embeddings.len() {
-            anyhow::bail!(
-                "Chunks and embeddings length mismatch: {} vs {}",
-                chunks.len(),
-                embeddings.len()
-            );
-        }
+        match &self.backend {
+            VectorStoreBackend::InMemory(store) => {
+                store.upsert_chunks(chunks, embeddings).await
+            }
+            VectorStoreBackend::Qdrant { client, collection_name } => {
+                if chunks.len() != embeddings.len() {
+                    anyhow::bail!(
+                        "Chunks and embeddings length mismatch: {} vs {}",
+                        chunks.len(),
+                        embeddings.len()
+                    );
+                }
 
-        let points: Vec<PointStruct> = chunks
-            .iter()
-            .zip(embeddings.iter())
-            .enumerate()
-            .map(|(idx, (chunk, embedding))| {
-                let json_value = serde_json::to_value(chunk)
-                    .expect("Failed to serialize chunk");
-                
-                let payload = json_value
-                    .as_object()
-                    .expect("Chunk should be object")
+                let points: Vec<PointStruct> = chunks
                     .iter()
-                    .map(|(k, v)| (k.clone(), v.clone().into()))
+                    .zip(embeddings.iter())
+                    .enumerate()
+                    .map(|(idx, (chunk, embedding))| {
+                        let json_value = serde_json::to_value(chunk)
+                            .expect("Failed to serialize chunk");
+
+                        let payload = json_value
+                            .as_object()
+                            .expect("Chunk should be object")
+                            .iter()
+                            .map(|(k, v)| (k.clone(), v.clone().into()))
+                            .collect();
+
+                        PointStruct {
+                            id: Some((idx as u64).into()),
+                            vectors: Some(embedding.clone().into()),
+                            payload,
+                        }
+                    })
                     .collect();
 
-                PointStruct {
-                    id: Some((idx as u64).into()),
-                    vectors: Some(embedding.clone().into()),
-                    payload,
-                }
-            })
-            .collect();
+                client
+                    .upsert_points_blocking(collection_name, None, points, None)
+                    .await
+                    .context("Failed to upsert points to Qdrant")?;
 
-        self.client
-            .upsert_points_blocking(&self.collection_name, None, points, None)
-            .await
-            .context("Failed to upsert points to Qdrant")?;
-
-        info!("Upserted {} chunks to Qdrant", chunks.len());
-        Ok(())
+                info!("Upserted {} chunks to Qdrant", chunks.len());
+                Ok(())
+            }
+        }
     }
 
     /// Search for similar chunks
@@ -117,44 +152,58 @@ impl VectorStore {
         query_embedding: Vec<f32>,
         limit: usize,
     ) -> Result<Vec<PersonalityChunk>> {
-        let search_result = self
-            .client
-            .search_points(&SearchPoints {
-                collection_name: self.collection_name.clone(),
-                vector: query_embedding,
-                limit: limit as u64,
-                with_payload: Some(true.into()),
-                ..Default::default()
-            })
-            .await
-            .context("Failed to search Qdrant")?;
+        match &self.backend {
+            VectorStoreBackend::InMemory(store) => {
+                store.search(query_embedding, limit).await
+            }
+            VectorStoreBackend::Qdrant { client, collection_name } => {
+                let search_result = client
+                    .search_points(&SearchPoints {
+                        collection_name: collection_name.clone(),
+                        vector: query_embedding,
+                        limit: limit as u64,
+                        with_payload: Some(true.into()),
+                        ..Default::default()
+                    })
+                    .await
+                    .context("Failed to search Qdrant")?;
 
-        let chunks: Vec<PersonalityChunk> = search_result
-            .result
-            .iter()
-            .filter_map(|point| {
-                let json_map: serde_json::Map<String, serde_json::Value> = point
-                    .payload
+                let chunks: Vec<PersonalityChunk> = search_result
+                    .result
                     .iter()
-                    .map(|(k, v)| (k.clone(), v.clone().into()))
-                    .collect();
-                
-                serde_json::from_value(serde_json::Value::Object(json_map)).ok()
-            })
-            .collect();
+                    .filter_map(|point| {
+                        let json_map: serde_json::Map<String, serde_json::Value> = point
+                            .payload
+                            .iter()
+                            .map(|(k, v)| (k.clone(), v.clone().into()))
+                            .collect();
 
-        info!("Found {} relevant chunks", chunks.len());
-        Ok(chunks)
+                        serde_json::from_value(serde_json::Value::Object(json_map)).ok()
+                    })
+                    .collect();
+
+                info!("Found {} relevant chunks", chunks.len());
+                Ok(chunks)
+            }
+        }
     }
 
     /// Delete collection (for testing)
     #[cfg(test)]
     pub async fn delete_collection(&self) -> Result<()> {
-        self.client
-            .delete_collection(&self.collection_name)
-            .await
-            .context("Failed to delete collection")?;
-        Ok(())
+        match &self.backend {
+            VectorStoreBackend::InMemory(store) => {
+                store.clear().await;
+                Ok(())
+            }
+            VectorStoreBackend::Qdrant { client, collection_name } => {
+                client
+                    .delete_collection(collection_name)
+                    .await
+                    .context("Failed to delete collection")?;
+                Ok(())
+            }
+        }
     }
 }
 
